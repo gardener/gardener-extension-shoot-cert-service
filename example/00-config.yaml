@@ -1,0 +1,11 @@
+---
+apiVersion: shoot-cert-service.extensions.config.gardener.cloud/v1alpha1
+kind: Configuration
+issuerName: gardener
+acme:
+  email: john.doe@example.com
+  server: https://acme-v02.api.letsencrypt.org/directory
+# privateKey: | # Optional key for Let's Encrypt account.
+#   -----BEGIN BEGIN RSA PRIVATE KEY-----
+#   ...
+#   -----END RSA PRIVATE KEY-----

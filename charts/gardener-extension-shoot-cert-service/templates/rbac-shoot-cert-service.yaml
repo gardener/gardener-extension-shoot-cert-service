@@ -1,0 +1,38 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: extensions.gardener.cloud:extension-shoot-cert-service
+  labels:
+    app.kubernetes.io/name: gardener-extension-shoot-cert-service
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+rules:
+- apiGroups:
+  - dns.gardener.cloud
+  resources:
+  - dnsentries
+  verbs:
+  - get
+  - list
+  - update
+  - watch
+  - create
+  - delete
+- apiGroups:
+  - "cert.gardener.cloud"
+  resources:
+  - issuers
+  - issuers/status
+  verbs:
+  - get
+  - update
+  - list
+  - patch
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - "secrets"
+  verbs:
+  - "*"

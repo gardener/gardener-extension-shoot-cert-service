@@ -1,0 +1,7 @@
+apiVersion: v1	
+kind: Secret	
+metadata:	
+  name: extension-shoot-cert-service.config
+  namespace: {{ .Release.Namespace }}	
+data:	
+  config.yaml: {{ include "certconfig" . | b64enc | trim }}

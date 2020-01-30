@@ -1,0 +1,87 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "cert-management.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    helm.sh/chart: {{ include "cert-management.chart" . }}
+    app.kubernetes.io/name: {{ include "cert-management.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+spec:
+  revisionHistoryLimit: 0
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "cert-management.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      annotations:
+        checksum/issuers: {{ toYaml .Values.issuers | sha256sum }}
+        {{- if .Values.podAnnotations }}
+{{ toYaml .Values.podAnnotations | indent 8 }}
+        {{- end }}
+      labels:
+        app.kubernetes.io/name: {{ include "cert-management.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        networking.gardener.cloud/to-dns: allowed
+        networking.gardener.cloud/to-shoot-apiserver: allowed
+        networking.gardener.cloud/to-seed-apiserver: allowed
+        networking.gardener.cloud/from-prometheus: allowed
+    spec:
+      containers:
+      - name: {{ .Chart.Name }}
+        image: {{ index .Values.images "cert-management" }}
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+        - name: shoot-cluster
+          mountPath: "/etc/shoot-cluster"
+          readOnly: true
+        args:
+        - --name={{ include "cert-management.fullname" . }}
+        - --source=/etc/shoot-cluster/kubeconfig
+        - --issuer.issuer-namespace={{ .Release.Namespace }}
+        - --issuer.default-issuer={{ .Values.defaultProvider.name }}
+        - --issuer.default-issuer-domain-ranges={{ .Values.defaultProvider.domains }}
+        - --issuer.dns-namespace={{ .Release.Namespace }}
+        - --server-port-http={{ .Values.configuration.serverPortHttp }}
+        - --ingress-cert.targets.pool.size={{ .Values.configuration.ingressCertWorkers }}
+        - --service-cert.targets.pool.size={{ .Values.configuration.certWorkers }}
+        - --issuer.default.pool.size={{ .Values.configuration.issuerWorkers }}
+        {{- range $idx, $flag := .Values.additionalConfiguration }}
+        - {{ $flag }}
+        {{- end }}
+        ports:
+        - containerPort: {{ .Values.configuration.serverPortHttp }}
+          protocol: TCP
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: {{ .Values.configuration.serverPortHttp }}
+            scheme: HTTP
+          initialDelaySeconds: 30
+          timeoutSeconds: 5
+        resources:
+          {{- toYaml .Values.resources | nindent 10 }}
+      volumes:
+      - name: shoot-cluster
+        secret:
+          secretName: {{ .Values.shootClusterSecret }}
+      serviceAccountName: {{ include "cert-management.name" . }}
+      {{- if .Values.priorityClassName }}
+      priorityClassName: {{ .Values.priorityClassName }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}

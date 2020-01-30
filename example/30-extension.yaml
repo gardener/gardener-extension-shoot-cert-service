@@ -1,0 +1,15 @@
+---
+apiVersion: extensions.gardener.cloud/v1alpha1
+kind: Extension
+metadata:
+  name: certificate-service
+  namespace: shoot--foo--bar
+spec:
+  type: shoot-cert-service
+  providerConfig:
+    apiVersion: service.cert.extensions.gardener.cloud/v1alpha1
+    kind: CertConfig
+    issuers:
+    - name: custom
+      server: https://acme-v02.api.letsencrypt.org/directory
+      email: john.doe@example.com
