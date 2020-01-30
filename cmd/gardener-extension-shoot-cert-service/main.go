@@ -15,7 +15,7 @@
 package main
 
 import (
-	"github.com/gardener/gardener-extension-shoot-cert-service/cmd/app"
+	"github.com/gardener/gardener-extension-shoot-cert-service/cmd/gardener-extension-shoot-cert-service/app"
 
 	"github.com/gardener/gardener-extensions/pkg/controller"
 	controllercmd "github.com/gardener/gardener-extensions/pkg/controller/cmd"

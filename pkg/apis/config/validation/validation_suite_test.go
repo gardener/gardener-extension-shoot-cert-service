@@ -23,5 +23,5 @@ import (
 
 func TestTypeValidation(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Shoot Cert Service Configuration Types Validation Suite")
+	RunSpecs(t, "Configuration Types Validation Suite")
 }

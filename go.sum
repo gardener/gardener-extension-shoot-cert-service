@@ -116,6 +116,7 @@ github.com/gardener/gardener v0.35.1-0.20200128130120-5b69a02f511a h1:rLj4qh4PWF
 github.com/gardener/gardener v0.35.1-0.20200128130120-5b69a02f511a/go.mod h1:cu4WkHhpM9JLvqx76qSViagsPO4UH9Qx5i0h3AEIdiE=
 github.com/gardener/gardener-extensions v1.2.1-0.20200129183102-afdd6bad562a h1:S5gPMoKMt68R0FC4l99Rd0KuNhEfcD3g824gajEarv8=
 github.com/gardener/gardener-extensions v1.2.1-0.20200129183102-afdd6bad562a/go.mod h1:qJHM2NaRCdCBKjnvWXpixWBq1866kqZR76kA7edk8I4=
+github.com/gardener/gardener-extensions v1.2.1 h1:dFUixBIVYBu/oJPbm21MjNpFouAJ7RSbAJA5npVTA3k=
 github.com/gardener/gardener-resource-manager v0.9.1-0.20200124091350-6ea41bbae81f h1:kaJJ2j6/uHTt6tDQiDO25HOq6Uit6Hu31hu47HfY/Lw=
 github.com/gardener/gardener-resource-manager v0.9.1-0.20200124091350-6ea41bbae81f/go.mod h1:0pKTHOhvU91eQB0EYr/6Ymd7lXc/5Hi8P8tF/gpV0VQ=
 github.com/gardener/hvpa-controller v0.0.0-20191014062307-fad3bdf06a25 h1:nOFITmV7vt4fcYPEXgj66Qs83FdDEMvL/LQcR0diRRE=
