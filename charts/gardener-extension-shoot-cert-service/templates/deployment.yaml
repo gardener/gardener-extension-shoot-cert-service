@@ -1,0 +1,71 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gardener-extension-shoot-cert-service
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: gardener-extension-shoot-cert-service
+    helm.sh/chart: gardener-extension-shoot-cert-service
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  revisionHistoryLimit: 0
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: gardener-extension-shoot-cert-service
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      annotations:
+        checksum/secret-cert-service-config: {{ include "certconfig" . | sha256sum }}
+        {{- if .Values.imageVectorOverwrite }}
+        checksum/configmap-extension-imagevector-overwrite: {{ include (print $.Template.BasePath "/configmap-imagevector-overwrite.yaml") . | sha256sum }}
+        {{- end }}
+      labels:
+        app.kubernetes.io/name: gardener-extension-shoot-cert-service
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      serviceAccountName: gardener-extension-shoot-cert-service
+      containers:
+      - name: gardener-extension-shoot-cert-service
+        image: {{ include "image" . }}
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        command:
+        - /gardener-extension-shoot-cert-service
+        - --config=/etc/cert-service/config.yaml
+        - --max-concurrent-reconciles={{ .Values.controllers.concurrentSyncs }}
+        - --disable-controllers={{ .Values.disableControllers | join "," }}
+        - --ignore-operation-annotation={{ .Values.controllers.ignoreOperationAnnotation }}
+        env:
+        - name: LEADER_ELECTION_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        {{- if .Values.imageVectorOverwrite }}
+        - name: IMAGEVECTOR_OVERWRITE
+          value: /charts_overwrite/images_overwrite.yaml
+        {{- end }}
+        {{- if .Values.resources }}
+        resources:
+{{ toYaml .Values.resources | trim | indent 10 }}
+        {{- end }}
+        volumeMounts:
+        - name: cert-service-config
+          mountPath: /etc/cert-service
+          readOnly: true
+        {{- if .Values.imageVectorOverwrite }}
+        - name: extension-imagevector-overwrite
+          mountPath: /charts_overwrite/
+          readOnly: true
+        {{- end }}
+      volumes:
+      - name: cert-service-config
+        secret:
+          secretName: extension-shoot-cert-service.config
+      {{- if .Values.imageVectorOverwrite }}
+      - name: extension-imagevector-overwrite
+        configMap:
+          name: {{ include "name" .}}-imagevector-overwrite
+          defaultMode: 420
+      {{- end }}

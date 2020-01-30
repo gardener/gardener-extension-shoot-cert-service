@@ -1,0 +1,5 @@
+images:
+- name: cert-management
+  sourceRepository: github.com/gardener/cert-management
+  repository: eu.gcr.io/gardener-project/cert-controller-manager
+  tag: "v0.2.13"

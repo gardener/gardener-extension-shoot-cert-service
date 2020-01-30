@@ -1,0 +1,29 @@
+{{- range .Values.issuers }}
+{{- if .acme.privateKey }}
+apiVersion: v1
+kind: Secret
+metadata: 
+  name: extension-shoot-cert-service-issuer-{{ .name }}
+  namespace: {{ $.Release.Namespace }}
+type: Opaque
+data:
+  email: {{ .acme.email | b64enc | trim }}
+  privateKey: {{ .acme.privateKey | b64enc | trim }}
+{{- end }}
+---
+apiVersion: cert.gardener.cloud/v1alpha1
+kind: Issuer
+metadata:
+  name: {{ .name }}
+  namespace: {{ $.Release.Namespace }}
+spec:
+  acme:
+    server: {{ .acme.server }}
+    email: {{ .acme.email }}
+    privateKeySecretRef:
+      name: extension-shoot-cert-service-issuer-{{ .name }}
+      namespace: {{ $.Release.Namespace }}
+{{- if not .acme.privateKey }}
+    autoRegistration: true
+{{- end }}
+{{- end }}

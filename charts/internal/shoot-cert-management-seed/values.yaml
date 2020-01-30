@@ -1,0 +1,51 @@
+seedNamespace: shoot--project--shootname
+
+nameOverride: ""
+fullnameOverride: cert-controller-manager
+
+replicaCount: 1
+
+images:
+  cert-management: any-repo:any-tag
+
+shootClusterSecret: cert-management-kubecfg
+
+resources:
+  requests:
+   cpu: 100m
+   memory: 128Mi
+  limits:
+   cpu: 200m
+   memory: 384Mi
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+# priorityClassName: ""
+
+podAnnotations:
+
+defaultProvider:
+  name: garden
+  domains: shoot.project.gardener.cloud
+
+issuers:
+- name: gardener
+  acme:
+    email: john.doe@example.com
+    server: https://acme-v02.api.letsencrypt.org/directory
+  # privateKey: | # Optional key for Let's Encrypt account.
+  #   -----BEGIN BEGIN RSA PRIVATE KEY-----
+  #   ...
+  #   -----END RSA PRIVATE KEY-----
+
+configuration:
+  serverPortHttp: 8080
+  ingressCertWorkers: 5
+  certWorkers: 5
+  issuerWorkers: 2
+
+additionalConfiguration:
+- --kubeconfig.disable-deploy-crds
+- --source.disable-deploy-crds
+- --target.disable-deploy-crds
