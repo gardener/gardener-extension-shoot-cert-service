@@ -20,11 +20,11 @@ checkPrereqs() {
 }
 
 createOrUpdateWebhookSVC(){
-namespace=${1:-}
-[[ -z $namespace ]] && echo "Please specify extension namespace!" && exit 1
-
-providerName=${2:-}
+providerName=${1:-}
 [[ -z $providerName ]] && echo "Please specify the provider name (aws,gcp,azure,..etc.)!" && exit 1
+
+namespace=${2:-}
+[[ -z $namespace ]] && echo "Please specify extension namespace!" && exit 1
 
 tmpService=$(mktemp)
 kubectl get svc gardener-extension-provider-$providerName -o yaml --export > $tmpService
@@ -257,11 +257,11 @@ if [[ "${BASH_SOURCE[0]}" = "$0" ]]; then
         usage
   fi
 
-  namespace=${1:-}
-  [[ -z $namespace ]] && echo "Please specify the extension namespace!" && exit 1
-
-  providerName=${2:-}
+  providerName=${1:-}
   [[ -z $providerName ]] && echo "Please specify the provider name (aws,gcp,azure,..etc.)!" && exit 1
+
+  namespace=${2:-}
+  [[ -z $namespace ]] && echo "Please specify the extension namespace!" && exit 1
 
   webhookServerPort=${3:-}
   [[ -z $webhookServerPort ]] && echo "Please specify webhook server port" && exit 1
