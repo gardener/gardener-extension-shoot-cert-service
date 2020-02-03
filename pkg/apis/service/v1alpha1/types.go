@@ -36,7 +36,7 @@ const CertManagementImageName = "cert-management"
 const CertManagementUserName = "gardener.cloud:system:cert-management"
 
 // ChartsPath is the path to the charts
-var ChartsPath = filepath.Join("controllers", "extension-shoot-cert-service", "charts", "internal")
+var ChartsPath = filepath.Join("charts", "internal")
 
 // CertManagementChartNameSeed is the name of the chart for Cert-Management in the seed.
 const CertManagementChartNameSeed = "shoot-cert-management-seed"
