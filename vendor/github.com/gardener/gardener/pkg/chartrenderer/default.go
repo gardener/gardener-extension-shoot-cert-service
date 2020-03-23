@@ -141,7 +141,7 @@ func (r *chartRenderer) renderResources(ch *chartapi.Chart, values chartutil.Val
 		return nil, err
 	}
 
-	// Remove NODES.txt and partials
+	// Remove NOTES.txt and partials
 	for k := range files {
 		if strings.HasSuffix(k, notesFileSuffix) || strings.HasPrefix(path.Base(k), "_") {
 			delete(files, k)

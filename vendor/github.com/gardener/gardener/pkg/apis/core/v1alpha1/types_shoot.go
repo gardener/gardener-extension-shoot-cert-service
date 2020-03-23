@@ -213,14 +213,16 @@ type DNSProvider struct {
 	// Domains contains information about which domains shall be included/excluded for this provider.
 	// +optional
 	Domains *DNSIncludeExclude `json:"domains,omitempty"`
+	// Primary indicates that this DNSProvider is used for shoot related domains.
+	// +optional
+	Primary *bool `json:"primary,omitempty"`
 	// SecretName is a name of a secret containing credentials for the stated domain and the
 	// provider. When not specified, the Gardener will use the cloud provider credentials referenced
-	// by the Shoot and try to find respective credentials there. Specifying this field may override
+	// by the Shoot and try to find respective credentials there (primary provider only). Specifying this field may override
 	// this behavior, i.e. forcing the Gardener to only look into the given secret.
 	// +optional
 	SecretName *string `json:"secretName,omitempty"`
-	// Type is the DNS provider type for the Shoot. Only relevant if not the default domain is used for
-	// this shoot.
+	// Type is the DNS provider type.
 	// +optional
 	Type *string `json:"type,omitempty"`
 	// Zones contains information about which hosted zones shall be included/excluded for this provider.
@@ -797,6 +799,12 @@ type Worker struct {
 	// Volume contains information about the volume type and size.
 	// +optional
 	Volume *Volume `json:"volume,omitempty"`
+	// DataVolumes contains a list of additional worker volumes.
+	// +optional
+	DataVolumes []Volume `json:"dataVolumes,omitempty"`
+	// KubeletDataVolumeName contains the name of a dataVolume that should be used for storing kubelet state.
+	// +optional
+	KubeletDataVolumeName *string `json:"kubeletDataVolumeName,omitempty"`
 	// Zones is a list of availability zones that are used to evenly distribute this worker pool. Optional
 	// as not every provider may support availability zones.
 	// +optional
@@ -834,11 +842,17 @@ type ShootMachineImage struct {
 
 // Volume contains information about the volume type and size.
 type Volume struct {
-	// Type is the machine type of the worker group.
+	// Name of the volume to make it referencable.
+	// +optional
+	Name *string `json:"name,omitempty"`
+	// Type is the type of the volume.
 	// +optional
 	Type *string `json:"type,omitempty"`
-	// Size is the size of the root volume.
+	// Size is the size of the volume.
 	Size string `json:"size"`
+	// Encrypted determines if the volume should be encrypted.
+	// +optional
+	Encrypted *bool `json:"encrypted,omitempty"`
 }
 
 var (

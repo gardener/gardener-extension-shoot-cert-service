@@ -176,6 +176,8 @@ type DNS struct {
 type DNSProvider struct {
 	// Domains contains information about which domains shall be included/excluded for this provider.
 	Domains *DNSIncludeExclude
+	// Primary indicates that this DNSProvider is used for shoot related domains.
+	Primary *bool
 	// SecretName is a name of a secret containing credentials for the stated domain and the
 	// provider. When not specified, the Gardener will use the cloud provider credentials referenced
 	// by the Shoot and try to find respective credentials there. Specifying this field may override
@@ -653,6 +655,10 @@ type Worker struct {
 	Taints []corev1.Taint
 	// Volume contains information about the volume type and size.
 	Volume *Volume
+	// DataVolumes contains a list of additional worker volumes.
+	DataVolumes []Volume
+	// KubeletDataVolumeName contains the name of a dataVolume that should be used for storing kubelet state.
+	KubeletDataVolumeName *string
 	// Zones is a list of availability zones that are used to evenly distribute this worker pool. Optional
 	// as not every provider may support availability zones.
 	Zones []string
@@ -686,10 +692,14 @@ type ShootMachineImage struct {
 
 // Volume contains information about the volume type and size.
 type Volume struct {
-	// Type is the machine type of the worker group.
+	// Name of the volume to make it referencable.
+	Name *string
+	// Type is the type of the volume.
 	Type *string
-	// Size is the size of the root volume.
+	// Size is the size of the volume.
 	Size string
+	// Encrypted determines if the volume should be encrypted.
+	Encrypted *bool
 }
 
 var (

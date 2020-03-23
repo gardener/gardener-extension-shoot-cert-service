@@ -20,6 +20,8 @@ import (
 	"fmt"
 	"io"
 
+	utilerrors "github.com/gardener/gardener/pkg/utils/errors"
+	"github.com/hashicorp/go-multierror"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -75,7 +77,7 @@ func (c *Applier) applyObject(ctx context.Context, desired *unstructured.Unstruc
 	}
 
 	if len(key.Name) == 0 {
-		return fmt.Errorf("Missing 'metadata.name' in: %+v", desired)
+		return fmt.Errorf("missing 'metadata.name' in: %+v", desired)
 	}
 
 	current := &unstructured.Unstructured{}
@@ -104,7 +106,7 @@ func (c *Applier) deleteObject(ctx context.Context, desired *unstructured.Unstru
 		desired.SetNamespace(metav1.NamespaceDefault)
 	}
 	if len(desired.GetName()) == 0 {
-		return fmt.Errorf("Missing 'metadata.name' in: %+v", desired)
+		return fmt.Errorf("missing 'metadata.name' in: %+v", desired)
 	}
 
 	err := c.client.Delete(ctx, desired)
@@ -188,44 +190,60 @@ func (c *Applier) mergeObjects(newObj, oldObj *unstructured.Unstructured, mergeF
 // all concatenated in a byte slice, and sends them one after the other to the API server. If a resource
 // already exists at the API server, it will update it. It returns an error as soon as the first error occurs.
 func (c *Applier) ApplyManifest(ctx context.Context, r UnstructuredReader, options ApplierOptions) error {
+	allErrs := &multierror.Error{
+		ErrorFormat: utilerrors.NewErrorFormatFuncWithPrefix("failed to apply manifests"),
+	}
+
 	for {
 		obj, err := r.Read()
 		if err == io.EOF {
-			return nil
+			break
 		}
 		if err != nil {
-			return err
+			allErrs = multierror.Append(allErrs, fmt.Errorf("could not read object: %+v", err))
+			continue
 		}
 		if obj == nil {
 			continue
 		}
 
 		if err := c.applyObject(ctx, obj, options); err != nil {
-			return err
+			allErrs = multierror.Append(allErrs, fmt.Errorf("could not apply object of kind %q \"%s/%s\": %+v", obj.GetKind(), obj.GetNamespace(), obj.GetName(), err))
+			continue
 		}
 	}
+
+	return allErrs.ErrorOrNil()
 }
 
 // DeleteManifest is a function which does the same like `kubectl delete -f <file>`. It takes a bunch of manifests <m>,
 // all concatenated in a byte slice, and sends them one after the other to the API server for deletion.
 // It returns an error as soon as the first error occurs.
 func (c *Applier) DeleteManifest(ctx context.Context, r UnstructuredReader) error {
+	allErrs := &multierror.Error{
+		ErrorFormat: utilerrors.NewErrorFormatFuncWithPrefix("failed to delete manifests"),
+	}
+
 	for {
 		obj, err := r.Read()
 		if err == io.EOF {
-			return nil
+			break
 		}
 		if err != nil {
-			return err
+			allErrs = multierror.Append(allErrs, fmt.Errorf("could not read object: %+v", err))
+			continue
 		}
 		if obj == nil {
 			continue
 		}
 
 		if err := c.deleteObject(ctx, obj); err != nil {
-			return err
+			allErrs = multierror.Append(allErrs, fmt.Errorf("could not delete object of kind %q \"%s/%s\": %+v", obj.GetKind(), obj.GetNamespace(), obj.GetName(), err))
+			continue
 		}
 	}
+
+	return allErrs.ErrorOrNil()
 }
 
 // UnstructuredReader an interface that all manifest readers should implement

@@ -20,6 +20,7 @@ import (
 	certv1alpha1 "github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/service/v1alpha1"
 	certcontroller "github.com/gardener/gardener-extension-shoot-cert-service/pkg/controller"
 
+	extensionscontroller "github.com/gardener/gardener-extensions/pkg/controller"
 	"github.com/gardener/gardener-extensions/pkg/controller/healthcheck"
 	healthcheckconfig "github.com/gardener/gardener-extensions/pkg/controller/healthcheck/config"
 	"github.com/gardener/gardener-extensions/pkg/controller/healthcheck/general"
@@ -41,6 +42,10 @@ var (
 // RegisterHealthChecks registers health checks for each extension resource
 // HealthChecks are grouped by extension (e.g worker), extension.type (e.g aws) and  Health Check Type (e.g SystemComponentsHealthy)
 func RegisterHealthChecks(mgr manager.Manager, opts healthcheck.DefaultAddArgs) error {
+	preCheckFunc := func(_ runtime.Object, cluster *extensionscontroller.Cluster) bool {
+		return cluster.Shoot.Spec.DNS != nil && cluster.Shoot.Spec.DNS.Domain != nil
+	}
+
 	return healthcheck.DefaultRegistration(
 		certcontroller.Type,
 		extensionsv1alpha1.SchemeGroupVersion.WithKind(extensionsv1alpha1.ExtensionResource),
@@ -48,10 +53,19 @@ func RegisterHealthChecks(mgr manager.Manager, opts healthcheck.DefaultAddArgs) 
 		mgr,
 		opts,
 		nil,
-		map[healthcheck.HealthCheck]string{
-			general.CheckManagedResource(certv1alpha1.CertManagementResourceNameSeed):  string(gardencorev1beta1.ShootControlPlaneHealthy),
-			general.CheckManagedResource(certv1alpha1.CertManagementResourceNameShoot): string(gardencorev1beta1.ShootSystemComponentsHealthy),
-		})
+		[]healthcheck.ConditionTypeToHealthCheck{
+			{
+				ConditionType: string(gardencorev1beta1.ShootControlPlaneHealthy),
+				HealthCheck:   general.CheckManagedResource(certv1alpha1.CertManagementResourceNameSeed),
+				PreCheckFunc:  preCheckFunc,
+			},
+			{
+				ConditionType: string(gardencorev1beta1.ShootSystemComponentsHealthy),
+				HealthCheck:   general.CheckManagedResource(certv1alpha1.CertManagementResourceNameShoot),
+				PreCheckFunc:  preCheckFunc,
+			},
+		},
+	)
 }
 
 // AddToManager adds a controller with the default Options.
