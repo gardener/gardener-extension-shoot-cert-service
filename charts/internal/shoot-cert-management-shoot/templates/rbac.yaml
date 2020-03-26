@@ -49,6 +49,19 @@ rules:
   - watch
   - create
   - delete
+{{- if .Values.dnsChallengeOnShoot.enabled }}
+- apiGroups:
+  - dns.gardener.cloud
+  resources:
+  - dnsentries
+  verbs:
+  - get
+  - list
+  - update
+  - watch
+  - create
+  - delete
+{{- end}}
 - apiGroups:
   - ""
   resources:

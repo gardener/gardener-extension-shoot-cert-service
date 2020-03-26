@@ -26,6 +26,10 @@ type CertConfig struct {
 
 	// Issuers is the configuration for certificate issuers.
 	Issuers []IssuerConfig
+
+	// DNSChallengeOnShoot controls where the DNS entries for DNS01 challenges are created.
+	// If not specified the DNS01 challenges are written to the control plane namespace on the seed.
+	DNSChallengeOnShoot *DNSChallengeOnShoot
 }
 
 // IssuerConfig contains information for certificate issuers.
@@ -33,4 +37,11 @@ type IssuerConfig struct {
 	Name   string
 	Server string
 	Email  string
+}
+
+// DNSChallengeOnShoot is used to create DNS01 challenges on shoot and not on seed.
+type DNSChallengeOnShoot struct {
+	Enabled   bool
+	Namespace string
+	DNSClass  *string
 }
