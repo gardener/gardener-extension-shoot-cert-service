@@ -12,7 +12,6 @@ gardener-extension-shoot-cert-service:
             image: 'eu.gcr.io/gardener-project/gardener/extensions/shoot-cert-service'
             dockerfile: 'Dockerfile'
             target: gardener-extension-shoot-cert-service
-    steps: ~
   jobs:
     head-update:
       traits:

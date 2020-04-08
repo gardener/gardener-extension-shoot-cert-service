@@ -26,9 +26,9 @@ import (
 	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/service/validation"
 	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/imagevector"
 
-	"github.com/gardener/gardener-extensions/pkg/controller"
-	"github.com/gardener/gardener-extensions/pkg/controller/extension"
-	"github.com/gardener/gardener-extensions/pkg/util"
+	"github.com/gardener/gardener/extensions/pkg/controller"
+	"github.com/gardener/gardener/extensions/pkg/controller/extension"
+	"github.com/gardener/gardener/extensions/pkg/util"
 	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
 	"github.com/gardener/gardener/pkg/chartrenderer"
 	"github.com/gardener/gardener/pkg/utils/chart"

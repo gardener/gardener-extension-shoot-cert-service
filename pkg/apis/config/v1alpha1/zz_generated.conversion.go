@@ -24,8 +24,8 @@ import (
 	unsafe "unsafe"
 
 	config "github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/config"
-	healthcheckconfig "github.com/gardener/gardener-extensions/pkg/controller/healthcheck/config"
-	configv1alpha1 "github.com/gardener/gardener-extensions/pkg/controller/healthcheck/config/v1alpha1"
+	healthcheckconfig "github.com/gardener/gardener/extensions/pkg/controller/healthcheck/config"
+	configv1alpha1 "github.com/gardener/gardener/extensions/pkg/controller/healthcheck/config/v1alpha1"
 	conversion "k8s.io/apimachinery/pkg/conversion"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )

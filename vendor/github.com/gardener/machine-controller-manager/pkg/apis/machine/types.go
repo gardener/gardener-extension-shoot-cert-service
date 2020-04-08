@@ -674,6 +674,7 @@ type OpenStackMachineClassSpec struct {
 	Networks         []OpenStackNetwork
 	SecretRef        *corev1.SecretReference
 	PodNetworkCidr   string
+	RootDiskSize     int // in GB
 }
 
 type OpenStackNetwork struct {
@@ -755,7 +756,7 @@ type AWSBlockDeviceMappingSpec struct {
 type AWSEbsBlockDeviceSpec struct {
 
 	// Indicates whether the EBS volume is deleted on machine termination.
-	DeleteOnTermination bool
+	DeleteOnTermination *bool
 
 	// Indicates whether the EBS volume is encrypted. Encrypted Amazon EBS volumes
 	// may only be attached to machines that support Amazon EBS encryption.
@@ -874,6 +875,7 @@ type AzureVirtualMachineProperties struct {
 	OsProfile       AzureOSProfile
 	NetworkProfile  AzureNetworkProfile
 	AvailabilitySet *AzureSubResource
+	IdentityID      *string
 	Zone            *int
 }
 
@@ -947,7 +949,8 @@ type AzureSSHPublicKey struct {
 
 // AzureNetworkProfile is specifies the network interfaces of the virtual machine.
 type AzureNetworkProfile struct {
-	NetworkInterfaces AzureNetworkInterfaceReference
+	NetworkInterfaces     AzureNetworkInterfaceReference
+	AcceleratedNetworking *bool
 }
 
 // AzureNetworkInterfaceReference is describes a network interface reference.

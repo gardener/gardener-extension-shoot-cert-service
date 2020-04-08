@@ -17,7 +17,7 @@ package controller
 import (
 	controllerconfig "github.com/gardener/gardener-extension-shoot-cert-service/pkg/controller/config"
 
-	"github.com/gardener/gardener-extensions/pkg/controller/extension"
+	"github.com/gardener/gardener/extensions/pkg/controller/extension"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 )

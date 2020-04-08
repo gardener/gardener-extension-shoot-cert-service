@@ -19,7 +19,7 @@ import (
 
 	certificateservicecmd "github.com/gardener/gardener-extension-shoot-cert-service/pkg/cmd"
 
-	controllercmd "github.com/gardener/gardener-extensions/pkg/controller/cmd"
+	controllercmd "github.com/gardener/gardener/extensions/pkg/controller/cmd"
 )
 
 // ExtensionName is the name of the extension.

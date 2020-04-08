@@ -17,32 +17,29 @@ package framework
 import (
 	"context"
 	"fmt"
+	"time"
+
+	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/gardener/gardener/pkg/operation/common"
+	kutil "github.com/gardener/gardener/pkg/utils/kubernetes"
+	"github.com/gardener/gardener/pkg/utils/kubernetes/health"
+	"github.com/gardener/gardener/pkg/utils/retry"
+
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"time"
-
-	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
-	kutil "github.com/gardener/gardener/pkg/utils/kubernetes"
-	"github.com/gardener/gardener/pkg/utils/retry"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // GetSeed returns the seed and its k8s client
-func (f *GardenerFramework) GetSeed(ctx context.Context, seedName string, seedScheme *runtime.Scheme) (*gardencorev1beta1.Seed, kubernetes.Interface, error) {
+func (f *GardenerFramework) GetSeed(ctx context.Context, seedName string) (*gardencorev1beta1.Seed, kubernetes.Interface, error) {
 	seed := &gardencorev1beta1.Seed{}
 	err := f.GardenClient.Client().Get(ctx, client.ObjectKey{Name: seedName}, seed)
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "could not get Seed from Shoot in Garden cluster")
-	}
-
-	if seedScheme == nil {
-		seedScheme = kubernetes.SeedScheme
 	}
 
 	seedSecretRef := seed.Spec.SecretRef
@@ -57,17 +54,7 @@ func (f *GardenerFramework) GetSeed(ctx context.Context, seedName string, seedSc
 
 // GetShoot gets the test shoot
 func (f *GardenerFramework) GetShoot(ctx context.Context, shoot *gardencorev1beta1.Shoot) error {
-	newShoot := &gardencorev1beta1.Shoot{}
-	err := f.GardenClient.Client().Get(ctx, client.ObjectKey{
-		Namespace: shoot.Namespace,
-		Name:      shoot.Name,
-	}, newShoot)
-
-	if err != nil {
-		return err
-	}
-	shoot = newShoot
-	return nil
+	return f.GardenClient.Client().Get(ctx, kutil.Key(shoot.Namespace, shoot.Name), shoot)
 }
 
 // GetShootProject returns the project of a shoot
@@ -240,7 +227,7 @@ func (f *GardenerFramework) HibernateShoot(ctx context.Context, shoot *gardencor
 // WakeUpShoot wakes up the test shoot from hibernation
 func (f *GardenerFramework) WakeUpShoot(ctx context.Context, shoot *gardencorev1beta1.Shoot) error {
 	// return if the shoot is already running
-	if shoot.Spec.Hibernation == nil || !*shoot.Spec.Hibernation.Enabled {
+	if shoot.Spec.Hibernation == nil || shoot.Spec.Hibernation.Enabled == nil || !*shoot.Spec.Hibernation.Enabled {
 		return nil
 	}
 
@@ -399,14 +386,39 @@ func (f *GardenerFramework) DumpState(ctx context.Context) {
 		return
 	}
 
-	// only dump shoot related events if a shoot is given
 	ctxIdentifier := "[GARDENER]"
 	f.Logger.Info(ctxIdentifier)
 
+	if err := f.dumpSeeds(ctx, ctxIdentifier); err != nil {
+		f.Logger.Errorf("unable to dump seed status: %s", err.Error())
+	}
+
 	// dump all events if no shoot is given
-	err := f.dumpEventsInAllNamespace(ctx, ctxIdentifier, f.GardenClient)
-	if err != nil {
+	if err := f.dumpEventsInAllNamespace(ctx, ctxIdentifier, f.GardenClient); err != nil {
 		f.Logger.Errorf("unable to dump Events from namespaces gardener: %s", err.Error())
+	}
+}
+
+// dumpSeeds prints information about all seeds
+func (f *GardenerFramework) dumpSeeds(ctx context.Context, ctxIdentifier string) error {
+	f.Logger.Infof("%s [SEEDS]", ctxIdentifier)
+	seeds := &gardencorev1beta1.SeedList{}
+	if err := f.GardenClient.Client().List(ctx, seeds); err != nil {
+		return err
+	}
+
+	for _, seed := range seeds.Items {
+		f.dumpSeed(&seed)
+	}
+	return nil
+}
+
+// dumpSeed prints information about a seed
+func (f *GardenerFramework) dumpSeed(seed *gardencorev1beta1.Seed) {
+	if err := health.CheckSeed(seed, seed.Status.Gardener); err != nil {
+		f.Logger.Printf("Seed %s is %s - Error: %s - Conditions %v", seed.Name, unhealthy, err.Error(), seed.Status.Conditions)
+	} else {
+		f.Logger.Printf("Seed %s is %s", seed.Name, healthy)
 	}
 }
 

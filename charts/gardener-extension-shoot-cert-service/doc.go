@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//go:generate ../../vendor/github.com/gardener/gardener-extensions/hack/generate-controller-registration.sh extension-shoot-cert-service . ../../VERSION ../../example/controller-registration.yaml Extension:shoot-cert-service
+//go:generate ../../vendor/github.com/gardener/gardener/extensions/hack/generate-controller-registration.sh extension-shoot-cert-service . ../../VERSION ../../example/controller-registration.yaml Extension:shoot-cert-service
 
 // Package chart enables go:generate support for generating the correct controller registration.
 package chart
