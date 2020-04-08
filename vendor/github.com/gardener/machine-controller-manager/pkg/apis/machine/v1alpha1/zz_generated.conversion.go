@@ -822,7 +822,7 @@ func Convert_machine_AWSBlockDeviceMappingSpec_To_v1alpha1_AWSBlockDeviceMapping
 }
 
 func autoConvert_v1alpha1_AWSEbsBlockDeviceSpec_To_machine_AWSEbsBlockDeviceSpec(in *AWSEbsBlockDeviceSpec, out *machine.AWSEbsBlockDeviceSpec, s conversion.Scope) error {
-	out.DeleteOnTermination = in.DeleteOnTermination
+	out.DeleteOnTermination = (*bool)(unsafe.Pointer(in.DeleteOnTermination))
 	out.Encrypted = in.Encrypted
 	out.Iops = in.Iops
 	out.VolumeSize = in.VolumeSize
@@ -836,7 +836,7 @@ func Convert_v1alpha1_AWSEbsBlockDeviceSpec_To_machine_AWSEbsBlockDeviceSpec(in 
 }
 
 func autoConvert_machine_AWSEbsBlockDeviceSpec_To_v1alpha1_AWSEbsBlockDeviceSpec(in *machine.AWSEbsBlockDeviceSpec, out *AWSEbsBlockDeviceSpec, s conversion.Scope) error {
-	out.DeleteOnTermination = in.DeleteOnTermination
+	out.DeleteOnTermination = (*bool)(unsafe.Pointer(in.DeleteOnTermination))
 	out.Encrypted = in.Encrypted
 	out.Iops = in.Iops
 	out.VolumeSize = in.VolumeSize
@@ -1335,6 +1335,7 @@ func autoConvert_v1alpha1_AzureNetworkProfile_To_machine_AzureNetworkProfile(in 
 	if err := Convert_v1alpha1_AzureNetworkInterfaceReference_To_machine_AzureNetworkInterfaceReference(&in.NetworkInterfaces, &out.NetworkInterfaces, s); err != nil {
 		return err
 	}
+	out.AcceleratedNetworking = (*bool)(unsafe.Pointer(in.AcceleratedNetworking))
 	return nil
 }
 
@@ -1347,6 +1348,7 @@ func autoConvert_machine_AzureNetworkProfile_To_v1alpha1_AzureNetworkProfile(in 
 	if err := Convert_machine_AzureNetworkInterfaceReference_To_v1alpha1_AzureNetworkInterfaceReference(&in.NetworkInterfaces, &out.NetworkInterfaces, s); err != nil {
 		return err
 	}
+	out.AcceleratedNetworking = (*bool)(unsafe.Pointer(in.AcceleratedNetworking))
 	return nil
 }
 
@@ -1553,6 +1555,7 @@ func autoConvert_v1alpha1_AzureVirtualMachineProperties_To_machine_AzureVirtualM
 		return err
 	}
 	out.AvailabilitySet = (*machine.AzureSubResource)(unsafe.Pointer(in.AvailabilitySet))
+	out.IdentityID = (*string)(unsafe.Pointer(in.IdentityID))
 	out.Zone = (*int)(unsafe.Pointer(in.Zone))
 	return nil
 }
@@ -1576,6 +1579,7 @@ func autoConvert_machine_AzureVirtualMachineProperties_To_v1alpha1_AzureVirtualM
 		return err
 	}
 	out.AvailabilitySet = (*AzureSubResource)(unsafe.Pointer(in.AvailabilitySet))
+	out.IdentityID = (*string)(unsafe.Pointer(in.IdentityID))
 	out.Zone = (*int)(unsafe.Pointer(in.Zone))
 	return nil
 }
@@ -2604,6 +2608,7 @@ func autoConvert_v1alpha1_OpenStackMachineClassSpec_To_machine_OpenStackMachineC
 	out.Networks = *(*[]machine.OpenStackNetwork)(unsafe.Pointer(&in.Networks))
 	out.SecretRef = (*v1.SecretReference)(unsafe.Pointer(in.SecretRef))
 	out.PodNetworkCidr = in.PodNetworkCidr
+	out.RootDiskSize = in.RootDiskSize
 	return nil
 }
 
@@ -2625,6 +2630,7 @@ func autoConvert_machine_OpenStackMachineClassSpec_To_v1alpha1_OpenStackMachineC
 	out.Networks = *(*[]OpenStackNetwork)(unsafe.Pointer(&in.Networks))
 	out.SecretRef = (*v1.SecretReference)(unsafe.Pointer(in.SecretRef))
 	out.PodNetworkCidr = in.PodNetworkCidr
+	out.RootDiskSize = in.RootDiskSize
 	return nil
 }
 
