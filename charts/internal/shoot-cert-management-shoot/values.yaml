@@ -1,1 +1,4 @@
 shootUserName: cert.gardener.cloud:system:cert-management
+
+dnsChallengeOnShoot:
+  enabled: false

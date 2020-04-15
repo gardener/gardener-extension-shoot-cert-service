@@ -83,5 +83,22 @@ var _ = Describe("Validation", func() {
 				},
 			},
 		}, BeEmpty()),
+		Entry("DNSChallengeOnShoot", service.CertConfig{
+			DNSChallengeOnShoot: &service.DNSChallengeOnShoot{
+				Enabled:   true,
+				Namespace: "",
+			},
+		}, ConsistOf(
+			PointTo(MatchFields(IgnoreExtras, Fields{
+				"Type":  Equal(field.ErrorTypeRequired),
+				"Field": Equal("dnsChallengeOnShoot.namespace"),
+			})),
+		)),
+		Entry("Valid DNSChallengeOnShoot", service.CertConfig{
+			DNSChallengeOnShoot: &service.DNSChallengeOnShoot{
+				Enabled:   true,
+				Namespace: "kube-system",
+			},
+		}, BeEmpty()),
 	)
 })

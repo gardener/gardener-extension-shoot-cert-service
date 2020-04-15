@@ -39,6 +39,11 @@ issuers:
   #   ...
   #   -----END RSA PRIVATE KEY-----
 
+dnsChallengeOnShoot:
+  enabled: false
+  # namespace: kube-system
+  # dnsClass: my-class
+
 configuration:
   serverPortHttp: 8080
   ingressCertWorkers: 5

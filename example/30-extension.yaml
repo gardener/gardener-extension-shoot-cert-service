@@ -13,3 +13,7 @@ spec:
     - name: custom
       server: https://acme-v02.api.letsencrypt.org/directory
       email: john.doe@example.com
+    dnsChallengeOnShoot: # controls where the DNS entries for DNS01 challenges are created
+      enabled: false
+      # namespace: kube-system
+      # dnsClass: foo

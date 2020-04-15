@@ -29,6 +29,8 @@ func ValidateCertConfig(config *service.CertConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
 	allErrs = append(allErrs, validateIssuers(config.Issuers, field.NewPath("issuers"))...)
 
+	allErrs = append(allErrs, validateDNSChallengeOnShoot(config.DNSChallengeOnShoot, field.NewPath("dnsChallengeOnShoot"))...)
+
 	return allErrs
 }
 
@@ -53,6 +55,18 @@ func validateIssuers(issuers []service.IssuerConfig, fldPath *field.Path) field.
 			allErrs = append(allErrs, field.Invalid(indexFldPath.Child("email"), issuer.Email, "must a valid email address"))
 		}
 		names.Insert(issuer.Name)
+	}
+
+	return allErrs
+}
+
+func validateDNSChallengeOnShoot(dnsChallenge *service.DNSChallengeOnShoot, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if dnsChallenge != nil && dnsChallenge.Enabled {
+		if dnsChallenge.Namespace == "" {
+			allErrs = append(allErrs, field.Required(fldPath.Child("namespace"), "must provide namespace for writing DNS entries"))
+		}
 	}
 
 	return allErrs

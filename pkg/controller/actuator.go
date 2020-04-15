@@ -20,6 +20,15 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/go-logr/logr"
+	"github.com/pkg/errors"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/client-go/rest"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/log"
+
 	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/config"
 	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/service"
 	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/service/v1alpha1"
@@ -33,14 +42,6 @@ import (
 	"github.com/gardener/gardener/pkg/chartrenderer"
 	"github.com/gardener/gardener/pkg/utils/chart"
 	"github.com/gardener/gardener/pkg/utils/secrets"
-	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
-	"k8s.io/client-go/rest"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 // ActuatorName is the name of the Certificate Service actuator.
@@ -73,13 +74,24 @@ func (a *actuator) Reconcile(ctx context.Context, ex *extensionsv1alpha1.Extensi
 		return err
 	}
 
+	var certConfig *service.CertConfig
+	if ex.Spec.ProviderConfig != nil {
+		certConfig = &service.CertConfig{}
+		if _, _, err := a.decoder.Decode(ex.Spec.ProviderConfig.Raw, nil, certConfig); err != nil {
+			return fmt.Errorf("failed to decode provider config: %+v", err)
+		}
+		if errs := validation.ValidateCertConfig(certConfig); len(errs) > 0 {
+			return errs.ToAggregate()
+		}
+	}
+
 	if !controller.IsHibernated(cluster) {
-		if err := a.createShootResources(ctx, cluster, namespace); err != nil {
+		if err := a.createShootResources(ctx, certConfig, cluster, namespace); err != nil {
 			return err
 		}
 	}
 
-	return a.createSeedResources(ctx, ex, cluster, namespace)
+	return a.createSeedResources(ctx, certConfig, cluster, namespace)
 }
 
 // Delete the Extension resource.
@@ -139,20 +151,44 @@ func (a *actuator) createIssuerValues(issuers ...service.IssuerConfig) ([]map[st
 	return issuerVal, nil
 }
 
-func (a *actuator) createSeedResources(ctx context.Context, ex *extensionsv1alpha1.Extension, cluster *controller.Cluster, namespace string) error {
-	var issuerConfig []service.IssuerConfig
-	if ex.Spec.ProviderConfig != nil {
-		certConfig := &service.CertConfig{}
-		if _, _, err := a.decoder.Decode(ex.Spec.ProviderConfig.Raw, nil, certConfig); err != nil {
-			return fmt.Errorf("failed to decode provider config: %+v", err)
-		}
-		if errs := validation.ValidateCertConfig(certConfig); len(errs) > 0 {
-			return errs.ToAggregate()
-		}
+func (a *actuator) createDNSChallengeOnShootValues(cfg *service.DNSChallengeOnShoot) (map[string]interface{}, error) {
+	if cfg == nil || !cfg.Enabled {
+		return map[string]interface{}{
+			"enabled": false,
+		}, nil
+	}
 
+	if cfg.Namespace == "" {
+		return nil, fmt.Errorf("missing DNSChallengeOnShoot namespace")
+	}
+
+	values := map[string]interface{}{
+		"enabled":   true,
+		"namespace": cfg.Namespace,
+	}
+
+	if cfg.DNSClass != nil {
+		values["dnsClass"] = *cfg.DNSClass
+	}
+
+	return values, nil
+}
+
+func (a *actuator) createSeedResources(ctx context.Context, certConfig *service.CertConfig, cluster *controller.Cluster, namespace string) error {
+	var (
+		issuerConfig              []service.IssuerConfig
+		dnsChallengeOnShootConfig *service.DNSChallengeOnShoot
+	)
+	if certConfig != nil {
 		issuerConfig = certConfig.Issuers
+		dnsChallengeOnShootConfig = certConfig.DNSChallengeOnShoot
 	}
 	issuers, err := a.createIssuerValues(issuerConfig...)
+	if err != nil {
+		return err
+	}
+
+	dnsChallengeOnShoot, err := a.createDNSChallengeOnShootValues(dnsChallengeOnShootConfig)
 	if err != nil {
 		return err
 	}
@@ -173,8 +209,9 @@ func (a *actuator) createSeedResources(ctx context.Context, ex *extensionsv1alph
 			"name":    a.serviceConfig.IssuerName,
 			"domains": cluster.Shoot.Spec.DNS.Domain,
 		},
-		"issuers":            issuers,
-		"shootClusterSecret": v1alpha1.CertManagementKubecfg,
+		"issuers":             issuers,
+		"dnsChallengeOnShoot": dnsChallengeOnShoot,
+		"shootClusterSecret":  v1alpha1.CertManagementKubecfg,
 		"podAnnotations": map[string]interface{}{
 			"checksum/secret-kubeconfig": util.ComputeChecksum(shootKubeconfig.Data),
 		},
@@ -195,9 +232,20 @@ func (a *actuator) createSeedResources(ctx context.Context, ex *extensionsv1alph
 	return a.createManagedResource(ctx, namespace, v1alpha1.CertManagementResourceNameSeed, "seed", renderer, v1alpha1.CertManagementChartNameSeed, certManagementConfig, nil)
 }
 
-func (a *actuator) createShootResources(ctx context.Context, cluster *controller.Cluster, namespace string) error {
+func (a *actuator) createShootResources(ctx context.Context, certConfig *service.CertConfig, cluster *controller.Cluster, namespace string) error {
+	var dnsChallengeOnShootConfig *service.DNSChallengeOnShoot
+	if certConfig != nil {
+		dnsChallengeOnShootConfig = certConfig.DNSChallengeOnShoot
+	}
+
+	dnsChallengeOnShoot, err := a.createDNSChallengeOnShootValues(dnsChallengeOnShootConfig)
+	if err != nil {
+		return err
+	}
+
 	values := map[string]interface{}{
-		"shootUserName": v1alpha1.CertManagementUserName,
+		"shootUserName":       v1alpha1.CertManagementUserName,
+		"dnsChallengeOnShoot": dnsChallengeOnShoot,
 	}
 
 	renderer, err := util.NewChartRendererForShoot(cluster.Shoot.Spec.Kubernetes.Version)

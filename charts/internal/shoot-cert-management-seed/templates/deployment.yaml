@@ -45,7 +45,15 @@ spec:
         - --issuer.issuer-namespace={{ .Release.Namespace }}
         - --issuer.default-issuer={{ .Values.defaultProvider.name }}
         - --issuer.default-issuer-domain-ranges={{ .Values.defaultProvider.domains }}
+        {{- if .Values.dnsChallengeOnShoot.enabled }}
+        - --dns=/etc/shoot-cluster/kubeconfig
+        - --issuer.dns-namespace={{ .Values.dnsChallengeOnShoot.namespace }}
+        {{- if .Values.dnsChallengeOnShoot.dnsClass }}
+        - --issuer.dns-class={{ .Values.dnsChallengeOnShoot.dnsClass }}
+        {{- end }}
+        {{- else }}
         - --issuer.dns-namespace={{ .Release.Namespace }}
+        {{- end }}
         - --server-port-http={{ .Values.configuration.serverPortHttp }}
         - --ingress-cert.targets.pool.size={{ .Values.configuration.ingressCertWorkers }}
         - --service-cert.targets.pool.size={{ .Values.configuration.certWorkers }}
