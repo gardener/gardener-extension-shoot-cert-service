@@ -42,6 +42,115 @@ spec:
   scope: Namespaced
   subresources:
     status: {}
+  validation:
+    openAPIV3Schema:
+      description: Certificate is the certificate CR.
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          description: CertificateSpec is the spec of the certificate to request.
+          properties:
+            commonName:
+              description: CommonName is the CN for the certificate (max. 64 chars).
+              type: string
+            csr:
+              description: CSR is the alternative way to provide CN,DNSNames and other
+                information.
+              format: byte
+              type: string
+            dnsNames:
+              description: DNSNames are the optional additional domain names of the
+                certificate.
+              items:
+                type: string
+              type: array
+            issuerRef:
+              description: IssuerRef is the reference of the issuer to use.
+              properties:
+                name:
+                  description: Name is the name of the issuer CR in the same namespace.
+                  type: string
+              required:
+                - name
+              type: object
+            secretName:
+              description: SecretName is the name of the secret object to use for
+                storing the certificate.
+              type: string
+            secretRef:
+              description: SecretRef is the reference of the secret object to use
+                for storing the certificate.
+              properties:
+                name:
+                  description: Name is unique within a namespace to reference a secret
+                    resource.
+                  type: string
+                namespace:
+                  description: Namespace defines the space within which the secret
+                    name must be unique.
+                  type: string
+              type: object
+          type: object
+        status:
+          description: CertificateStatus is the status of the certificate request.
+          properties:
+            commonName:
+              description: CommonName is the current CN.
+              type: string
+            dnsNames:
+              description: DNSNames are the current domain names.
+              items:
+                type: string
+              type: array
+            expirationDate:
+              description: ExpirationDate shows the notAfter validity date.
+              type: string
+            issuerRef:
+              description: IssuerRef is the used issuer.
+              properties:
+                name:
+                  description: Name is the name of the issuer CR.
+                  type: string
+                namespace:
+                  description: Namespace is the namespace of the issuer CR.
+                  type: string
+              required:
+                - name
+                - namespace
+              type: object
+            lastPendingTimestamp:
+              description: LastPendingTimestamp contains the start timestamp of the
+                last pending status.
+              format: date-time
+              type: string
+            message:
+              description: Message is the status or error message.
+              type: string
+            observedGeneration:
+              description: ObservedGeneration is the observed generation of the spec.
+              format: int64
+              type: integer
+            state:
+              description: State is the certificate state.
+              type: string
+          required:
+            - lastPendingTimestamp
+            - state
+          type: object
+      required:
+        - spec
+      type: object
   version: v1alpha1
   versions:
     - name: v1alpha1
