@@ -20,12 +20,13 @@ import (
 	extensionscontroller "github.com/gardener/gardener/extensions/pkg/controller"
 	extensionsevent "github.com/gardener/gardener/extensions/pkg/event"
 	extensionsinject "github.com/gardener/gardener/extensions/pkg/inject"
-
+	gardencore "github.com/gardener/gardener/pkg/api/core"
 	"github.com/gardener/gardener/pkg/api/extensions"
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
 	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
 	"github.com/gardener/gardener/pkg/utils/version"
+
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/event"
@@ -76,9 +77,11 @@ func (s *shootNotFailedMapper) Map(e event.GenericEvent) bool {
 	}
 
 	lastOperation := cluster.Shoot.Status.LastOperation
-	return lastOperation != nil &&
-		lastOperation.State != gardencorev1beta1.LastOperationStateFailed &&
-		cluster.Shoot.Generation == cluster.Shoot.Status.ObservedGeneration
+	if lastOperation != nil && lastOperation.State == gardencorev1beta1.LastOperationStateFailed {
+		return cluster.Shoot.Generation != cluster.Shoot.Status.ObservedGeneration
+	}
+
+	return true
 }
 
 // ShootNotFailed is a predicate for failed shoots.
@@ -174,7 +177,7 @@ func LastOperationNotSuccessful() predicate.Predicate {
 
 		lastOp := acc.GetExtensionStatus().GetLastOperation()
 		return lastOp == nil ||
-			lastOp.GetState() != gardencorev1beta1.LastOperationStateSucceeded
+			lastOp.State != gardencorev1beta1.LastOperationStateSucceeded
 	}
 
 	return predicate.Funcs{
@@ -259,6 +262,37 @@ func ClusterShootProviderType(decoder runtime.Decoder, providerType string) pred
 		}
 
 		return shoot.Spec.Provider.Type == providerType
+	}
+
+	return predicate.Funcs{
+		CreateFunc: func(event event.CreateEvent) bool {
+			return f(event.Object)
+		},
+		UpdateFunc: func(event event.UpdateEvent) bool {
+			return f(event.ObjectNew)
+		},
+		GenericFunc: func(event event.GenericEvent) bool {
+			return f(event.Object)
+		},
+		DeleteFunc: func(event event.DeleteEvent) bool {
+			return f(event.Object)
+		},
+	}
+}
+
+// GardenCoreProviderType is a predicate for the provider type of a `gardencore.Object` implementation.
+func GardenCoreProviderType(providerType string) predicate.Predicate {
+	f := func(obj runtime.Object) bool {
+		if obj == nil {
+			return false
+		}
+
+		accessor, err := gardencore.Accessor(obj)
+		if err != nil {
+			return false
+		}
+
+		return accessor.GetProviderType() == providerType
 	}
 
 	return predicate.Funcs{
