@@ -47,13 +47,13 @@ github.com/gardener/controller-manager-library/pkg/kutil
 github.com/gardener/controller-manager-library/pkg/logger
 github.com/gardener/controller-manager-library/pkg/resources
 github.com/gardener/controller-manager-library/pkg/utils
-# github.com/gardener/etcd-druid v0.1.12
+# github.com/gardener/etcd-druid v0.1.15
 github.com/gardener/etcd-druid/api/v1alpha1
 # github.com/gardener/external-dns-management v0.7.7
 github.com/gardener/external-dns-management/pkg/apis/dns
 github.com/gardener/external-dns-management/pkg/apis/dns/v1alpha1
 github.com/gardener/external-dns-management/pkg/client/dns/clientset/versioned/scheme
-# github.com/gardener/gardener v1.2.1-0.20200408030154-40b97d31d7f7
+# github.com/gardener/gardener v1.3.1-0.20200505064036-175b017d8c5b
 ## explicit
 github.com/gardener/gardener/extensions/hack
 github.com/gardener/gardener/extensions/pkg/controller
@@ -75,6 +75,7 @@ github.com/gardener/gardener/extensions/test/integration/operation
 github.com/gardener/gardener/hack
 github.com/gardener/gardener/hack/.ci
 github.com/gardener/gardener/hack/api-reference/template
+github.com/gardener/gardener/pkg/api/core
 github.com/gardener/gardener/pkg/api/extensions
 github.com/gardener/gardener/pkg/apis/core
 github.com/gardener/gardener/pkg/apis/core/install
@@ -89,41 +90,27 @@ github.com/gardener/gardener/pkg/client/core/clientset/versioned
 github.com/gardener/gardener/pkg/client/core/clientset/versioned/scheme
 github.com/gardener/gardener/pkg/client/core/clientset/versioned/typed/core/v1alpha1
 github.com/gardener/gardener/pkg/client/core/clientset/versioned/typed/core/v1beta1
-github.com/gardener/gardener/pkg/client/core/informers/externalversions
-github.com/gardener/gardener/pkg/client/core/informers/externalversions/core
-github.com/gardener/gardener/pkg/client/core/informers/externalversions/core/v1alpha1
-github.com/gardener/gardener/pkg/client/core/informers/externalversions/core/v1beta1
-github.com/gardener/gardener/pkg/client/core/informers/externalversions/internalinterfaces
-github.com/gardener/gardener/pkg/client/core/listers/core/v1alpha1
 github.com/gardener/gardener/pkg/client/core/listers/core/v1beta1
 github.com/gardener/gardener/pkg/client/extensions/clientset/versioned/scheme
 github.com/gardener/gardener/pkg/client/kubernetes
-github.com/gardener/gardener/pkg/controllerutils
-github.com/gardener/gardener/pkg/controllerutils/metrics
 github.com/gardener/gardener/pkg/logger
 github.com/gardener/gardener/pkg/mock/go/context
 github.com/gardener/gardener/pkg/operation/common
-github.com/gardener/gardener/pkg/scheduler
-github.com/gardener/gardener/pkg/scheduler/apis/config
-github.com/gardener/gardener/pkg/scheduler/apis/config/v1alpha1
-github.com/gardener/gardener/pkg/scheduler/controller/common
-github.com/gardener/gardener/pkg/scheduler/controller/shoot
 github.com/gardener/gardener/pkg/utils
 github.com/gardener/gardener/pkg/utils/chart
 github.com/gardener/gardener/pkg/utils/context
 github.com/gardener/gardener/pkg/utils/errors
+github.com/gardener/gardener/pkg/utils/flow
 github.com/gardener/gardener/pkg/utils/imagevector
 github.com/gardener/gardener/pkg/utils/kubernetes
 github.com/gardener/gardener/pkg/utils/kubernetes/health
 github.com/gardener/gardener/pkg/utils/retry
 github.com/gardener/gardener/pkg/utils/secrets
-github.com/gardener/gardener/pkg/utils/validation/cidr
 github.com/gardener/gardener/pkg/utils/version
 github.com/gardener/gardener/pkg/version
 github.com/gardener/gardener/test/framework
 github.com/gardener/gardener/test/framework/config
 github.com/gardener/gardener/test/framework/reporter
-github.com/gardener/gardener/test/integration/framework
 # github.com/gardener/gardener-resource-manager v0.10.0
 github.com/gardener/gardener-resource-manager/pkg/apis/resources
 github.com/gardener/gardener-resource-manager/pkg/apis/resources/v1alpha1
@@ -481,7 +468,7 @@ golang.org/x/text/unicode/norm
 golang.org/x/text/width
 # golang.org/x/time v0.0.0-20191024005414-555d28b269f0
 golang.org/x/time/rate
-# golang.org/x/tools v0.0.0-20200406213809-066fd1390ee0
+# golang.org/x/tools v0.0.0-20200422205258-72e4a01eba43
 golang.org/x/tools/go/analysis
 golang.org/x/tools/go/analysis/passes/inspect
 golang.org/x/tools/go/ast/astutil
@@ -500,6 +487,7 @@ golang.org/x/tools/internal/gocommand
 golang.org/x/tools/internal/gopathwalk
 golang.org/x/tools/internal/imports
 golang.org/x/tools/internal/packagesinternal
+golang.org/x/tools/internal/telemetry/event
 # golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543
 golang.org/x/xerrors
 golang.org/x/xerrors/internal
@@ -574,7 +562,7 @@ honnef.co/go/tools/staticcheck/vrp
 honnef.co/go/tools/stylecheck
 honnef.co/go/tools/unused
 honnef.co/go/tools/version
-# k8s.io/api v0.17.0 => k8s.io/api v0.16.8
+# k8s.io/api v0.16.8 => k8s.io/api v0.16.8
 ## explicit
 k8s.io/api/admission/v1beta1
 k8s.io/api/admissionregistration/v1
@@ -759,7 +747,7 @@ k8s.io/client-go/util/workqueue
 # k8s.io/cluster-bootstrap v0.16.8 => k8s.io/cluster-bootstrap v0.16.8
 k8s.io/cluster-bootstrap/token/api
 k8s.io/cluster-bootstrap/token/util
-# k8s.io/code-generator v0.17.0 => k8s.io/code-generator v0.16.8
+# k8s.io/code-generator v0.16.8 => k8s.io/code-generator v0.16.8
 ## explicit
 k8s.io/code-generator
 k8s.io/code-generator/cmd/client-gen
@@ -795,10 +783,9 @@ k8s.io/code-generator/cmd/set-gen
 k8s.io/code-generator/pkg/namer
 k8s.io/code-generator/pkg/util
 k8s.io/code-generator/third_party/forked/golang/reflect
-# k8s.io/component-base v0.17.0 => k8s.io/component-base v0.16.8
+# k8s.io/component-base v0.16.8 => k8s.io/component-base v0.16.8
 ## explicit
 k8s.io/component-base/config
-k8s.io/component-base/config/v1alpha1
 # k8s.io/gengo v0.0.0-20190826232639-a874a240740c
 k8s.io/gengo/args
 k8s.io/gengo/examples/deepcopy-gen/generators

@@ -96,7 +96,7 @@ type checkResultForConditionType struct {
 func (a *Actuator) ExecuteHealthCheckFunctions(ctx context.Context, request types.NamespacedName) (*[]Result, error) {
 	_, shootClient, err := util.NewClientForShoot(ctx, a.seedClient, request.Namespace, client.Options{})
 	if err != nil {
-		msg := fmt.Errorf("failed to create shoot client in namespace '%s'", request.Namespace)
+		msg := fmt.Errorf("failed to create shoot client in namespace '%s': %v", request.Namespace, err)
 		a.logger.Error(err, msg.Error())
 		return nil, msg
 	}
@@ -147,7 +147,7 @@ func (a *Actuator) ExecuteHealthCheckFunctions(ctx context.Context, request type
 				}
 
 				if !preCheckFunc(obj, cluster) {
-					a.logger.Info("Skipping health check as pre check function returned false", "conditionType", healthConditionType)
+					a.logger.V(6).Info("Skipping health check as pre check function returned false", "condition type", healthConditionType)
 					channel <- channelResult{
 						healthCheckResult: &SingleCheckResult{
 							IsHealthy: true,
