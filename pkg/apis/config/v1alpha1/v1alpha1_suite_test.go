@@ -12,20 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package v1alpha1
+package v1alpha1_test
 
 import (
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/utils/pointer"
+	"testing"
+
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 )
 
-func addDefaultingFuncs(scheme *runtime.Scheme) error {
-	return RegisterDefaults(scheme)
-}
-
-// SetDefaults_Configuration sets default values for Configuration objects.
-func SetDefaults_Configuration(obj *Configuration) {
-	if obj.RestrictIssuer == nil {
-		obj.RestrictIssuer = pointer.BoolPtr(true)
-	}
+func TestV1alpha1(t *testing.T) {
+	RegisterFailHandler(Fail)
+	RunSpecs(t, "API Config V1alpha1 Suite")
 }

@@ -17,6 +17,7 @@ controllers:
 
 certificateConfig:
   defaultIssuer:
+    restricted: true # restrict default issuer to any sub-domain of shoot.spec.dns.domain
     name: gardener
     acme:
       email: john.doe@example.com

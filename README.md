@@ -15,6 +15,7 @@ Example configuration for this extension controller:
 apiVersion: shoot-cert-service.extensions.config.gardener.cloud/v1alpha1
 kind: Configuration
 issuerName: gardener
+restrictIssuer: true # restrict issuer to any sub-domain of shoot.spec.dns.domain (default)
 acme:
   email: john.doe@example.com
   server: https://acme-v02.api.letsencrypt.org/directory

@@ -26,8 +26,9 @@ import (
 type Configuration struct {
 	metav1.TypeMeta
 
-	IssuerName string
-	ACME       ACME
+	IssuerName     string
+	RestrictIssuer *bool
+	ACME           ACME
 	// HealthCheckConfig is the config for the health check controller
 	HealthCheckConfig *healthcheckconfig.HealthCheckConfig
 }

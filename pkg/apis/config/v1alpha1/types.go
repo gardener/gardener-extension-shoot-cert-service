@@ -27,8 +27,9 @@ import (
 type Configuration struct {
 	metav1.TypeMeta `json:",inline"`
 
-	IssuerName string `json:"issuerName"`
-	ACME       ACME   `json:"acme"`
+	IssuerName     string `json:"issuerName"`
+	RestrictIssuer *bool  `json:"restrictIssuer,omitempty"`
+	ACME           ACME   `json:"acme"`
 	// HealthCheckConfig is the config for the health check controller
 	// +optional
 	HealthCheckConfig *healthcheckconfigv1alpha1.HealthCheckConfig `json:"healthCheckConfig,omitempty"`

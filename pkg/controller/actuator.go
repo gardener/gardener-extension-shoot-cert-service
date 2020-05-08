@@ -205,9 +205,10 @@ func (a *actuator) createSeedResources(ctx context.Context, certConfig *service.
 
 	certManagementConfig := map[string]interface{}{
 		"replicaCount": controller.GetReplicas(cluster, 1),
-		"defaultProvider": map[string]interface{}{
-			"name":    a.serviceConfig.IssuerName,
-			"domains": cluster.Shoot.Spec.DNS.Domain,
+		"defaultIssuer": map[string]interface{}{
+			"name":       a.serviceConfig.IssuerName,
+			"restricted": *a.serviceConfig.RestrictIssuer,
+			"domains":    cluster.Shoot.Spec.DNS.Domain,
 		},
 		"issuers":             issuers,
 		"dnsChallengeOnShoot": dnsChallengeOnShoot,

@@ -43,8 +43,10 @@ spec:
         - --name={{ include "cert-management.fullname" . }}
         - --source=/etc/shoot-cluster/kubeconfig
         - --issuer.issuer-namespace={{ .Release.Namespace }}
-        - --issuer.default-issuer={{ .Values.defaultProvider.name }}
-        - --issuer.default-issuer-domain-ranges={{ .Values.defaultProvider.domains }}
+        - --issuer.default-issuer={{ .Values.defaultIssuer.name }}
+        {{- if .Values.defaultIssuer.restricted }}
+        - --issuer.default-issuer-domain-ranges={{ .Values.defaultIssuer.domains }}
+        {{- end }}
         {{- if .Values.dnsChallengeOnShoot.enabled }}
         - --dns=/etc/shoot-cluster/kubeconfig
         - --issuer.dns-namespace={{ .Values.dnsChallengeOnShoot.namespace }}
