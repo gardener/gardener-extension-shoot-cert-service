@@ -86,6 +86,7 @@ func Convert_config_ACME_To_v1alpha1_ACME(in *config.ACME, out *ACME, s conversi
 
 func autoConvert_v1alpha1_Configuration_To_config_Configuration(in *Configuration, out *config.Configuration, s conversion.Scope) error {
 	out.IssuerName = in.IssuerName
+	out.RestrictIssuer = (*bool)(unsafe.Pointer(in.RestrictIssuer))
 	if err := Convert_v1alpha1_ACME_To_config_ACME(&in.ACME, &out.ACME, s); err != nil {
 		return err
 	}
@@ -100,6 +101,7 @@ func Convert_v1alpha1_Configuration_To_config_Configuration(in *Configuration, o
 
 func autoConvert_config_Configuration_To_v1alpha1_Configuration(in *config.Configuration, out *Configuration, s conversion.Scope) error {
 	out.IssuerName = in.IssuerName
+	out.RestrictIssuer = (*bool)(unsafe.Pointer(in.RestrictIssuer))
 	if err := Convert_config_ACME_To_v1alpha1_ACME(&in.ACME, &out.ACME, s); err != nil {
 		return err
 	}

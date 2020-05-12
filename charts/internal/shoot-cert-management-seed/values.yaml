@@ -25,7 +25,8 @@ affinity: {}
 
 podAnnotations:
 
-defaultProvider:
+defaultIssuer:
+  retricted: true
   name: garden
   domains: shoot.project.gardener.cloud
 

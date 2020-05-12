@@ -50,6 +50,11 @@ func (in *ACME) DeepCopy() *ACME {
 func (in *Configuration) DeepCopyInto(out *Configuration) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
+	if in.RestrictIssuer != nil {
+		in, out := &in.RestrictIssuer, &out.RestrictIssuer
+		*out = new(bool)
+		**out = **in
+	}
 	in.ACME.DeepCopyInto(&out.ACME)
 	if in.HealthCheckConfig != nil {
 		in, out := &in.HealthCheckConfig, &out.HealthCheckConfig

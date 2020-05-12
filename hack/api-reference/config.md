@@ -54,6 +54,16 @@ string
 </tr>
 <tr>
 <td>
+<code>restrictIssuer</code></br>
+<em>
+bool
+</em>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td>
 <code>acme</code></br>
 <em>
 <a href="#shoot-cert-service.extensions.config.gardener.cloud/v1alpha1.ACME">
