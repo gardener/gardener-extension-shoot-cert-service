@@ -145,7 +145,6 @@ spec:
               description: State is the certificate state.
               type: string
           required:
-            - lastPendingTimestamp
             - state
           type: object
       required:
