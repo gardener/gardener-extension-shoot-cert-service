@@ -17,6 +17,7 @@ package v1alpha1
 import (
 	"time"
 
+	autoscalingv1 "k8s.io/api/autoscaling/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -92,6 +93,12 @@ type ShootSpec struct {
 	// SeedName is the name of the seed cluster that runs the control plane of the Shoot.
 	// +optional
 	SeedName *string `json:"seedName,omitempty" protobuf:"bytes,14,opt,name=seedName"`
+	// SeedSelector is an optional selector which must match a seed's labels for the shoot to be scheduled on that seed.
+	// +optional
+	SeedSelector *metav1.LabelSelector `json:"seedSelector,omitempty" protobuf:"bytes,15,opt,name=seedSelector"`
+	// Resources holds a list of named resource references that can be referred to in extension configs by their names.
+	// +optional
+	Resources []NamedResourceReference `json:"resources,omitempty" protobuf:"bytes,16,rep,name=resources"`
 }
 
 // ShootStatus holds the most recently observed status of the Shoot cluster.
@@ -253,6 +260,21 @@ type Extension struct {
 	// ProviderConfig is the configuration passed to extension resource.
 	// +optional
 	ProviderConfig *ProviderConfig `json:"providerConfig,omitempty" protobuf:"bytes,2,opt,name=providerConfig"`
+	// Disabled allows to disable extensions that were marked as 'globally enabled' by Gardener administrators.
+	// +optional
+	Disabled *bool `json:"disabled,omitempty" protobuf:"varint,3,opt,name=disabled"`
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+// NamedResourceReference relevant types                                                        //
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+// NamedResourceReference is a named reference to a resource.
+type NamedResourceReference struct {
+	// Name of the resource reference.
+	Name string `json:"name" protobuf:"bytes,1,opt,name=name"`
+	// ResourceRef is a reference to a resource.
+	ResourceRef autoscalingv1.CrossVersionObjectReference `json:"resourceRef" protobuf:"bytes,2,opt,name=resourceRef"`
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////

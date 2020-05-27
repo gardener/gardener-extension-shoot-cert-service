@@ -22,10 +22,12 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
+	autoscalingv1 "k8s.io/api/autoscaling/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
@@ -38,6 +40,7 @@ import (
 	"github.com/gardener/gardener/extensions/pkg/controller"
 	"github.com/gardener/gardener/extensions/pkg/controller/extension"
 	"github.com/gardener/gardener/extensions/pkg/util"
+	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
 	"github.com/gardener/gardener/pkg/chartrenderer"
 	"github.com/gardener/gardener/pkg/utils/chart"
@@ -91,7 +94,11 @@ func (a *actuator) Reconcile(ctx context.Context, ex *extensionsv1alpha1.Extensi
 		}
 	}
 
-	return a.createSeedResources(ctx, certConfig, cluster, namespace)
+	if err := a.createSeedResources(ctx, certConfig, cluster, namespace); err != nil {
+		return err
+	}
+
+	return a.updateStatus(ctx, ex, certConfig)
 }
 
 // Delete the Extension resource.
@@ -103,6 +110,16 @@ func (a *actuator) Delete(ctx context.Context, ex *extensionsv1alpha1.Extension)
 	}
 
 	return a.deleteSeedResources(ctx, namespace)
+}
+
+// Restore the Extension resource.
+func (a *actuator) Restore(ctx context.Context, ex *extensionsv1alpha1.Extension) error {
+	return a.Reconcile(ctx, ex)
+}
+
+// Migrate the Extension resource.
+func (a *actuator) Migrate(ctx context.Context, ex *extensionsv1alpha1.Extension) error {
+	return a.Delete(ctx, ex)
 }
 
 // InjectConfig injects the rest config to this actuator.
@@ -301,4 +318,23 @@ func (a *actuator) createManagedResource(ctx context.Context, namespace, name, c
 		renderer, filepath.Join(v1alpha1.ChartsPath, chartName), chartName,
 		chartValues, injectedLabels,
 	)
+}
+
+func (a *actuator) updateStatus(ctx context.Context, ex *extensionsv1alpha1.Extension, certConfig *service.CertConfig) error {
+	var resources []gardencorev1beta1.NamedResourceReference
+	for _, issuerConfig := range certConfig.Issuers {
+		name := "extension-shoot-cert-service-issuer-" + issuerConfig.Name
+		resources = append(resources, gardencorev1beta1.NamedResourceReference{
+			Name: name,
+			ResourceRef: autoscalingv1.CrossVersionObjectReference{
+				Kind:       "Secret",
+				Name:       name,
+				APIVersion: "v1",
+			},
+		})
+	}
+	return controller.TryUpdateStatus(ctx, retry.DefaultBackoff, a.client, ex, func() error {
+		ex.Status.Resources = resources
+		return nil
+	})
 }
