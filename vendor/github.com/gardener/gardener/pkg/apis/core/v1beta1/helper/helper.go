@@ -172,7 +172,17 @@ func IsControllerInstallationSuccessful(controllerInstallation gardencorev1beta1
 	return installed && healthy
 }
 
-// ComputeOperationType checksthe <lastOperation> and determines whether is it is Create operation or reconcile operation
+// IsControllerInstallationRequired returns true if a ControllerInstallation has been marked as "required".
+func IsControllerInstallationRequired(controllerInstallation gardencorev1beta1.ControllerInstallation) bool {
+	for _, condition := range controllerInstallation.Status.Conditions {
+		if condition.Type == gardencorev1beta1.ControllerInstallationRequired && condition.Status == gardencorev1beta1.ConditionTrue {
+			return true
+		}
+	}
+	return false
+}
+
+// ComputeOperationType checks the <lastOperation> and determines whether it is Create, Delete, Reconcile, Migrate or Restore operation
 func ComputeOperationType(meta metav1.ObjectMeta, lastOperation *gardencorev1beta1.LastOperation) gardencorev1beta1.LastOperationType {
 	switch {
 	case meta.Annotations[v1beta1constants.GardenerOperation] == v1beta1constants.GardenerOperationMigrate:
@@ -181,10 +191,12 @@ func ComputeOperationType(meta metav1.ObjectMeta, lastOperation *gardencorev1bet
 		return gardencorev1beta1.LastOperationTypeDelete
 	case lastOperation == nil:
 		return gardencorev1beta1.LastOperationTypeCreate
-	case (lastOperation.Type == gardencorev1beta1.LastOperationTypeCreate && lastOperation.State != gardencorev1beta1.LastOperationStateSucceeded):
+	case lastOperation.Type == gardencorev1beta1.LastOperationTypeCreate && lastOperation.State != gardencorev1beta1.LastOperationStateSucceeded:
 		return gardencorev1beta1.LastOperationTypeCreate
-	case (lastOperation.Type == gardencorev1beta1.LastOperationTypeMigrate && lastOperation.State != gardencorev1beta1.LastOperationStateSucceeded):
+	case lastOperation.Type == gardencorev1beta1.LastOperationTypeMigrate && lastOperation.State != gardencorev1beta1.LastOperationStateSucceeded:
 		return gardencorev1beta1.LastOperationTypeMigrate
+	case (lastOperation.Type == gardencorev1beta1.LastOperationTypeRestore && lastOperation.State != gardencorev1beta1.LastOperationStateSucceeded):
+		return gardencorev1beta1.LastOperationTypeRestore
 	}
 	return gardencorev1beta1.LastOperationTypeReconcile
 }
@@ -855,4 +867,14 @@ func FilterExpiredVersion() func(expirableVersion gardencorev1beta1.ExpirableVer
 	return func(expirableVersion gardencorev1beta1.ExpirableVersion, _ *semver.Version) (bool, error) {
 		return expirableVersion.ExpirationDate != nil && (time.Now().UTC().After(expirableVersion.ExpirationDate.UTC()) || time.Now().UTC().Equal(expirableVersion.ExpirationDate.UTC())), nil
 	}
+}
+
+// GetResourceByName returns the first NamedResourceReference with the given name in the given slice, or nil if not found.
+func GetResourceByName(resources []gardencorev1beta1.NamedResourceReference, name string) *gardencorev1beta1.NamedResourceReference {
+	for _, resource := range resources {
+		if resource.Name == name {
+			return &resource
+		}
+	}
+	return nil
 }

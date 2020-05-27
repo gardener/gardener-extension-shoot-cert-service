@@ -36,6 +36,8 @@ github.com/emicklei/go-restful
 github.com/emicklei/go-restful/log
 # github.com/evanphx/json-patch v4.5.0+incompatible
 github.com/evanphx/json-patch
+# github.com/frankban/quicktest v1.10.0
+## explicit
 # github.com/fsnotify/fsnotify v1.4.7
 github.com/fsnotify/fsnotify
 # github.com/gardener/controller-manager-library v0.1.1-0.20200204110458-c263b9bb97ad
@@ -47,13 +49,13 @@ github.com/gardener/controller-manager-library/pkg/kutil
 github.com/gardener/controller-manager-library/pkg/logger
 github.com/gardener/controller-manager-library/pkg/resources
 github.com/gardener/controller-manager-library/pkg/utils
-# github.com/gardener/etcd-druid v0.1.15
+# github.com/gardener/etcd-druid v0.3.0
 github.com/gardener/etcd-druid/api/v1alpha1
 # github.com/gardener/external-dns-management v0.7.7
 github.com/gardener/external-dns-management/pkg/apis/dns
 github.com/gardener/external-dns-management/pkg/apis/dns/v1alpha1
 github.com/gardener/external-dns-management/pkg/client/dns/clientset/versioned/scheme
-# github.com/gardener/gardener v1.4.1
+# github.com/gardener/gardener v1.5.0
 ## explicit
 github.com/gardener/gardener/extensions/hack
 github.com/gardener/gardener/extensions/pkg/controller
@@ -90,12 +92,25 @@ github.com/gardener/gardener/pkg/client/core/clientset/versioned
 github.com/gardener/gardener/pkg/client/core/clientset/versioned/scheme
 github.com/gardener/gardener/pkg/client/core/clientset/versioned/typed/core/v1alpha1
 github.com/gardener/gardener/pkg/client/core/clientset/versioned/typed/core/v1beta1
+github.com/gardener/gardener/pkg/client/core/informers/externalversions
+github.com/gardener/gardener/pkg/client/core/informers/externalversions/core
+github.com/gardener/gardener/pkg/client/core/informers/externalversions/core/v1alpha1
+github.com/gardener/gardener/pkg/client/core/informers/externalversions/core/v1beta1
+github.com/gardener/gardener/pkg/client/core/informers/externalversions/internalinterfaces
+github.com/gardener/gardener/pkg/client/core/listers/core/v1alpha1
 github.com/gardener/gardener/pkg/client/core/listers/core/v1beta1
 github.com/gardener/gardener/pkg/client/extensions/clientset/versioned/scheme
 github.com/gardener/gardener/pkg/client/kubernetes
+github.com/gardener/gardener/pkg/controllerutils
+github.com/gardener/gardener/pkg/controllerutils/metrics
 github.com/gardener/gardener/pkg/logger
 github.com/gardener/gardener/pkg/mock/go/context
 github.com/gardener/gardener/pkg/operation/common
+github.com/gardener/gardener/pkg/scheduler
+github.com/gardener/gardener/pkg/scheduler/apis/config
+github.com/gardener/gardener/pkg/scheduler/apis/config/v1alpha1
+github.com/gardener/gardener/pkg/scheduler/controller/common
+github.com/gardener/gardener/pkg/scheduler/controller/shoot
 github.com/gardener/gardener/pkg/utils
 github.com/gardener/gardener/pkg/utils/chart
 github.com/gardener/gardener/pkg/utils/context
@@ -106,6 +121,7 @@ github.com/gardener/gardener/pkg/utils/kubernetes
 github.com/gardener/gardener/pkg/utils/kubernetes/health
 github.com/gardener/gardener/pkg/utils/retry
 github.com/gardener/gardener/pkg/utils/secrets
+github.com/gardener/gardener/pkg/utils/validation/cidr
 github.com/gardener/gardener/pkg/utils/version
 github.com/gardener/gardener/pkg/version
 github.com/gardener/gardener/test/framework
@@ -206,7 +222,7 @@ github.com/golang/protobuf/ptypes/duration
 github.com/golang/protobuf/ptypes/timestamp
 # github.com/golang/snappy v0.0.1
 github.com/golang/snappy
-# github.com/google/go-cmp v0.3.1
+# github.com/google/go-cmp v0.4.0
 github.com/google/go-cmp/cmp
 github.com/google/go-cmp/cmp/internal/diff
 github.com/google/go-cmp/cmp/internal/flags
@@ -244,7 +260,7 @@ github.com/hpcloud/tail/ratelimiter
 github.com/hpcloud/tail/util
 github.com/hpcloud/tail/watch
 github.com/hpcloud/tail/winfile
-# github.com/huandu/xstrings v1.3.0
+# github.com/huandu/xstrings v1.3.1
 github.com/huandu/xstrings
 # github.com/imdario/mergo v0.3.8
 github.com/imdario/mergo
@@ -282,7 +298,8 @@ github.com/mitchellh/reflectwalk
 github.com/modern-go/concurrent
 # github.com/modern-go/reflect2 v1.0.1
 github.com/modern-go/reflect2
-# github.com/nwaples/rardecode v1.0.0
+# github.com/nwaples/rardecode v1.1.0
+## explicit
 github.com/nwaples/rardecode
 # github.com/onsi/ginkgo v1.10.1
 ## explicit
@@ -330,7 +347,8 @@ github.com/onsi/gomega/matchers/support/goraph/util
 github.com/onsi/gomega/types
 # github.com/pelletier/go-toml v1.6.0
 github.com/pelletier/go-toml
-# github.com/pierrec/lz4 v2.3.0+incompatible
+# github.com/pierrec/lz4 v2.5.2+incompatible
+## explicit
 github.com/pierrec/lz4
 github.com/pierrec/lz4/internal/xxh32
 # github.com/pkg/errors v0.9.1
@@ -377,7 +395,8 @@ github.com/spf13/pflag
 github.com/spf13/viper
 # github.com/subosito/gotenv v1.2.0
 github.com/subosito/gotenv
-# github.com/ulikunitz/xz v0.5.6
+# github.com/ulikunitz/xz v0.5.7
+## explicit
 github.com/ulikunitz/xz
 github.com/ulikunitz/xz/internal/hash
 github.com/ulikunitz/xz/internal/xlog
@@ -562,7 +581,7 @@ honnef.co/go/tools/staticcheck/vrp
 honnef.co/go/tools/stylecheck
 honnef.co/go/tools/unused
 honnef.co/go/tools/version
-# k8s.io/api v0.16.8 => k8s.io/api v0.16.8
+# k8s.io/api v0.17.0 => k8s.io/api v0.16.8
 ## explicit
 k8s.io/api/admission/v1beta1
 k8s.io/api/admissionregistration/v1
@@ -786,6 +805,7 @@ k8s.io/code-generator/third_party/forked/golang/reflect
 # k8s.io/component-base v0.16.8 => k8s.io/component-base v0.16.8
 ## explicit
 k8s.io/component-base/config
+k8s.io/component-base/config/v1alpha1
 # k8s.io/gengo v0.0.0-20190826232639-a874a240740c
 k8s.io/gengo/args
 k8s.io/gengo/examples/deepcopy-gen/generators

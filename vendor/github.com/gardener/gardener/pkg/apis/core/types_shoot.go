@@ -17,6 +17,7 @@ package core
 import (
 	"time"
 
+	autoscalingv1 "k8s.io/api/autoscaling/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -80,6 +81,10 @@ type ShootSpec struct {
 	SecretBindingName string
 	// SeedName is the name of the seed cluster that runs the control plane of the Shoot.
 	SeedName *string
+	// SeedSelector is an optional selector which must match a seed's labels for the shoot to be scheduled on that seed.
+	SeedSelector *metav1.LabelSelector
+	// Resources holds a list of named resource references that can be referred to in extension configs by their names.
+	Resources []NamedResourceReference
 }
 
 func (s *Shoot) GetProviderType() string {
@@ -214,6 +219,20 @@ type Extension struct {
 	Type string
 	// ProviderConfig is the configuration passed to extension resource.
 	ProviderConfig *ProviderConfig
+	// Disabled allows to disable extensions that were marked as 'globally enabled' by Gardener administrators.
+	Disabled *bool
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+// NamedResourceReference relevant types                                                        //
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+// NamedResourceReference is a named reference to a resource.
+type NamedResourceReference struct {
+	// Name of the resource reference.
+	Name string
+	// ResourceRef is a reference to a resource.
+	ResourceRef autoscalingv1.CrossVersionObjectReference
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
