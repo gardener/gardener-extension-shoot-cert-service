@@ -129,11 +129,6 @@ spec:
                 - name
                 - namespace
               type: object
-            lastPendingTimestamp:
-              description: LastPendingTimestamp contains the start timestamp of the
-                last pending status.
-              format: date-time
-              type: string
             message:
               description: Message is the status or error message.
               type: string
