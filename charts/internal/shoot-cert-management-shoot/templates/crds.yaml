@@ -106,6 +106,27 @@ spec:
         status:
           description: CertificateStatus is the status of the certificate request.
           properties:
+            backoff:
+              description: BackOff contains the state to back off failed certificate
+                requests
+              properties:
+                observedGeneration:
+                  description: ObservedGeneration is the observed generation the BackOffState
+                    is assigned to
+                  format: int64
+                  type: integer
+                recheckAfter:
+                  description: RetryAfter is the timestamp this cert request is not
+                    retried before.
+                  format: date-time
+                  type: string
+                recheckInterval:
+                  description: RetryInterval is interval to wait for retrying.
+                  type: string
+              required:
+                - recheckAfter
+                - recheckInterval
+              type: object
             commonName:
               description: CommonName is the current CN.
               type: string
@@ -130,6 +151,11 @@ spec:
                 - name
                 - namespace
               type: object
+            lastPendingTimestamp:
+              description: LastPendingTimestamp contains the start timestamp of the
+                last pending status.
+              format: date-time
+              type: string
             message:
               description: Message is the status or error message.
               type: string
