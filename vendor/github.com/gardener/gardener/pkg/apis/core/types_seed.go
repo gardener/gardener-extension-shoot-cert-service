@@ -18,6 +18,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 // +genclient
@@ -92,7 +93,7 @@ type SeedBackup struct {
 	// Provider is a provider name.
 	Provider string
 	// ProviderConfig is the configuration passed to BackupBucket resource.
-	ProviderConfig *ProviderConfig
+	ProviderConfig *runtime.RawExtension
 	// Region is a region name.
 	Region *string
 	// SecretRef is a reference to a Secret object containing the cloud provider credentials for
@@ -136,7 +137,7 @@ type SeedProvider struct {
 	// Type is the name of the provider.
 	Type string
 	// ProviderConfig is the configuration passed to Seed resource.
-	ProviderConfig *ProviderConfig
+	ProviderConfig *runtime.RawExtension
 	// Region is a name of a region.
 	Region string
 }
@@ -149,6 +150,11 @@ type SeedSettings struct {
 	Scheduling *SeedSettingScheduling
 	// ShootDNS controls the shoot DNS settings for the seed.
 	ShootDNS *SeedSettingShootDNS
+	// LoadBalancerServices controls certain settings for services of type load balancer that are created in the
+	// seed.
+	LoadBalancerServices *SeedSettingLoadBalancerServices
+	// VerticalPodAutoscaler controls certain settings for the vertical pod autoscaler components deployed in the seed.
+	VerticalPodAutoscaler *SeedSettingVerticalPodAutoscaler
 }
 
 // SeedSettingExcessCapacityReservation controls the excess capacity reservation for shoot control planes in the
@@ -172,6 +178,22 @@ type SeedSettingScheduling struct {
 	// Visible controls whether the gardener-scheduler shall consider this seed when scheduling shoots. Invisible seeds
 	// are not considered by the scheduler.
 	Visible bool
+}
+
+// SeedSettingLoadBalancerServices controls certain settings for services of type load balancer that are created in the
+// seed.
+type SeedSettingLoadBalancerServices struct {
+	// Annotations is a map of annotations that will be injected/merged into every load balancer service object.
+	Annotations map[string]string
+}
+
+// SeedSettingVerticalPodAutoscaler controls certain settings for the vertical pod autoscaler components deployed in the
+// seed.
+type SeedSettingVerticalPodAutoscaler struct {
+	// Enabled controls whether the VPA components shall be deployed into the garden namespace in the seed cluster. It
+	// is enabled by default because Gardener heavily relies on a VPA being deployed. You should only disable this if
+	// your seed cluster already has another, manually/custom managed VPA deployment.
+	Enabled bool
 }
 
 // SeedTaint describes a taint on a seed.

@@ -211,6 +211,46 @@ func TaintsHave(taints []gardencorev1beta1.SeedTaint, key string) bool {
 	return false
 }
 
+// TaintsAreTolerated returns true when all the given taints are tolerated by the given tolerations. It ignores the
+// deprecated taints that were migrated into the new `settings` field in the Seed specification.
+func TaintsAreTolerated(taints []gardencorev1beta1.SeedTaint, tolerations []gardencorev1beta1.Toleration) bool {
+	var relevantTaints []gardencorev1beta1.SeedTaint
+	for _, taint := range taints {
+		if taint.Key == gardencorev1beta1.DeprecatedSeedTaintDisableDNS || taint.Key == gardencorev1beta1.DeprecatedSeedTaintInvisible || taint.Key == gardencorev1beta1.DeprecatedSeedTaintDisableCapacityReservation {
+			continue
+		}
+		relevantTaints = append(relevantTaints, taint)
+	}
+
+	if len(relevantTaints) == 0 {
+		return true
+	}
+	if len(relevantTaints) > len(tolerations) {
+		return false
+	}
+
+	tolerationKeyValues := make(map[string]string, len(tolerations))
+	for _, toleration := range tolerations {
+		v := ""
+		if toleration.Value != nil {
+			v = *toleration.Value
+		}
+		tolerationKeyValues[toleration.Key] = v
+	}
+
+	for _, taint := range relevantTaints {
+		tolerationValue, ok := tolerationKeyValues[taint.Key]
+		if !ok {
+			return false
+		}
+		if taint.Value != nil && *taint.Value != tolerationValue {
+			return false
+		}
+	}
+
+	return true
+}
+
 type ShootedSeed struct {
 	DisableDNS                     *bool
 	DisableCapacityReservation     *bool
@@ -566,6 +606,11 @@ func ShootWantsClusterAutoscaler(shoot *gardencorev1beta1.Shoot) (bool, error) {
 	return false, nil
 }
 
+// ShootWantsVerticalPodAutoscaler checks if the given Shoot needs a VPA.
+func ShootWantsVerticalPodAutoscaler(shoot *gardencorev1beta1.Shoot) bool {
+	return shoot.Spec.Kubernetes.VerticalPodAutoscaler != nil && shoot.Spec.Kubernetes.VerticalPodAutoscaler.Enabled
+}
+
 // ShootIgnoresAlerts checks if the alerts for the annotated shoot cluster should be ignored.
 func ShootIgnoresAlerts(shoot *gardencorev1beta1.Shoot) bool {
 	ignore := false
@@ -632,6 +677,11 @@ func GetLatestQualifyingShootMachineImage(image gardencorev1beta1.MachineImage, 
 		return false, nil, nil
 	}
 	return true, &gardencorev1beta1.ShootMachineImage{Name: image.Name, Version: &latestImageVersion.Version}, nil
+}
+
+// SystemComponentsAllowed checks if the given worker allows system components to be scheduled onto it
+func SystemComponentsAllowed(worker *gardencorev1beta1.Worker) bool {
+	return worker.SystemComponents == nil || worker.SystemComponents.Allow
 }
 
 // UpdateMachineImages updates the machine images in place.
@@ -877,4 +927,65 @@ func GetResourceByName(resources []gardencorev1beta1.NamedResourceReference, nam
 		}
 	}
 	return nil
+}
+
+// UpsertLastError adds a 'last error' to the given list of existing 'last errors' if it does not exist yet. Otherwise,
+// it updates it.
+func UpsertLastError(lastErrors []gardencorev1beta1.LastError, lastError gardencorev1beta1.LastError) []gardencorev1beta1.LastError {
+	var (
+		out   []gardencorev1beta1.LastError
+		found bool
+	)
+
+	for _, lastErr := range lastErrors {
+		if lastErr.TaskID != nil && lastError.TaskID != nil && *lastErr.TaskID == *lastError.TaskID {
+			out = append(out, lastError)
+			found = true
+		} else {
+			out = append(out, lastErr)
+		}
+	}
+
+	if !found {
+		out = append(out, lastError)
+	}
+
+	return out
+}
+
+// DeleteLastErrorByTaskID removes the 'last error' with the given task ID from the given 'last error' list.
+func DeleteLastErrorByTaskID(lastErrors []gardencorev1beta1.LastError, taskID string) []gardencorev1beta1.LastError {
+	var out []gardencorev1beta1.LastError
+	for _, lastErr := range lastErrors {
+		if lastErr.TaskID == nil || taskID != *lastErr.TaskID {
+			out = append(out, lastErr)
+		}
+	}
+	return out
+}
+
+// ShootItems provides helper functions with ShootLists
+type ShootItems gardencorev1beta1.ShootList
+
+// Union returns a set of Shoots that presents either in s or shootList
+func (s *ShootItems) Union(shootItems *ShootItems) []gardencorev1beta1.Shoot {
+	unionedShoots := make(map[string]gardencorev1beta1.Shoot)
+	for _, s := range s.Items {
+		unionedShoots[objectKey(s.Namespace, s.Name)] = s
+	}
+
+	for _, s := range shootItems.Items {
+		unionedShoots[objectKey(s.Namespace, s.Name)] = s
+	}
+
+	shoots := make([]gardencorev1beta1.Shoot, 0, len(unionedShoots))
+	for _, v := range unionedShoots {
+		shoots = append(shoots, v)
+	}
+
+	return shoots
+}
+
+func objectKey(namesapce, name string) string {
+	return fmt.Sprintf("%s/%s", namesapce, name)
 }
