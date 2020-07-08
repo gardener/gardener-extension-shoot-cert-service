@@ -44,6 +44,7 @@ import (
 	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
 	"github.com/gardener/gardener/pkg/chartrenderer"
 	"github.com/gardener/gardener/pkg/utils/chart"
+	managedresources "github.com/gardener/gardener/pkg/utils/managedresources"
 	"github.com/gardener/gardener/pkg/utils/secrets"
 )
 
@@ -283,24 +284,24 @@ func (a *actuator) deleteSeedResources(ctx context.Context, namespace string) er
 	if err := a.client.Delete(ctx, secret); client.IgnoreNotFound(err) != nil {
 		return err
 	}
-	if err := controller.DeleteManagedResource(ctx, a.client, namespace, v1alpha1.CertManagementResourceNameSeed); err != nil {
+	if err := managedresources.DeleteManagedResource(ctx, a.client, namespace, v1alpha1.CertManagementResourceNameSeed); err != nil {
 		return err
 	}
 
 	timeoutCtx, cancel := context.WithTimeout(ctx, 2*time.Minute)
 	defer cancel()
-	return controller.WaitUntilManagedResourceDeleted(timeoutCtx, a.client, namespace, v1alpha1.CertManagementResourceNameSeed)
+	return managedresources.WaitUntilManagedResourceDeleted(timeoutCtx, a.client, namespace, v1alpha1.CertManagementResourceNameSeed)
 }
 
 func (a *actuator) deleteShootResources(ctx context.Context, namespace string) error {
 	a.logger.Info("Deleting managed resource for shoot", "namespace", namespace)
-	if err := controller.DeleteManagedResource(ctx, a.client, namespace, v1alpha1.CertManagementResourceNameShoot); err != nil {
+	if err := managedresources.DeleteManagedResource(ctx, a.client, namespace, v1alpha1.CertManagementResourceNameShoot); err != nil {
 		return err
 	}
 
 	timeoutCtx, cancel := context.WithTimeout(ctx, 2*time.Minute)
 	defer cancel()
-	return controller.WaitUntilManagedResourceDeleted(timeoutCtx, a.client, namespace, v1alpha1.CertManagementResourceNameShoot)
+	return managedresources.WaitUntilManagedResourceDeleted(timeoutCtx, a.client, namespace, v1alpha1.CertManagementResourceNameShoot)
 }
 
 func (a *actuator) createKubeconfigForCertManagement(ctx context.Context, namespace string) (*corev1.Secret, error) {
@@ -313,11 +314,13 @@ func (a *actuator) createKubeconfigForCertManagement(ctx context.Context, namesp
 }
 
 func (a *actuator) createManagedResource(ctx context.Context, namespace, name, class string, renderer chartrenderer.Interface, chartName string, chartValues map[string]interface{}, injectedLabels map[string]string) error {
-	return controller.CreateManagedResourceFromFileChart(
-		ctx, a.client, namespace, name, class,
-		renderer, filepath.Join(v1alpha1.ChartsPath, chartName), chartName,
-		chartValues, injectedLabels,
-	)
+	chartPath := filepath.Join(v1alpha1.ChartsPath, chartName)
+	chart, err := renderer.Render(chartPath, chartName, namespace, chartValues)
+	if err != nil {
+		return err
+	}
+
+	return managedresources.CreateManagedResource(ctx, a.client, namespace, name, class, chartName, chart.Manifest(), false, injectedLabels, false)
 }
 
 func (a *actuator) updateStatus(ctx context.Context, ex *extensionsv1alpha1.Extension, certConfig *service.CertConfig) error {

@@ -28,23 +28,24 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 )
 
-type errorWithCodes struct {
+// ErrorWithCodes contains error codes and an error message.
+type ErrorWithCodes struct {
 	message string
 	codes   []gardencorev1beta1.ErrorCode
 }
 
 // NewErrorWithCodes creates a new error that additionally exposes the given codes via the Coder interface.
 func NewErrorWithCodes(message string, codes ...gardencorev1beta1.ErrorCode) error {
-	return &errorWithCodes{message, codes}
+	return &ErrorWithCodes{message, codes}
 }
 
 // Codes returns all error codes.
-func (e *errorWithCodes) Codes() []gardencorev1beta1.ErrorCode {
+func (e *ErrorWithCodes) Codes() []gardencorev1beta1.ErrorCode {
 	return e.codes
 }
 
 // Error returns the error message.
-func (e *errorWithCodes) Error() string {
+func (e *ErrorWithCodes) Error() string {
 	return e.message
 }
 
@@ -52,9 +53,9 @@ var (
 	unauthorizedRegexp           = regexp.MustCompile(`(?i)(Unauthorized|InvalidClientTokenId|SignatureDoesNotMatch|Authentication failed|AuthFailure|AuthorizationFailed|invalid character|invalid_grant|invalid_client|Authorization Profile was not found|cannot fetch token|no active subscriptions|InvalidAccessKeyId|InvalidSecretAccessKey|query returned no results)`)
 	quotaExceededRegexp          = regexp.MustCompile(`(?i)(LimitExceeded|Quota)`)
 	insufficientPrivilegesRegexp = regexp.MustCompile(`(?i)(AccessDenied|Forbidden|deny|denied|OperationNotAllowed)`)
-	dependenciesRegexp           = regexp.MustCompile(`(?i)(PendingVerification|Access Not Configured|accessNotConfigured|DependencyViolation|OptInRequired|DeleteConflict|Conflict|inactive billing state|ReadOnlyDisabledSubscription|is already being used|InUseSubnetCannotBeDeleted|VnetInUse|timeout while waiting for state to become)`)
+	dependenciesRegexp           = regexp.MustCompile(`(?i)(PendingVerification|Access Not Configured|accessNotConfigured|DependencyViolation|OptInRequired|DeleteConflict|Conflict|inactive billing state|ReadOnlyDisabledSubscription|is already being used|InUseSubnetCannotBeDeleted|VnetInUse|timeout while waiting for state to become|InvalidCidrBlock)`)
 	resourcesDepletedRegexp      = regexp.MustCompile(`(?i)(not available in the current hardware cluster|InsufficientInstanceCapacity|SkuNotAvailable|ZonalAllocationFailed)`)
-	configurationProblemRegexp   = regexp.MustCompile(`(?i)(AzureBastionSubnet|not supported in your requested Availability Zone|InvalidParameterValue|notFound|NetcfgInvalidSubnet|InvalidSubnet|Invalid value|KubeletHasInsufficientMemory|KubeletHasDiskPressure|KubeletHasInsufficientPID|violates constraint|no attached internet gateway found|Your query returned no results)`)
+	configurationProblemRegexp   = regexp.MustCompile(`(?i)(AzureBastionSubnet|not supported in your requested Availability Zone|InvalidParameterValue|notFound|NetcfgInvalidSubnet|InvalidSubnet|Invalid value|KubeletHasInsufficientMemory|KubeletHasDiskPressure|KubeletHasInsufficientPID|violates constraint|no attached internet gateway found|Your query returned no results|PrivateEndpointNetworkPoliciesCannotBeEnabledOnPrivateEndpointSubnet)`)
 )
 
 // DetermineError determines the Garden error code for the given error and creates a new error with the given message.
@@ -72,7 +73,7 @@ func DetermineError(err error, message string) error {
 	if codes == nil {
 		return errors.New(errMsg)
 	}
-	return &errorWithCodes{errMsg, codes}
+	return &ErrorWithCodes{errMsg, codes}
 }
 
 // DetermineErrorCodes determines error codes based on the given error.

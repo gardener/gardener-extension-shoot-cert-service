@@ -21,6 +21,7 @@ import (
 	"io"
 
 	utilerrors "github.com/gardener/gardener/pkg/utils/errors"
+
 	"github.com/hashicorp/go-multierror"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -28,46 +29,60 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/yaml"
-	"k8s.io/client-go/discovery"
-	memcache "k8s.io/client-go/discovery/cached/memory"
 	"k8s.io/client-go/rest"
-	"k8s.io/client-go/restmapper"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func newControllerClient(config *rest.Config, options client.Options) (client.Client, error) {
-	return client.New(config, options)
+// defaultApplier applies objects by retrieving their current state and then either creating / updating them
+// (update happens with a predefined merge logic).
+type defaultApplier struct {
+	client     client.Client
+	restMapper meta.RESTMapper
 }
 
-// NewControllerClient instantiates a new client.Client.
-var NewControllerClient = newControllerClient
+// NewApplier constructs a new Applier from the given client.
+func NewApplier(c client.Client, restMapper meta.RESTMapper) Applier {
+	return &defaultApplier{client: c, restMapper: restMapper}
+}
 
-// NewApplierInternal constructs a new Applier from the given config and DiscoveryInterface.
-// This method should only be used for testing.
-func NewApplierInternal(config *rest.Config, discoveryClient discovery.CachedDiscoveryInterface) (*Applier, error) {
-	mapper := restmapper.NewDeferredDiscoveryRESTMapper(discoveryClient)
-	c, err := NewControllerClient(config, client.Options{Mapper: mapper})
+// NewApplierForConfig creates a new Applier for the given rest.Config.
+// Use NewApplier if you already have a client and RESTMapper at hand, as this will create a new direct client.
+func NewApplierForConfig(config *rest.Config) (Applier, error) {
+	opts := client.Options{}
+
+	if err := setClientOptionsDefaults(config, &opts); err != nil {
+		return nil, err
+	}
+
+	c, err := NewDirectClient(config, opts)
 	if err != nil {
 		return nil, err
 	}
 
-	return &Applier{client: c, restMapper: mapper}, nil
+	return NewApplier(c, opts.Mapper), nil
 }
 
-// NewApplierForConfig creates and returns a new Applier for the given rest.Config.
-func NewApplierForConfig(config *rest.Config) (*Applier, error) {
-	discoveryClient, err := discovery.NewDiscoveryClientForConfig(config)
-	if err != nil {
-		return nil, err
-	}
+func (a *defaultApplier) applyObject(ctx context.Context, desired *unstructured.Unstructured, options MergeFuncs) error {
+	// look up scope of objects' kind to check, if we should default the namespace field
+	mapping, err := a.restMapper.RESTMapping(desired.GroupVersionKind().GroupKind(), desired.GroupVersionKind().Version)
+	if err != nil || mapping == nil {
+		// Don't reset RESTMapper in case of cache misses. Most probably indicates, that the corresponding CRD is not yet applied.
+		// CRD might be applied later as part of the same chart
 
-	cachedDiscoveryClient := memcache.NewMemCacheClient(discoveryClient)
-	return NewApplierInternal(config, cachedDiscoveryClient)
-}
-
-func (c *Applier) applyObject(ctx context.Context, desired *unstructured.Unstructured, options MergeFuncs) error {
-	if desired.GetNamespace() == "" {
-		desired.SetNamespace(metav1.NamespaceDefault)
+		// default namespace on a best effort basis
+		if desired.GetKind() != "Namespace" && desired.GetNamespace() == "" {
+			desired.SetNamespace(metav1.NamespaceDefault)
+		}
+	} else {
+		if mapping.Scope.Name() == meta.RESTScopeNameNamespace {
+			// default namespace field to `default` in case of namespaced kinds
+			if desired.GetNamespace() == "" {
+				desired.SetNamespace(metav1.NamespaceDefault)
+			}
+		} else {
+			// unset namespace field in case of non-namespaced kinds
+			desired.SetNamespace("")
+		}
 	}
 
 	key, err := client.ObjectKeyFromObject(desired)
@@ -81,26 +96,21 @@ func (c *Applier) applyObject(ctx context.Context, desired *unstructured.Unstruc
 
 	current := &unstructured.Unstructured{}
 	current.SetGroupVersionKind(desired.GroupVersionKind())
-	err = c.client.Get(ctx, key, current)
-	if meta.IsNoMatchError(err) {
-		c.restMapper.Reset()
-		err = c.client.Get(ctx, key, current)
-	}
-	if err != nil {
+	if err = a.client.Get(ctx, key, current); err != nil {
 		if apierrors.IsNotFound(err) {
-			return c.client.Create(ctx, desired)
+			return a.client.Create(ctx, desired)
 		}
 		return err
 	}
 
-	if err := c.mergeObjects(desired, current, options); err != nil {
+	if err := a.mergeObjects(desired, current, options); err != nil {
 		return err
 	}
 
-	return c.client.Update(ctx, desired)
+	return a.client.Update(ctx, desired)
 }
 
-func (c *Applier) deleteObject(ctx context.Context, desired *unstructured.Unstructured) error {
+func (a *defaultApplier) deleteObject(ctx context.Context, desired *unstructured.Unstructured, opts *DeleteManifestOptions) error {
 	if desired.GetNamespace() == "" {
 		desired.SetNamespace(metav1.NamespaceDefault)
 	}
@@ -108,104 +118,122 @@ func (c *Applier) deleteObject(ctx context.Context, desired *unstructured.Unstru
 		return fmt.Errorf("missing 'metadata.name' in: %+v", desired)
 	}
 
-	err := c.client.Delete(ctx, desired)
-	if err != nil && apierrors.IsNotFound(err) {
-		return nil
-	}
-	return err
+	err := a.client.Delete(ctx, desired)
+	if err != nil {
+		// this is kept for backwards compatibility.
+		if apierrors.IsNotFound(err) {
+			return nil
+		}
 
+		for _, tf := range opts.TolerateErrorFuncs {
+			if tf != nil && tf(err) {
+				return nil
+			}
+		}
+	}
+
+	return err
 }
 
 // DefaultMergeFuncs contains options for common k8s objects, e.g. Service, ServiceAccount.
-var DefaultMergeFuncs = MergeFuncs{
-	corev1.SchemeGroupVersion.WithKind("Service").GroupKind(): func(newObj, oldObj *unstructured.Unstructured) {
-		newSvcType, found, _ := unstructured.NestedString(newObj.Object, "spec", "type")
-		if !found {
-			newSvcType = string(corev1.ServiceTypeClusterIP)
-			_ = unstructured.SetNestedField(newObj.Object, newSvcType, "spec", "type")
-		}
-
-		oldSvcType, found, _ := unstructured.NestedString(oldObj.Object, "spec", "type")
-		if !found {
-			oldSvcType = string(corev1.ServiceTypeClusterIP)
-
-		}
-
-		switch newSvcType {
-		case string(corev1.ServiceTypeLoadBalancer), string(corev1.ServiceTypeNodePort):
-			oldPorts, found, _ := unstructured.NestedSlice(oldObj.Object, "spec", "ports")
+var (
+	DefaultMergeFuncs = MergeFuncs{
+		corev1.SchemeGroupVersion.WithKind("Service").GroupKind(): func(newObj, oldObj *unstructured.Unstructured) {
+			newSvcType, found, _ := unstructured.NestedString(newObj.Object, "spec", "type")
 			if !found {
-				// no old ports probably means that the service was of type External name before.
-				break
+				newSvcType = string(corev1.ServiceTypeClusterIP)
+				_ = unstructured.SetNestedField(newObj.Object, newSvcType, "spec", "type")
 			}
 
-			newPorts, found, _ := unstructured.NestedSlice(newObj.Object, "spec", "ports")
+			oldSvcType, found, _ := unstructured.NestedString(oldObj.Object, "spec", "type")
 			if !found {
-				// no new ports is safe to ignore
-				break
+				oldSvcType = string(corev1.ServiceTypeClusterIP)
 			}
 
-			ports := []interface{}{}
-			for _, newPort := range newPorts {
-				np := newPort.(map[string]interface{})
-				npName, _, _ := unstructured.NestedString(np, "name")
-				npPort, _ := nestedFloat64OrInt64(np, "port")
-				nodePort, ok := nestedFloat64OrInt64(np, "nodePort")
-
-				for _, oldPortObj := range oldPorts {
-					op := oldPortObj.(map[string]interface{})
-					opName, _, _ := unstructured.NestedString(op, "name")
-					opPort, _ := nestedFloat64OrInt64(op, "port")
-
-					if (opName == npName || opPort == npPort) && (!ok || nodePort == 0) {
-						np["nodePort"] = op["nodePort"]
-					}
+			switch newSvcType {
+			case string(corev1.ServiceTypeLoadBalancer), string(corev1.ServiceTypeNodePort):
+				oldPorts, found, _ := unstructured.NestedSlice(oldObj.Object, "spec", "ports")
+				if !found {
+					// no old ports probably means that the service was of type External name before.
+					break
 				}
 
-				ports = append(ports, np)
+				newPorts, found, _ := unstructured.NestedSlice(newObj.Object, "spec", "ports")
+				if !found {
+					// no new ports is safe to ignore
+					break
+				}
+
+				ports := make([]interface{}, 0, len(newPorts))
+				for _, newPort := range newPorts {
+					np := newPort.(map[string]interface{})
+					npName, _, _ := unstructured.NestedString(np, "name")
+					npPort, _ := nestedFloat64OrInt64(np, "port")
+					nodePort, ok := nestedFloat64OrInt64(np, "nodePort")
+
+					for _, oldPortObj := range oldPorts {
+						op := oldPortObj.(map[string]interface{})
+						opName, _, _ := unstructured.NestedString(op, "name")
+						opPort, _ := nestedFloat64OrInt64(op, "port")
+
+						if (opName == npName || opPort == npPort) && (!ok || nodePort == 0) {
+							np["nodePort"] = op["nodePort"]
+						}
+					}
+
+					ports = append(ports, np)
+				}
+
+				_ = unstructured.SetNestedSlice(newObj.Object, ports, "spec", "ports")
+
+			case string(corev1.ServiceTypeExternalName):
+				// there is no ClusterIP in this case
+				return
 			}
 
-			_ = unstructured.SetNestedSlice(newObj.Object, ports, "spec", "ports")
+			// ClusterIP is immutable unless that old service is of type ExternalName
+			if oldSvcType != string(corev1.ServiceTypeExternalName) {
+				newClusterIP, _, _ := unstructured.NestedString(newObj.Object, "spec", "clusterIP")
+				if newClusterIP != corev1.ClusterIPNone || newSvcType != string(corev1.ServiceTypeClusterIP) {
+					oldClusterIP, _, _ := unstructured.NestedString(oldObj.Object, "spec", "clusterIP")
+					_ = unstructured.SetNestedField(newObj.Object, oldClusterIP, "spec", "clusterIP")
+				}
+			}
 
-		case string(corev1.ServiceTypeExternalName):
-			// there is no ClusterIP in this case
+			newETP, _, _ := unstructured.NestedString(newObj.Object, "spec", "externalTrafficPolicy")
+			oldETP, _, _ := unstructured.NestedString(oldObj.Object, "spec", "externalTrafficPolicy")
+
+			if oldSvcType == string(corev1.ServiceTypeLoadBalancer) &&
+				newSvcType == string(corev1.ServiceTypeLoadBalancer) &&
+				newETP == string(corev1.ServiceExternalTrafficPolicyTypeLocal) &&
+				oldETP == string(corev1.ServiceExternalTrafficPolicyTypeLocal) {
+				newHealthCheckPort, _ := nestedFloat64OrInt64(newObj.Object, "spec", "healthCheckNodePort")
+				if newHealthCheckPort == 0 {
+					oldHealthCheckPort, _ := nestedFloat64OrInt64(oldObj.Object, "spec", "healthCheckNodePort")
+					_ = unstructured.SetNestedField(newObj.Object, oldHealthCheckPort, "spec", "healthCheckNodePort")
+				}
+			}
+
+		},
+		corev1.SchemeGroupVersion.WithKind("ServiceAccount").GroupKind(): func(newObj, oldObj *unstructured.Unstructured) {
+			// We do not want to overwrite a ServiceAccount's `.secrets[]` list or `.imagePullSecrets[]`.
+			newObj.Object["secrets"] = oldObj.Object["secrets"]
+			newObj.Object["imagePullSecrets"] = oldObj.Object["imagePullSecrets"]
+		},
+		{Group: "autoscaling.k8s.io", Kind: "VerticalPodAutoscaler"}: func(newObj, oldObj *unstructured.Unstructured) {
+			// Never override the status of VPA resources
+			newObj.Object["status"] = oldObj.Object["status"]
+		},
+	}
+
+	DeploymentKeepReplicasMergeFunc = MergeFunc(func(newObj, oldObj *unstructured.Unstructured) {
+		oldReplicas, ok := nestedFloat64OrInt64(oldObj.Object, "spec", "replicas")
+		if !ok {
 			return
 		}
-
-		// ClusterIP is immutable unless that old service is of type ExternalName
-		if oldSvcType != string(corev1.ServiceTypeExternalName) {
-			newClusterIP, _, _ := unstructured.NestedString(newObj.Object, "spec", "clusterIP")
-			if newClusterIP != string(corev1.ClusterIPNone) || newSvcType != string(corev1.ServiceTypeClusterIP) {
-				oldClusterIP, _, _ := unstructured.NestedString(oldObj.Object, "spec", "clusterIP")
-				_ = unstructured.SetNestedField(newObj.Object, oldClusterIP, "spec", "clusterIP")
-			}
-		}
-
-		newETP, _, _ := unstructured.NestedString(newObj.Object, "spec", "externalTrafficPolicy")
-		oldETP, _, _ := unstructured.NestedString(oldObj.Object, "spec", "externalTrafficPolicy")
-
-		if oldSvcType == string(corev1.ServiceTypeLoadBalancer) &&
-			newSvcType == string(corev1.ServiceTypeLoadBalancer) &&
-			newETP == string(corev1.ServiceExternalTrafficPolicyTypeLocal) &&
-			oldETP == string(corev1.ServiceExternalTrafficPolicyTypeLocal) {
-			newHealthCheckPort, _ := nestedFloat64OrInt64(newObj.Object, "spec", "healthCheckNodePort")
-			if newHealthCheckPort == 0 {
-				oldHealthCheckPort, _ := nestedFloat64OrInt64(oldObj.Object, "spec", "healthCheckNodePort")
-				_ = unstructured.SetNestedField(newObj.Object, oldHealthCheckPort, "spec", "healthCheckNodePort")
-			}
-		}
-
-	},
-	corev1.SchemeGroupVersion.WithKind("ServiceAccount").GroupKind(): func(newObj, oldObj *unstructured.Unstructured) {
-		// We do not want to overwrite a ServiceAccount's `.secrets[]` list or `.imagePullSecrets[]`.
-		newObj.Object["secrets"] = oldObj.Object["secrets"]
-		newObj.Object["imagePullSecrets"] = oldObj.Object["imagePullSecrets"]
-	},
-	{Group: "autoscaling.k8s.io", Kind: "VerticalPodAutoscaler"}: func(newObj, oldObj *unstructured.Unstructured) {
-		// Never override the status of VPA resources
-		newObj.Object["status"] = oldObj.Object["status"]
-	},
-}
+		_ = unstructured.SetNestedField(newObj.Object, oldReplicas, "spec", "replicas")
+	})
+)
 
 func nestedFloat64OrInt64(obj map[string]interface{}, fields ...string) (int64, bool) {
 	val, found, err := unstructured.NestedFieldNoCopy(obj, fields...)
@@ -237,7 +265,7 @@ func CopyApplierOptions(in MergeFuncs) MergeFuncs {
 	return out
 }
 
-func (c *Applier) mergeObjects(newObj, oldObj *unstructured.Unstructured, mergeFuncs MergeFuncs) error {
+func (a *defaultApplier) mergeObjects(newObj, oldObj *unstructured.Unstructured, mergeFuncs MergeFuncs) error {
 	newObj.SetResourceVersion(oldObj.GetResourceVersion())
 
 	// We do not want to overwrite the Finalizers.
@@ -253,7 +281,7 @@ func (c *Applier) mergeObjects(newObj, oldObj *unstructured.Unstructured, mergeF
 // ApplyManifest is a function which does the same like `kubectl apply -f <file>`. It takes a bunch of manifests <m>,
 // all concatenated in a byte slice, and sends them one after the other to the API server. If a resource
 // already exists at the API server, it will update it. It returns an error as soon as the first error occurs.
-func (c *Applier) ApplyManifest(ctx context.Context, r UnstructuredReader, options MergeFuncs) error {
+func (a *defaultApplier) ApplyManifest(ctx context.Context, r UnstructuredReader, options MergeFuncs) error {
 	allErrs := &multierror.Error{
 		ErrorFormat: utilerrors.NewErrorFormatFuncWithPrefix("failed to apply manifests"),
 	}
@@ -271,7 +299,7 @@ func (c *Applier) ApplyManifest(ctx context.Context, r UnstructuredReader, optio
 			continue
 		}
 
-		if err := c.applyObject(ctx, obj, options); err != nil {
+		if err := a.applyObject(ctx, obj, options); err != nil {
 			allErrs = multierror.Append(allErrs, fmt.Errorf("could not apply object of kind %q \"%s/%s\": %+v", obj.GetKind(), obj.GetNamespace(), obj.GetName(), err))
 			continue
 		}
@@ -283,9 +311,17 @@ func (c *Applier) ApplyManifest(ctx context.Context, r UnstructuredReader, optio
 // DeleteManifest is a function which does the same like `kubectl delete -f <file>`. It takes a bunch of manifests <m>,
 // all concatenated in a byte slice, and sends them one after the other to the API server for deletion.
 // It returns an error as soon as the first error occurs.
-func (c *Applier) DeleteManifest(ctx context.Context, r UnstructuredReader) error {
+func (a *defaultApplier) DeleteManifest(ctx context.Context, r UnstructuredReader, opts ...DeleteManifestOption) error {
 	allErrs := &multierror.Error{
 		ErrorFormat: utilerrors.NewErrorFormatFuncWithPrefix("failed to delete manifests"),
+	}
+
+	deleteOps := &DeleteManifestOptions{}
+
+	for _, o := range opts {
+		if o != nil {
+			o.MutateDeleteManifestOptions(deleteOps)
+		}
 	}
 
 	for {
@@ -301,7 +337,7 @@ func (c *Applier) DeleteManifest(ctx context.Context, r UnstructuredReader) erro
 			continue
 		}
 
-		if err := c.deleteObject(ctx, obj); err != nil {
+		if err := a.deleteObject(ctx, obj, deleteOps); err != nil {
 			allErrs = multierror.Append(allErrs, fmt.Errorf("could not delete object of kind %q \"%s/%s\": %+v", obj.GetKind(), obj.GetNamespace(), obj.GetName(), err))
 			continue
 		}
