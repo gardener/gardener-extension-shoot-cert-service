@@ -325,17 +325,20 @@ func (a *actuator) createManagedResource(ctx context.Context, namespace, name, c
 
 func (a *actuator) updateStatus(ctx context.Context, ex *extensionsv1alpha1.Extension, certConfig *service.CertConfig) error {
 	var resources []gardencorev1beta1.NamedResourceReference
-	for _, issuerConfig := range certConfig.Issuers {
-		name := "extension-shoot-cert-service-issuer-" + issuerConfig.Name
-		resources = append(resources, gardencorev1beta1.NamedResourceReference{
-			Name: name,
-			ResourceRef: autoscalingv1.CrossVersionObjectReference{
-				Kind:       "Secret",
-				Name:       name,
-				APIVersion: "v1",
-			},
-		})
+	if certConfig != nil {
+		for _, issuerConfig := range certConfig.Issuers {
+			name := "extension-shoot-cert-service-issuer-" + issuerConfig.Name
+			resources = append(resources, gardencorev1beta1.NamedResourceReference{
+				Name: name,
+				ResourceRef: autoscalingv1.CrossVersionObjectReference{
+					Kind:       "Secret",
+					Name:       name,
+					APIVersion: "v1",
+				},
+			})
+		}
 	}
+
 	return controller.TryUpdateStatus(ctx, retry.DefaultBackoff, a.client, ex, func() error {
 		ex.Status.Resources = resources
 		return nil
