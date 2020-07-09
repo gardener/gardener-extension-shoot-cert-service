@@ -20,7 +20,7 @@ import (
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// CertConfig infrastructure configuration resource
+// CertConfig configuration resource
 type CertConfig struct {
 	metav1.TypeMeta
 

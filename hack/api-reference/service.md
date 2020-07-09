@@ -15,7 +15,7 @@ Resource Types:
 <h3 id="service.cert.extensions.gardener.cloud/v1alpha1.CertConfig">CertConfig
 </h3>
 <p>
-<p>CertConfig infrastructure configuration resource</p>
+<p>CertConfig configuration resource</p>
 </p>
 <table>
 <thead>
