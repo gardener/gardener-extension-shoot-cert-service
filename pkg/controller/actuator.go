@@ -78,9 +78,8 @@ func (a *actuator) Reconcile(ctx context.Context, ex *extensionsv1alpha1.Extensi
 		return err
 	}
 
-	var certConfig *service.CertConfig
+	certConfig := &service.CertConfig{}
 	if ex.Spec.ProviderConfig != nil {
-		certConfig = &service.CertConfig{}
 		if _, _, err := a.decoder.Decode(ex.Spec.ProviderConfig.Raw, nil, certConfig); err != nil {
 			return fmt.Errorf("failed to decode provider config: %+v", err)
 		}
@@ -169,7 +168,7 @@ func (a *actuator) createIssuerValues(issuers ...service.IssuerConfig) ([]map[st
 	return issuerVal, nil
 }
 
-func (a *actuator) createDNSChallengeOnShootValues(cfg *service.DNSChallengeOnShoot) (map[string]interface{}, error) {
+func createDNSChallengeOnShootValues(cfg *service.DNSChallengeOnShoot) (map[string]interface{}, error) {
 	if cfg == nil || !cfg.Enabled {
 		return map[string]interface{}{
 			"enabled": false,
@@ -193,20 +192,12 @@ func (a *actuator) createDNSChallengeOnShootValues(cfg *service.DNSChallengeOnSh
 }
 
 func (a *actuator) createSeedResources(ctx context.Context, certConfig *service.CertConfig, cluster *controller.Cluster, namespace string) error {
-	var (
-		issuerConfig              []service.IssuerConfig
-		dnsChallengeOnShootConfig *service.DNSChallengeOnShoot
-	)
-	if certConfig != nil {
-		issuerConfig = certConfig.Issuers
-		dnsChallengeOnShootConfig = certConfig.DNSChallengeOnShoot
-	}
-	issuers, err := a.createIssuerValues(issuerConfig...)
+	issuers, err := a.createIssuerValues(certConfig.Issuers...)
 	if err != nil {
 		return err
 	}
 
-	dnsChallengeOnShoot, err := a.createDNSChallengeOnShootValues(dnsChallengeOnShootConfig)
+	dnsChallengeOnShoot, err := createDNSChallengeOnShootValues(certConfig.DNSChallengeOnShoot)
 	if err != nil {
 		return err
 	}
@@ -252,12 +243,7 @@ func (a *actuator) createSeedResources(ctx context.Context, certConfig *service.
 }
 
 func (a *actuator) createShootResources(ctx context.Context, certConfig *service.CertConfig, cluster *controller.Cluster, namespace string) error {
-	var dnsChallengeOnShootConfig *service.DNSChallengeOnShoot
-	if certConfig != nil {
-		dnsChallengeOnShootConfig = certConfig.DNSChallengeOnShoot
-	}
-
-	dnsChallengeOnShoot, err := a.createDNSChallengeOnShootValues(dnsChallengeOnShootConfig)
+	dnsChallengeOnShoot, err := createDNSChallengeOnShootValues(certConfig.DNSChallengeOnShoot)
 	if err != nil {
 		return err
 	}
@@ -325,18 +311,16 @@ func (a *actuator) createManagedResource(ctx context.Context, namespace, name, c
 
 func (a *actuator) updateStatus(ctx context.Context, ex *extensionsv1alpha1.Extension, certConfig *service.CertConfig) error {
 	var resources []gardencorev1beta1.NamedResourceReference
-	if certConfig != nil {
-		for _, issuerConfig := range certConfig.Issuers {
-			name := "extension-shoot-cert-service-issuer-" + issuerConfig.Name
-			resources = append(resources, gardencorev1beta1.NamedResourceReference{
-				Name: name,
-				ResourceRef: autoscalingv1.CrossVersionObjectReference{
-					Kind:       "Secret",
-					Name:       name,
-					APIVersion: "v1",
-				},
-			})
-		}
+	for _, issuerConfig := range certConfig.Issuers {
+		name := "extension-shoot-cert-service-issuer-" + issuerConfig.Name
+		resources = append(resources, gardencorev1beta1.NamedResourceReference{
+			Name: name,
+			ResourceRef: autoscalingv1.CrossVersionObjectReference{
+				Kind:       "Secret",
+				Name:       name,
+				APIVersion: "v1",
+			},
+		})
 	}
 
 	return controller.TryUpdateStatus(ctx, retry.DefaultBackoff, a.client, ex, func() error {
