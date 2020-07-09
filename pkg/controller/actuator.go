@@ -24,6 +24,7 @@ import (
 	"github.com/pkg/errors"
 	autoscalingv1 "k8s.io/api/autoscaling/v1"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/client-go/rest"
@@ -239,7 +240,7 @@ func (a *actuator) createSeedResources(ctx context.Context, certConfig *service.
 
 	a.logger.Info("Component is being applied", "component", "cert-management", "namespace", namespace)
 
-	return a.createManagedResource(ctx, namespace, v1alpha1.CertManagementResourceNameSeed, "seed", renderer, v1alpha1.CertManagementChartNameSeed, certManagementConfig, nil)
+	return a.createManagedResource(ctx, namespace, v1alpha1.CertManagementResourceNameSeed, "seed", renderer, v1alpha1.CertManagementChartNameSeed, namespace, certManagementConfig, nil)
 }
 
 func (a *actuator) createShootResources(ctx context.Context, certConfig *service.CertConfig, cluster *controller.Cluster, namespace string) error {
@@ -258,7 +259,7 @@ func (a *actuator) createShootResources(ctx context.Context, certConfig *service
 		return errors.Wrap(err, "could not create chart renderer")
 	}
 
-	return a.createManagedResource(ctx, namespace, v1alpha1.CertManagementResourceNameShoot, "", renderer, v1alpha1.CertManagementChartNameShoot, values, nil)
+	return a.createManagedResource(ctx, namespace, v1alpha1.CertManagementResourceNameShoot, "", renderer, v1alpha1.CertManagementChartNameShoot, metav1.NamespaceSystem, values, nil)
 }
 
 func (a *actuator) deleteSeedResources(ctx context.Context, namespace string) error {
@@ -299,9 +300,9 @@ func (a *actuator) createKubeconfigForCertManagement(ctx context.Context, namesp
 	return util.GetOrCreateShootKubeconfig(ctx, a.client, certConfig, namespace)
 }
 
-func (a *actuator) createManagedResource(ctx context.Context, namespace, name, class string, renderer chartrenderer.Interface, chartName string, chartValues map[string]interface{}, injectedLabels map[string]string) error {
+func (a *actuator) createManagedResource(ctx context.Context, namespace, name, class string, renderer chartrenderer.Interface, chartName, chartNamespace string, chartValues map[string]interface{}, injectedLabels map[string]string) error {
 	chartPath := filepath.Join(v1alpha1.ChartsPath, chartName)
-	chart, err := renderer.Render(chartPath, chartName, namespace, chartValues)
+	chart, err := renderer.Render(chartPath, chartName, chartNamespace, chartValues)
 	if err != nil {
 		return err
 	}
