@@ -42,6 +42,7 @@ spec:
           readOnly: true
         args:
         - --name={{ include "cert-management.fullname" . }}
+        - --namespace=kube-system
         - --source=/etc/shoot-cluster/kubeconfig
         - --issuer.issuer-namespace={{ .Release.Namespace }}
         - --issuer.default-issuer={{ .Values.defaultIssuer.name }}
