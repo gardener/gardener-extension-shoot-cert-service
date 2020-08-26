@@ -11,3 +11,9 @@ spec:
     name: {{ include "cert-management.fullname" . }}
   updatePolicy:
     updateMode: "Auto"
+  resourcePolicy:
+    containerPolicies:
+      - containerName: '*'
+        minAllowed:
+          cpu: 10m
+          memory: 25Mi
