@@ -53,6 +53,20 @@ func addConversionFuncs(scheme *runtime.Scheme) error {
 	}
 
 	if err := scheme.AddFieldLabelConversionFunc(
+		SchemeGroupVersion.WithKind("ControllerInstallation"),
+		func(label, value string) (string, string, error) {
+			switch label {
+			case "metadata.name", core.RegistrationRefName, core.SeedRefName:
+				return label, value, nil
+			default:
+				return "", "", fmt.Errorf("field label not supported: %s", label)
+			}
+		},
+	); err != nil {
+		return err
+	}
+
+	if err := scheme.AddFieldLabelConversionFunc(
 		SchemeGroupVersion.WithKind("Shoot"),
 		func(label, value string) (string, string, error) {
 			switch label {
@@ -66,8 +80,7 @@ func addConversionFuncs(scheme *runtime.Scheme) error {
 		return err
 	}
 
-	// Add non-generated conversion functions
-	return scheme.AddConversionFuncs()
+	return nil
 }
 
 func Convert_v1beta1_ProjectSpec_To_core_ProjectSpec(in *ProjectSpec, out *core.ProjectSpec, s conversion.Scope) error {

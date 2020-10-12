@@ -14,7 +14,7 @@
 
 EXTENSION_PREFIX            := gardener-extension
 NAME                        := shoot-cert-service
-REGISTRY                    := eu.gcr.io/gardener-project
+REGISTRY                    := eu.gcr.io/gardener-project/gardener
 IMAGE_PREFIX                := $(REGISTRY)/extensions
 REPO_ROOT                   := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 HACK_DIR                    := $(REPO_ROOT)/hack
@@ -72,7 +72,7 @@ revendor:
 	@GO111MODULE=on go mod tidy
 	@chmod +x $(REPO_ROOT)/vendor/github.com/gardener/gardener/hack/*
 	@chmod +x $(REPO_ROOT)/vendor/github.com/gardener/gardener/hack/.ci/*
-	@chmod +x $(REPO_ROOT)/vendor/github.com/gardener/gardener/extensions/hack/*
+	@$(REPO_ROOT)/hack/update-github-templates.sh
 
 .PHONY: clean
 clean:

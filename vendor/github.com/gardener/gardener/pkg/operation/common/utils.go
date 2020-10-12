@@ -22,7 +22,6 @@ import (
 	"net"
 	"reflect"
 	"regexp"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -36,11 +35,13 @@ import (
 	"github.com/gardener/gardener/pkg/version"
 
 	jsoniter "github.com/json-iterator/go"
+	admissionregistrationv1beta1 "k8s.io/api/admissionregistration/v1beta1"
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv2beta1 "k8s.io/api/autoscaling/v2beta1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
+	networkingv1 "k8s.io/api/networking/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	schedulingv1beta1 "k8s.io/api/scheduling/v1beta1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -64,7 +65,7 @@ var (
 
 // GetSecretKeysWithPrefix returns a list of keys of the given map <m> which are prefixed with <kind>.
 func GetSecretKeysWithPrefix(kind string, m map[string]*corev1.Secret) []string {
-	result := []string{}
+	var result []string
 	for key := range m {
 		if strings.HasPrefix(key, kind) {
 			result = append(result, key)
@@ -227,7 +228,7 @@ func MergeOwnerReferences(references []metav1.OwnerReference, newReferences ...m
 }
 
 // ReadLeaderElectionRecord returns the leader election record for a given lock type and a namespace/name combination.
-func ReadLeaderElectionRecord(k8sClient kubernetes.Interface, lock, namespace, name string) (*resourcelock.LeaderElectionRecord, error) {
+func ReadLeaderElectionRecord(ctx context.Context, k8sClient kubernetes.Interface, lock, namespace, name string) (*resourcelock.LeaderElectionRecord, error) {
 	var (
 		leaderElectionRecord resourcelock.LeaderElectionRecord
 		annotations          map[string]string
@@ -235,13 +236,13 @@ func ReadLeaderElectionRecord(k8sClient kubernetes.Interface, lock, namespace, n
 
 	switch lock {
 	case resourcelock.EndpointsResourceLock:
-		endpoint, err := k8sClient.Kubernetes().CoreV1().Endpoints(namespace).Get(name, metav1.GetOptions{})
+		endpoint, err := k8sClient.Kubernetes().CoreV1().Endpoints(namespace).Get(ctx, name, kubernetes.DefaultGetOptions())
 		if err != nil {
 			return nil, err
 		}
 		annotations = endpoint.Annotations
 	case resourcelock.ConfigMapsResourceLock:
-		configmap, err := k8sClient.Kubernetes().CoreV1().ConfigMaps(namespace).Get(name, metav1.GetOptions{})
+		configmap, err := k8sClient.Kubernetes().CoreV1().ConfigMaps(namespace).Get(ctx, name, kubernetes.DefaultGetOptions())
 		if err != nil {
 			return nil, err
 		}
@@ -279,27 +280,8 @@ func ShouldObjectBeRemoved(obj metav1.Object, gracePeriod time.Duration) bool {
 	return deletionTimestamp.Time.Before(time.Now().Add(-gracePeriod))
 }
 
-// ComputeSecretCheckSum computes the sha256 checksum of secret data.
-func ComputeSecretCheckSum(m map[string][]byte) string {
-	var (
-		hash string
-		keys []string
-	)
-
-	for k := range m {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-
-	for _, k := range keys {
-		hash += utils.ComputeSHA256Hex(m[k])
-	}
-
-	return utils.ComputeSHA256Hex([]byte(hash))
-}
-
 // DeleteHvpa delete all resources required for the HVPA in the given namespace.
-func DeleteHvpa(k8sClient kubernetes.Interface, namespace string) error {
+func DeleteHvpa(ctx context.Context, k8sClient kubernetes.Interface, namespace string) error {
 	if k8sClient == nil {
 		return fmt.Errorf("require kubernetes client")
 	}
@@ -311,34 +293,34 @@ func DeleteHvpa(k8sClient kubernetes.Interface, namespace string) error {
 	// Delete all CRDs with label "gardener.cloud/role=hvpa"
 	// Workaround: Due to https://github.com/gardener/gardener/issues/2257, we first list the HVPA CRDs and then remove
 	// them one by one.
-	crdList, err := k8sClient.APIExtension().ApiextensionsV1beta1().CustomResourceDefinitions().List(listOptions)
+	crdList, err := k8sClient.APIExtension().ApiextensionsV1beta1().CustomResourceDefinitions().List(ctx, listOptions)
 	if err != nil {
 		return err
 	}
 	for _, crd := range crdList.Items {
-		if err := k8sClient.APIExtension().ApiextensionsV1beta1().CustomResourceDefinitions().Delete(crd.Name, &metav1.DeleteOptions{}); client.IgnoreNotFound(err) != nil {
+		if err := k8sClient.APIExtension().ApiextensionsV1beta1().CustomResourceDefinitions().Delete(ctx, crd.Name, metav1.DeleteOptions{}); client.IgnoreNotFound(err) != nil {
 			return err
 		}
 	}
 
 	// Delete all Deployments with label "gardener.cloud/role=hvpa"
 	deletePropagation := metav1.DeletePropagationForeground
-	if err := k8sClient.Kubernetes().AppsV1().Deployments(namespace).DeleteCollection(&metav1.DeleteOptions{PropagationPolicy: &deletePropagation}, listOptions); client.IgnoreNotFound(err) != nil {
+	if err := k8sClient.Kubernetes().AppsV1().Deployments(namespace).DeleteCollection(ctx, metav1.DeleteOptions{PropagationPolicy: &deletePropagation}, listOptions); client.IgnoreNotFound(err) != nil {
 		return err
 	}
 
 	// Delete all ClusterRoles with label "gardener.cloud/role=hvpa"
-	if err := k8sClient.Kubernetes().RbacV1().ClusterRoles().DeleteCollection(&metav1.DeleteOptions{}, listOptions); client.IgnoreNotFound(err) != nil {
+	if err := k8sClient.Kubernetes().RbacV1().ClusterRoles().DeleteCollection(ctx, metav1.DeleteOptions{}, listOptions); client.IgnoreNotFound(err) != nil {
 		return err
 	}
 
 	// Delete all ClusterRoleBindings with label "gardener.cloud/role=hvpa"
-	if err := k8sClient.Kubernetes().RbacV1().ClusterRoleBindings().DeleteCollection(&metav1.DeleteOptions{}, listOptions); client.IgnoreNotFound(err) != nil {
+	if err := k8sClient.Kubernetes().RbacV1().ClusterRoleBindings().DeleteCollection(ctx, metav1.DeleteOptions{}, listOptions); client.IgnoreNotFound(err) != nil {
 		return err
 	}
 
 	// Delete all ServiceAccounts with label "gardener.cloud/role=hvpa"
-	if err := k8sClient.Kubernetes().CoreV1().ServiceAccounts(namespace).DeleteCollection(&metav1.DeleteOptions{}, listOptions); client.IgnoreNotFound(err) != nil {
+	if err := k8sClient.Kubernetes().CoreV1().ServiceAccounts(namespace).DeleteCollection(ctx, metav1.DeleteOptions{}, listOptions); client.IgnoreNotFound(err) != nil {
 		return err
 	}
 
@@ -348,13 +330,16 @@ func DeleteHvpa(k8sClient kubernetes.Interface, namespace string) error {
 // DeleteVpa delete all resources required for the VPA in the given namespace.
 func DeleteVpa(ctx context.Context, c client.Client, namespace string, isShoot bool) error {
 	resources := []runtime.Object{
-		&appsv1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: "vpa-admission-controller", Namespace: namespace}},
-		&appsv1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: "vpa-exporter", Namespace: namespace}},
-		&appsv1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: "vpa-recommender", Namespace: namespace}},
-		&appsv1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: "vpa-updater", Namespace: namespace}},
+		&appsv1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: v1beta1constants.DeploymentNameVPAAdmissionController, Namespace: namespace}},
+		&appsv1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: v1beta1constants.DeploymentNameVPAExporter, Namespace: namespace}},
+		&appsv1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: v1beta1constants.DeploymentNameVPARecommender, Namespace: namespace}},
+		&appsv1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: v1beta1constants.DeploymentNameVPAUpdater, Namespace: namespace}},
 		&corev1.Service{ObjectMeta: metav1.ObjectMeta{Name: "vpa-webhook", Namespace: namespace}},
 		&corev1.Service{ObjectMeta: metav1.ObjectMeta{Name: "vpa-exporter", Namespace: namespace}},
-		&autoscalingv1beta2.VerticalPodAutoscaler{ObjectMeta: metav1.ObjectMeta{Name: "vpa-exporter-vpa", Namespace: namespace}},
+		&autoscalingv1beta2.VerticalPodAutoscaler{ObjectMeta: metav1.ObjectMeta{Name: v1beta1constants.DeploymentNameVPAAdmissionController, Namespace: namespace}},
+		&autoscalingv1beta2.VerticalPodAutoscaler{ObjectMeta: metav1.ObjectMeta{Name: v1beta1constants.DeploymentNameVPAExporter + "-vpa", Namespace: namespace}},
+		&autoscalingv1beta2.VerticalPodAutoscaler{ObjectMeta: metav1.ObjectMeta{Name: v1beta1constants.DeploymentNameVPARecommender, Namespace: namespace}},
+		&autoscalingv1beta2.VerticalPodAutoscaler{ObjectMeta: metav1.ObjectMeta{Name: v1beta1constants.DeploymentNameVPAUpdater, Namespace: namespace}},
 	}
 
 	if isShoot {
@@ -362,29 +347,31 @@ func DeleteVpa(ctx context.Context, c client.Client, namespace string, isShoot b
 			&corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: "vpa-admission-controller", Namespace: namespace}},
 			&corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: "vpa-exporter", Namespace: namespace}},
 			&corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: "vpa-recommender", Namespace: namespace}},
-			&corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: "vpa-tls-certs", Namespace: namespace}},
+			&corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: VPASecretName, Namespace: namespace}},
 			&corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: "vpa-updater", Namespace: namespace}},
+			&networkingv1.NetworkPolicy{ObjectMeta: metav1.ObjectMeta{Name: "allow-kube-apiserver-to-vpa-admission-controller", Namespace: namespace}},
 		)
 	} else {
 		resources = append(resources,
-			&rbacv1.ClusterRole{ObjectMeta: metav1.ObjectMeta{Name: "system:vpa-actor"}},
-			&rbacv1.ClusterRole{ObjectMeta: metav1.ObjectMeta{Name: "system:vpa-admission-controller"}},
-			&rbacv1.ClusterRole{ObjectMeta: metav1.ObjectMeta{Name: "system:vpa-checkpoint-actor"}},
-			&rbacv1.ClusterRole{ObjectMeta: metav1.ObjectMeta{Name: "system:vpa-exporter-role"}},
-			&rbacv1.ClusterRole{ObjectMeta: metav1.ObjectMeta{Name: "system:metrics-reader"}},
-			&rbacv1.ClusterRole{ObjectMeta: metav1.ObjectMeta{Name: "system:vpa-target-reader"}},
-			&rbacv1.ClusterRole{ObjectMeta: metav1.ObjectMeta{Name: "system:evictioner"}},
-			&rbacv1.ClusterRoleBinding{ObjectMeta: metav1.ObjectMeta{Name: "system:vpa-actor"}},
-			&rbacv1.ClusterRoleBinding{ObjectMeta: metav1.ObjectMeta{Name: "system:vpa-admission-controller"}},
-			&rbacv1.ClusterRoleBinding{ObjectMeta: metav1.ObjectMeta{Name: "system:vpa-checkpoint-actor"}},
-			&rbacv1.ClusterRoleBinding{ObjectMeta: metav1.ObjectMeta{Name: "system:vpa-exporter-role-binding"}},
-			&rbacv1.ClusterRoleBinding{ObjectMeta: metav1.ObjectMeta{Name: "system:metrics-reader"}},
-			&rbacv1.ClusterRoleBinding{ObjectMeta: metav1.ObjectMeta{Name: "system:vpa-target-reader-binding"}},
-			&rbacv1.ClusterRoleBinding{ObjectMeta: metav1.ObjectMeta{Name: "system:vpa-evictionter-binding"}},
+			&rbacv1.ClusterRole{ObjectMeta: metav1.ObjectMeta{Name: "gardener.cloud:vpa:seed:actor"}},
+			&rbacv1.ClusterRole{ObjectMeta: metav1.ObjectMeta{Name: "gardener.cloud:vpa:seed:admission-controller"}},
+			&rbacv1.ClusterRole{ObjectMeta: metav1.ObjectMeta{Name: "gardener.cloud:vpa:seed:checkpoint-actor"}},
+			&rbacv1.ClusterRole{ObjectMeta: metav1.ObjectMeta{Name: "gardener.cloud:vpa:seed:exporter"}},
+			&rbacv1.ClusterRole{ObjectMeta: metav1.ObjectMeta{Name: "gardener.cloud:vpa:seed:metrics-reader"}},
+			&rbacv1.ClusterRole{ObjectMeta: metav1.ObjectMeta{Name: "gardener.cloud:vpa:seed:target-reader"}},
+			&rbacv1.ClusterRole{ObjectMeta: metav1.ObjectMeta{Name: "gardener.cloud:vpa:seed:evictioner"}},
+			&rbacv1.ClusterRoleBinding{ObjectMeta: metav1.ObjectMeta{Name: "gardener.cloud:vpa:seed:actor"}},
+			&rbacv1.ClusterRoleBinding{ObjectMeta: metav1.ObjectMeta{Name: "gardener.cloud:vpa:seed:admission-controller"}},
+			&rbacv1.ClusterRoleBinding{ObjectMeta: metav1.ObjectMeta{Name: "gardener.cloud:vpa:seed:checkpoint-actor"}},
+			&rbacv1.ClusterRoleBinding{ObjectMeta: metav1.ObjectMeta{Name: "gardener.cloud:vpa:seed:exporter"}},
+			&rbacv1.ClusterRoleBinding{ObjectMeta: metav1.ObjectMeta{Name: "gardener.cloud:vpa:seed:metrics-reader"}},
+			&rbacv1.ClusterRoleBinding{ObjectMeta: metav1.ObjectMeta{Name: "gardener.cloud:vpa:seed:target-reader"}},
+			&rbacv1.ClusterRoleBinding{ObjectMeta: metav1.ObjectMeta{Name: "gardener.cloud:vpa:seed:evictioner"}},
 			&corev1.ServiceAccount{ObjectMeta: metav1.ObjectMeta{Name: "vpa-admission-controller", Namespace: namespace}},
 			&corev1.ServiceAccount{ObjectMeta: metav1.ObjectMeta{Name: "vpa-exporter", Namespace: namespace}},
 			&corev1.ServiceAccount{ObjectMeta: metav1.ObjectMeta{Name: "vpa-recommender", Namespace: namespace}},
 			&corev1.ServiceAccount{ObjectMeta: metav1.ObjectMeta{Name: "vpa-updater", Namespace: namespace}},
+			&admissionregistrationv1beta1.MutatingWebhookConfiguration{ObjectMeta: metav1.ObjectMeta{Name: "vpa-webhook-config-seed"}},
 		)
 	}
 
@@ -402,7 +389,7 @@ func DeleteLoggingStack(ctx context.Context, k8sClient client.Client, namespace 
 		return errors.New("must provide non-nil kubernetes client to common.DeleteLoggingStack")
 	}
 
-	// Delete the resources below that match "garden.sapcloud.io/role=logging"
+	// Delete the resources below that match "gardener.cloud/role=logging"
 	lists := []runtime.Object{
 		&corev1.ConfigMapList{},
 		&batchv1beta1.CronJobList{},
@@ -412,6 +399,7 @@ func DeleteLoggingStack(ctx context.Context, k8sClient client.Client, namespace 
 		&rbacv1.RoleBindingList{},
 		&appsv1.DaemonSetList{},
 		&appsv1.DeploymentList{},
+		// TODO: Use autoscaling/v2beta2 for Kubernetes 1.19+ shoots once kubernetes-v1.19 golang dependencies were vendored.
 		&autoscalingv2beta1.HorizontalPodAutoscalerList{},
 		&extensionsv1beta1.IngressList{},
 		&corev1.SecretList{},
@@ -423,7 +411,7 @@ func DeleteLoggingStack(ctx context.Context, k8sClient client.Client, namespace 
 	for _, list := range lists {
 		if err := k8sClient.List(ctx, list,
 			client.InNamespace(namespace),
-			client.MatchingLabels{v1beta1constants.DeprecatedGardenRole: v1beta1constants.GardenRoleLogging}); err != nil {
+			client.MatchingLabels{v1beta1constants.GardenRole: v1beta1constants.GardenRoleLogging}); err != nil {
 			return err
 		}
 
@@ -436,7 +424,7 @@ func DeleteLoggingStack(ctx context.Context, k8sClient client.Client, namespace 
 
 	pvc := &corev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "elasticsearch-logging-elasticsearch-logging-0",
+			Name:      "loki-loki-0",
 			Namespace: namespace,
 		},
 	}
@@ -524,17 +512,11 @@ func DeleteAlertmanager(ctx context.Context, k8sClient client.Client, namespace 
 		},
 	}
 
-	for _, obj := range objs {
-		if err := k8sClient.Delete(ctx, obj, kubernetes.DefaultDeleteOptions...); client.IgnoreNotFound(err) != nil {
-			return err
-		}
-	}
-
-	return nil
+	return kutil.DeleteObjects(ctx, k8sClient, objs...)
 }
 
 // DeleteGrafanaByRole deletes the monitoring stack for the shoot owner.
-func DeleteGrafanaByRole(k8sClient kubernetes.Interface, namespace, role string) error {
+func DeleteGrafanaByRole(ctx context.Context, k8sClient kubernetes.Interface, namespace, role string) error {
 	if k8sClient == nil {
 		return fmt.Errorf("require kubernetes client")
 	}
@@ -545,29 +527,30 @@ func DeleteGrafanaByRole(k8sClient kubernetes.Interface, namespace, role string)
 
 	deletePropagation := metav1.DeletePropagationForeground
 	if err := k8sClient.Kubernetes().AppsV1().Deployments(namespace).DeleteCollection(
-		&metav1.DeleteOptions{
+		ctx,
+		metav1.DeleteOptions{
 			PropagationPolicy: &deletePropagation,
 		}, listOptions); err != nil && !apierrors.IsNotFound(err) {
 		return err
 	}
 
 	if err := k8sClient.Kubernetes().CoreV1().ConfigMaps(namespace).DeleteCollection(
-		&metav1.DeleteOptions{}, listOptions); err != nil && !apierrors.IsNotFound(err) {
+		ctx, metav1.DeleteOptions{}, listOptions); err != nil && !apierrors.IsNotFound(err) {
 		return err
 	}
 
 	if err := k8sClient.Kubernetes().ExtensionsV1beta1().Ingresses(namespace).DeleteCollection(
-		&metav1.DeleteOptions{}, listOptions); err != nil && !apierrors.IsNotFound(err) {
+		ctx, metav1.DeleteOptions{}, listOptions); err != nil && !apierrors.IsNotFound(err) {
 		return err
 	}
 
 	if err := k8sClient.Kubernetes().CoreV1().Secrets(namespace).DeleteCollection(
-		&metav1.DeleteOptions{}, listOptions); err != nil && !apierrors.IsNotFound(err) {
+		ctx, metav1.DeleteOptions{}, listOptions); err != nil && !apierrors.IsNotFound(err) {
 		return err
 	}
 
-	if err := k8sClient.Kubernetes().CoreV1().Services(namespace).Delete(fmt.Sprintf("grafana-%s", role),
-		&metav1.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
+	if err := k8sClient.Kubernetes().CoreV1().Services(namespace).Delete(
+		ctx, fmt.Sprintf("grafana-%s", role), metav1.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
 		return err
 	}
 	return nil
@@ -579,16 +562,10 @@ func GetDomainInfoFromAnnotations(annotations map[string]string) (provider strin
 		return "", "", nil, nil, fmt.Errorf("domain secret has no annotations")
 	}
 
-	if providerAnnotation, ok := annotations[DNSProviderDeprecated]; ok {
-		provider = providerAnnotation
-	}
 	if providerAnnotation, ok := annotations[DNSProvider]; ok {
 		provider = providerAnnotation
 	}
 
-	if domainAnnotation, ok := annotations[DNSDomainDeprecated]; ok {
-		domain = domainAnnotation
-	}
 	if domainAnnotation, ok := annotations[DNSDomain]; ok {
 		domain = domainAnnotation
 	}
@@ -633,7 +610,7 @@ func ShouldIgnoreShoot(respectSyncPeriodOverwrite bool, shoot *gardencorev1beta1
 		return false
 	}
 
-	value, ok := GetShootIgnoreAnnotation(shoot.Annotations)
+	value, ok := shoot.Annotations[ShootIgnore]
 	if !ok {
 		return false
 	}
@@ -675,7 +652,7 @@ func SyncPeriodOfShoot(respectSyncPeriodOverwrite bool, defaultMinSyncPeriod tim
 		return defaultMinSyncPeriod
 	}
 
-	syncPeriodOverwrite, ok := GetShootSyncPeriodAnnotation(shoot.Annotations)
+	syncPeriodOverwrite, ok := shoot.Annotations[ShootSyncPeriod]
 	if !ok {
 		return defaultMinSyncPeriod
 	}
@@ -761,34 +738,10 @@ func GetConfirmationDeletionAnnotation(annotations map[string]string) (string, b
 	return getDeprecatedAnnotation(annotations, ConfirmationDeletion, ConfirmationDeletionDeprecated)
 }
 
-// GetShootExpirationTimestampAnnotation fetches the value for ShootExpirationTimestamp annotation.
-// If not present, it fallbacks to ShootExpirationTimestampDeprecated.
-func GetShootExpirationTimestampAnnotation(annotations map[string]string) (string, bool) {
-	return getDeprecatedAnnotation(annotations, ShootExpirationTimestamp, ShootExpirationTimestampDeprecated)
-}
-
 // GetShootOperationAnnotation fetches the value for v1beta1constants.GardenerOperation annotation.
 // If not present, it fallbacks to ShootOperationDeprecated.
 func GetShootOperationAnnotation(annotations map[string]string) (string, bool) {
 	return getDeprecatedAnnotation(annotations, v1beta1constants.GardenerOperation, ShootOperationDeprecated)
-}
-
-// GetShootSyncPeriodAnnotation fetches the value for ShootSyncPeriod annotation.
-// If not present, it fallbacks to ShootSyncPeriodDeprecated.
-func GetShootSyncPeriodAnnotation(annotations map[string]string) (string, bool) {
-	return getDeprecatedAnnotation(annotations, ShootSyncPeriod, ShootSyncPeriodDeprecated)
-}
-
-// GetShootIgnoreAnnotation fetches the value for ShootIgnore annotation.
-// If not present, it fallbacks to ShootIgnoreDeprecated.
-func GetShootIgnoreAnnotation(annotations map[string]string) (string, bool) {
-	return getDeprecatedAnnotation(annotations, ShootIgnore, ShootIgnoreDeprecated)
-}
-
-// GetTasksAnnotation fetches the value for ShootTasks annotation.
-// If not present, it falls back to ShootTasksDeprecated.
-func GetTasksAnnotation(annotations map[string]string) (string, bool) {
-	return getDeprecatedAnnotation(annotations, ShootTasks, ShootTasksDeprecated)
 }
 
 func getDeprecatedAnnotation(annotations map[string]string, annotationKey, deprecatedAnnotationKey string) (string, bool) {
