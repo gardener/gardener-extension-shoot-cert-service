@@ -11,9 +11,20 @@ resources:
    cpu: "50m"
    memory: "128Mi"
 
+vpa:
+  enabled: true
+  # resourcePolicy:
+  #   minAllowed:
+  #     cpu: 100m
+  #     memory: 128Mi
+  updatePolicy:
+    updateMode: "Auto"
+
 controllers:
   concurrentSyncs: 5
   ignoreOperationAnnotation: false
+  healthcheck:
+    concurrentSyncs: 5
 
 certificateConfig:
   defaultIssuer:
