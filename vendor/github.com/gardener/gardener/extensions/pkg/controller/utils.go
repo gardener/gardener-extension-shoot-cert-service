@@ -21,11 +21,11 @@ import (
 	"time"
 
 	controllererror "github.com/gardener/gardener/extensions/pkg/controller/error"
-	"github.com/gardener/gardener/extensions/pkg/util"
 	"github.com/gardener/gardener/pkg/api/extensions"
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
 	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
+	contextutil "github.com/gardener/gardener/pkg/utils/context"
 	kutil "github.com/gardener/gardener/pkg/utils/kubernetes"
 
 	resourcemanagerv1alpha1 "github.com/gardener/gardener-resource-manager/pkg/apis/resources/v1alpha1"
@@ -96,7 +96,7 @@ func ReconcileErrCauseOrErr(err error) error {
 
 // SetupSignalHandlerContext sets up a context from signals.SetupSignalHandler stop channel.
 func SetupSignalHandlerContext() context.Context {
-	return util.ContextFromStopChannel(signals.SetupSignalHandler())
+	return contextutil.FromStopChannel(signals.SetupSignalHandler())
 }
 
 // AddToManagerBuilder aggregates various AddToManager functions.
@@ -224,6 +224,7 @@ func tryUpdate(ctx context.Context, backoff wait.Backoff, c client.Client, obj r
 		return err
 	}
 
+	resetCopy := obj.DeepCopyObject()
 	return exponentialBackoff(ctx, backoff, func() (bool, error) {
 		if err := c.Get(ctx, key, obj); err != nil {
 			return false, err
@@ -240,6 +241,7 @@ func tryUpdate(ctx context.Context, backoff wait.Backoff, c client.Client, obj r
 
 		if err := updateFunc(ctx, obj); err != nil {
 			if apierrors.IsConflict(err) {
+				reflect.ValueOf(obj).Elem().Set(reflect.ValueOf(resetCopy).Elem())
 				return false, nil
 			}
 			return false, err

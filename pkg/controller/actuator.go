@@ -20,6 +20,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/gardener/gardener/pkg/utils"
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	autoscalingv1 "k8s.io/api/autoscaling/v1"
@@ -224,7 +225,7 @@ func (a *actuator) createSeedResources(ctx context.Context, certConfig *service.
 		"dnsChallengeOnShoot": dnsChallengeOnShoot,
 		"shootClusterSecret":  v1alpha1.CertManagementKubecfg,
 		"podAnnotations": map[string]interface{}{
-			"checksum/secret-kubeconfig": util.ComputeChecksum(shootKubeconfig.Data),
+			"checksum/secret-kubeconfig": utils.ComputeChecksum(shootKubeconfig.Data),
 		},
 	}
 

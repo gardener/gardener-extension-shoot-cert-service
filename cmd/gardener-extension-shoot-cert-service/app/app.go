@@ -24,7 +24,10 @@ import (
 	extensionscontroller "github.com/gardener/gardener/extensions/pkg/controller"
 	controllercmd "github.com/gardener/gardener/extensions/pkg/controller/cmd"
 	"github.com/gardener/gardener/extensions/pkg/util"
+	"github.com/gardener/gardener/pkg/client/kubernetes/utils"
+
 	"github.com/spf13/cobra"
+	corev1 "k8s.io/api/core/v1"
 	componentbaseconfig "k8s.io/component-base/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
@@ -57,7 +60,12 @@ func (o *Options) run(ctx context.Context) {
 		Burst: 130,
 	}, o.restOptions.Completed().Config)
 
-	mgr, err := manager.New(o.restOptions.Completed().Config, o.managerOptions.Completed().Options())
+	mgrOpts := o.managerOptions.Completed().Options()
+	mgrOpts.NewClient = utils.NewClientFuncWithDisabledCacheFor(
+		&corev1.Secret{},    // applied for ManagedResources
+		&corev1.ConfigMap{}, // applied for monitoring config
+	)
+	mgr, err := manager.New(o.restOptions.Completed().Config, mgrOpts)
 	if err != nil {
 		controllercmd.LogErrAndExit(err, "Could not instantiate controller-manager")
 	}
