@@ -22,6 +22,7 @@ package config
 
 import (
 	healthcheckconfig "github.com/gardener/gardener/extensions/pkg/controller/healthcheck/config"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -31,6 +32,11 @@ func (in *ACME) DeepCopyInto(out *ACME) {
 	if in.PrivateKey != nil {
 		in, out := &in.PrivateKey, &out.PrivateKey
 		*out = new(string)
+		**out = **in
+	}
+	if in.PropagationTimeout != nil {
+		in, out := &in.PropagationTimeout, &out.PropagationTimeout
+		*out = new(v1.Duration)
 		**out = **in
 	}
 	return

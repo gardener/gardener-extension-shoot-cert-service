@@ -214,6 +214,11 @@ func (a *actuator) createSeedResources(ctx context.Context, certConfig *service.
 		return err
 	}
 
+	var propagationTimeout string
+	if a.serviceConfig.ACME.PropagationTimeout != nil {
+		propagationTimeout = a.serviceConfig.ACME.PropagationTimeout.Duration.String()
+	}
+
 	certManagementConfig := map[string]interface{}{
 		"replicaCount": controller.GetReplicas(cluster, 1),
 		"defaultIssuer": map[string]interface{}{
@@ -221,7 +226,10 @@ func (a *actuator) createSeedResources(ctx context.Context, certConfig *service.
 			"restricted": *a.serviceConfig.RestrictIssuer,
 			"domains":    cluster.Shoot.Spec.DNS.Domain,
 		},
-		"issuers":             issuers,
+		"issuers": issuers,
+		"configuration": map[string]interface{}{
+			"propagationTimeout": propagationTimeout,
+		},
 		"dnsChallengeOnShoot": dnsChallengeOnShoot,
 		"shootClusterSecret":  v1alpha1.CertManagementKubecfg,
 		"podAnnotations": map[string]interface{}{

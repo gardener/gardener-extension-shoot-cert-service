@@ -26,6 +26,7 @@ import (
 	config "github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/config"
 	healthcheckconfig "github.com/gardener/gardener/extensions/pkg/controller/healthcheck/config"
 	configv1alpha1 "github.com/gardener/gardener/extensions/pkg/controller/healthcheck/config/v1alpha1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	conversion "k8s.io/apimachinery/pkg/conversion"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
@@ -64,6 +65,7 @@ func autoConvert_v1alpha1_ACME_To_config_ACME(in *ACME, out *config.ACME, s conv
 	out.Email = in.Email
 	out.Server = in.Server
 	out.PrivateKey = (*string)(unsafe.Pointer(in.PrivateKey))
+	out.PropagationTimeout = (*v1.Duration)(unsafe.Pointer(in.PropagationTimeout))
 	return nil
 }
 
@@ -76,6 +78,7 @@ func autoConvert_config_ACME_To_v1alpha1_ACME(in *config.ACME, out *ACME, s conv
 	out.Email = in.Email
 	out.Server = in.Server
 	out.PrivateKey = (*string)(unsafe.Pointer(in.PrivateKey))
+	out.PropagationTimeout = (*v1.Duration)(unsafe.Pointer(in.PropagationTimeout))
 	return nil
 }
 

@@ -46,6 +46,7 @@ dnsChallengeOnShoot:
   # dnsClass: my-class
 
 configuration:
+# propagationTimeout: 60s # TTL for DNS01 challenges
   serverPortHttp: 8080
   ingressCertWorkers: 5
   certWorkers: 5

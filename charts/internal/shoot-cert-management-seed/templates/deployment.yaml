@@ -62,6 +62,9 @@ spec:
         - --ingress-cert.targets.pool.size={{ .Values.configuration.ingressCertWorkers }}
         - --service-cert.targets.pool.size={{ .Values.configuration.certWorkers }}
         - --issuer.default.pool.size={{ .Values.configuration.issuerWorkers }}
+        {{- if .Values.configuration.propagationTimeout }}
+        - --propagation-timeout={{ .Values.configuration.propagationTimeout }}
+        {{- end }}
         {{- range $idx, $flag := .Values.additionalConfiguration }}
         - {{ $flag }}
         {{- end }}

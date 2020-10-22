@@ -27,18 +27,28 @@ import (
 type Configuration struct {
 	metav1.TypeMeta `json:",inline"`
 
-	IssuerName     string `json:"issuerName"`
-	RestrictIssuer *bool  `json:"restrictIssuer,omitempty"`
-	ACME           ACME   `json:"acme"`
-	// HealthCheckConfig is the config for the health check controller
+	// IssuerName is the name of the issuer.
+	IssuerName string `json:"issuerName"`
+	// RestrictIssuer restricts the ACME issuer to shoot related domains.
+	// +optional
+	RestrictIssuer *bool `json:"restrictIssuer,omitempty"`
+	// ACME contains ACME related configuration.
+	ACME ACME `json:"acme"`
+	// HealthCheckConfig is the config for the health check controller.
 	// +optional
 	HealthCheckConfig *healthcheckconfigv1alpha1.HealthCheckConfig `json:"healthCheckConfig,omitempty"`
 }
 
 // ACME holds information about the ACME issuer used for the certificate service.
 type ACME struct {
-	Email  string `json:"email"`
+	// Email is the e-mail address used for the ACME issuer.
+	Email string `json:"email"`
+	// Server is the server address used for the ACME issuer.
 	Server string `json:"server"`
+	// PrivateKey is the key used for the ACME issuer.
 	// +optional
 	PrivateKey *string `json:"privateKey,omitempty"`
+	// PropagationTimeout is the timeout for DNS01 challenges.
+	// +optional
+	PropagationTimeout *metav1.Duration `json:"propagationTimeout,omitempty"`
 }

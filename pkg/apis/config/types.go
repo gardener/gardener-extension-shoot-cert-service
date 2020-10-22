@@ -26,16 +26,24 @@ import (
 type Configuration struct {
 	metav1.TypeMeta
 
-	IssuerName     string
+	// IssuerName is the name of the issuer.
+	IssuerName string
+	// RestrictIssuer restricts the ACME issuer to shoot related domains.
 	RestrictIssuer *bool
-	ACME           ACME
-	// HealthCheckConfig is the config for the health check controller
+	// ACME contains ACME related configuration.
+	ACME ACME
+	// HealthCheckConfig is the config for the health check controller.
 	HealthCheckConfig *healthcheckconfig.HealthCheckConfig
 }
 
 // ACME holds information about the ACME issuer used for the certificate service.
 type ACME struct {
-	Email      string
-	Server     string
+	// Email is the e-mail address used for the ACME issuer.
+	Email string
+	// Server is the server address used for the ACME issuer.
+	Server string
+	// PrivateKey is the key used for the ACME issuer.
 	PrivateKey *string
+	// PropagationTimeout is the timeout for DNS01 challenges.
+	PropagationTimeout *metav1.Duration
 }
