@@ -50,6 +50,7 @@ string
 </em>
 </td>
 <td>
+<p>IssuerName is the name of the issuer.</p>
 </td>
 </tr>
 <tr>
@@ -60,6 +61,8 @@ bool
 </em>
 </td>
 <td>
+<em>(Optional)</em>
+<p>RestrictIssuer restricts the ACME issuer to shoot related domains.</p>
 </td>
 </tr>
 <tr>
@@ -72,6 +75,7 @@ ACME
 </em>
 </td>
 <td>
+<p>ACME contains ACME related configuration.</p>
 </td>
 </tr>
 <tr>
@@ -85,7 +89,7 @@ github.com/gardener/gardener/extensions/pkg/controller/healthcheck/config/v1alph
 </td>
 <td>
 <em>(Optional)</em>
-<p>HealthCheckConfig is the config for the health check controller</p>
+<p>HealthCheckConfig is the config for the health check controller.</p>
 </td>
 </tr>
 </tbody>
@@ -115,6 +119,7 @@ string
 </em>
 </td>
 <td>
+<p>Email is the e-mail address used for the ACME issuer.</p>
 </td>
 </tr>
 <tr>
@@ -125,6 +130,7 @@ string
 </em>
 </td>
 <td>
+<p>Server is the server address used for the ACME issuer.</p>
 </td>
 </tr>
 <tr>
@@ -136,6 +142,21 @@ string
 </td>
 <td>
 <em>(Optional)</em>
+<p>PrivateKey is the key used for the ACME issuer.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>propagationTimeout</code></br>
+<em>
+<a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.15/#duration-v1-meta">
+Kubernetes meta/v1.Duration
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>PropagationTimeout is the timeout for DNS01 challenges.</p>
 </td>
 </tr>
 </tbody>
