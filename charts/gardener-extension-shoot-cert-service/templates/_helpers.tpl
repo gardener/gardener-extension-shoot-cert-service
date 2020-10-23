@@ -11,6 +11,9 @@ restrictIssuer: {{ required ".Values.certificateConfig.defaultIssuer.restricted 
 acme:
   email: {{ required ".Values.certificateConfig.defaultIssuer.acme.email is required" .Values.certificateConfig.defaultIssuer.acme.email }}
   server: {{ required ".Values.certificateConfig.defaultIssuer.acme.server is required" .Values.certificateConfig.defaultIssuer.acme.server }}
+  {{- if .Values.certificateConfig.defaultIssuer.acme.propagationTimeout }}
+  propagationTimeout: {{ .Values.certificateConfig.defaultIssuer.acme.propagationTimeout }}
+  {{- end }}
   {{- if .Values.certificateConfig.defaultIssuer.acme.privateKey }}
   privateKey: |
 {{ .Values.certificateConfig.defaultIssuer.acme.privateKey | trim | indent 4 }}
