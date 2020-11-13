@@ -1,10 +1,10 @@
 module github.com/gardener/gardener-extension-shoot-cert-service
 
-go 1.14
+go 1.15
 
 require (
 	github.com/ahmetb/gen-crd-api-reference-docs v0.2.0
-	github.com/gardener/gardener v1.11.1-0.20201005094210-7cbab7acfc16
+	github.com/gardener/gardener v1.12.5
 	github.com/go-logr/logr v0.1.0
 	github.com/gobuffalo/packr/v2 v2.8.0
 	github.com/golang/mock v1.4.4-0.20200731163441-8734ec565a4d

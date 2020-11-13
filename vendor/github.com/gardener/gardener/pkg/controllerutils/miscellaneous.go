@@ -62,10 +62,9 @@ func AddTasks(annotations map[string]string, tasksToAdd ...string) {
 func RemoveTasks(annotations map[string]string, tasksToRemove ...string) {
 	tasks := GetTasks(annotations)
 
-	for i := 0; i < len(tasks); i++ {
+	for i := len(tasks) - 1; i >= 0; i-- {
 		if utils.ValueExists(tasks[i], tasksToRemove) {
-			tasks = append(tasks[:i], tasks[i+1:]...)
-			i--
+			tasks = append((tasks)[:i], (tasks)[i+1:]...)
 		}
 	}
 
@@ -75,8 +74,6 @@ func RemoveTasks(annotations map[string]string, tasksToRemove ...string) {
 // RemoveAllTasks removes the ShootTasks annotation from the passed map.
 func RemoveAllTasks(annotations map[string]string) {
 	delete(annotations, common.ShootTasks)
-	// TODO: remove in a future release
-	delete(annotations, common.ShootTasksDeprecated)
 }
 
 func setTaskAnnotations(annotations map[string]string, tasks []string) {

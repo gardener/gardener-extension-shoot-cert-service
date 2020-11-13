@@ -20,6 +20,10 @@ import (
 	"strings"
 	"time"
 
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/json"
+
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
 	versionutils "github.com/gardener/gardener/pkg/utils/version"
@@ -203,21 +207,12 @@ func TaintsHave(taints []gardencorev1beta1.SeedTaint, key string) bool {
 	return false
 }
 
-// TaintsAreTolerated returns true when all the given taints are tolerated by the given tolerations. It ignores the
-// deprecated taints that were migrated into the new `settings` field in the Seed specification.
+// TaintsAreTolerated returns true when all the given taints are tolerated by the given tolerations.
 func TaintsAreTolerated(taints []gardencorev1beta1.SeedTaint, tolerations []gardencorev1beta1.Toleration) bool {
-	var relevantTaints []gardencorev1beta1.SeedTaint
-	for _, taint := range taints {
-		if taint.Key == gardencorev1beta1.DeprecatedSeedTaintDisableDNS || taint.Key == gardencorev1beta1.DeprecatedSeedTaintInvisible || taint.Key == gardencorev1beta1.DeprecatedSeedTaintDisableCapacityReservation {
-			continue
-		}
-		relevantTaints = append(relevantTaints, taint)
-	}
-
-	if len(relevantTaints) == 0 {
+	if len(taints) == 0 {
 		return true
 	}
-	if len(relevantTaints) > len(tolerations) {
+	if len(taints) > len(tolerations) {
 		return false
 	}
 
@@ -230,7 +225,7 @@ func TaintsAreTolerated(taints []gardencorev1beta1.SeedTaint, tolerations []gard
 		tolerationKeyValues[toleration.Key] = v
 	}
 
-	for _, taint := range relevantTaints {
+	for _, taint := range taints {
 		tolerationValue, ok := tolerationKeyValues[taint.Key]
 		if !ok {
 			return false
@@ -253,6 +248,7 @@ type ShootedSeed struct {
 	BlockCIDRs                     []string
 	ShootDefaults                  *gardencorev1beta1.ShootNetworks
 	Backup                         *gardencorev1beta1.SeedBackup
+	SeedProviderConfig             *runtime.RawExtension
 	NoGardenlet                    bool
 	UseServiceAccountBootstrapping bool
 	WithSecretRef                  bool
@@ -324,6 +320,12 @@ func parseShootedSeed(annotation string) (*ShootedSeed, error) {
 		return nil, err
 	}
 	shootedSeed.Backup = backup
+
+	seedProviderConfig, err := parseShootedSeedProviderConfig(settings)
+	if err != nil {
+		return nil, err
+	}
+	shootedSeed.SeedProviderConfig = seedProviderConfig
 
 	if size, ok := settings["minimumVolumeSize"]; ok {
 		shootedSeed.MinimumVolumeSize = &size
@@ -421,6 +423,46 @@ func parseShootedSeedBackup(settings map[string]string) (*gardencorev1beta1.Seed
 	}
 
 	return backup, nil
+}
+
+func parseShootedSeedProviderConfig(settings map[string]string) (*runtime.RawExtension, error) {
+	// reconstruct providerConfig structure
+	providerConfig := map[string]interface{}{}
+
+	var err error
+	for k, v := range settings {
+		if strings.HasPrefix(k, "providerConfig.") {
+			var value interface{}
+			if strings.HasPrefix(v, `"`) && strings.HasSuffix(v, `"`) {
+				value, err = strconv.Unquote(v)
+				if err != nil {
+					return nil, err
+				}
+			} else if b, err := strconv.ParseBool(v); err == nil {
+				value = b
+			} else if f, err := strconv.ParseFloat(v, 64); err == nil {
+				value = f
+			} else {
+				value = v
+			}
+			if err := unstructured.SetNestedField(providerConfig, value, strings.Split(k, ".")[1:]...); err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	if len(providerConfig) == 0 {
+		return nil, nil
+	}
+
+	jsonStr, err := json.Marshal(providerConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	return &runtime.RawExtension{
+		Raw: jsonStr,
+	}, nil
 }
 
 func parseShootedSeedAPIServer(settings map[string]string) (*ShootedSeedAPIServer, error) {
