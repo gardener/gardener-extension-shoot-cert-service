@@ -1,3 +1,86 @@
-#!/usr/bin/env bash
+#!/usr/bin/env python3
 
-"$(dirname $0)"/../vendor/github.com/gardener/gardener/hack/.ci/component_descriptor "$(dirname $0)"/..
+import dataclasses
+import os
+import yaml
+
+import ci.util
+import gci.componentmodel
+import util
+
+
+component_descriptor_base_path = os.path.abspath(util.check_env('BASE_DEFINITION_PATH'))
+component_descriptor_path = os.path.abspath(util.check_env('COMPONENT_DESCRIPTOR_PATH'))
+repo_path = os.path.abspath(util.check_env('MAIN_REPO_DIR'))
+
+
+def parse_component_descriptor():
+    component_descriptor_v2 = gci.componentmodel.ComponentDescriptor.from_dict(
+        ci.util.parse_yaml_file(component_descriptor_base_path)
+    )
+
+    return component_descriptor_v2
+
+
+def add_image_dependency(component, image_name, image_reference, image_version):
+    resource_access = gci.componentmodel.OciAccess(
+        type=gci.componentmodel.AccessType.OCI_REGISTRY,
+        imageReference=image_reference,
+    )
+    component.resources.append(
+        gci.componentmodel.Resource(
+            name=image_name,
+            version=image_version,
+            type=gci.componentmodel.ResourceType.OCI_IMAGE,
+            access=resource_access,
+        ),
+    )
+
+
+def add_component_dependency(component, dependency_name, dependency_version):
+    component.componentReferences.append(
+        gci.componentmodel.ComponentReference(
+            name=dependency_name,
+            componentName=dependency_name,
+            version=dependency_version,
+            labels=[],
+        )
+    )
+
+
+component_descriptor = parse_component_descriptor()
+own_component = component_descriptor.component
+
+images_list_path = os.path.join(repo_path, 'charts', 'images.yaml')
+
+with open(images_list_path, 'r') as f:
+    images_list_contents = yaml.safe_load(f)
+
+for image in images_list_contents.get('images', []):
+    # use same heuristics as before: if the image's repository starts with
+    # 'eu.gcr.io/gardener-project' assume it's one of our components ...
+    # NOTE: Usually that is 'eu.gcr.io/gardener-project/gardener', but for this
+    # component (or rather: its' dependencies) the image repository is
+    # different.
+    if image['repository'].startswith('eu.gcr.io/gardener-project'):
+        add_component_dependency(
+            component=own_component,
+            dependency_name=image['sourceRepository'],
+            dependency_version=image['tag'],
+        )
+    # ... otherwise assume it's an image dependency
+    else:
+        add_image_dependency(
+            component=own_component,
+            image_name=image['name'],
+            image_reference=image['repository'],
+            image_version=image['tag'],
+        )
+
+# write generated component descriptor back out
+with open(component_descriptor_path, 'w') as f:
+    yaml.dump(
+        data=dataclasses.asdict(component_descriptor),
+        Dumper=gci.componentmodel.EnumValueYamlDumper,
+        stream=f,
+    )
