@@ -40,6 +40,17 @@ certificateConfig:
     #   ...
     #   -----END RSA PRIVATE KEY-----
 
+  #precheckNameservers: 8.8.8.8,8.8.4.4
+
+  #caCertificates: | # optional custom CA certificates when using private ACME provider
+  #  -----BEGIN CERTIFICATE-----
+  #  ...
+  #  -----END CERTIFICATE-----
+  #
+  #  -----BEGIN CERTIFICATE-----
+  #  ...
+  #  -----END CERTIFICATE-----
+
 disableControllers: []
 
 # imageVectorOverwrite: |

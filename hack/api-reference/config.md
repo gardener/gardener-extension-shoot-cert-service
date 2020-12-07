@@ -171,6 +171,31 @@ Kubernetes meta/v1.Duration
 <p>PropagationTimeout is the timeout for DNS01 challenges.</p>
 </td>
 </tr>
+<tr>
+<td>
+<code>precheckNameservers</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>PrecheckNameservers is used to specify a comma-separated list of DNS servers for checking availability for DNS
+challenge before calling ACME CA</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>caCertificates</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>CACertificates are custom root certificates to be made available for the cert-controller-manager</p>
+</td>
+</tr>
 </tbody>
 </table>
 <hr/>

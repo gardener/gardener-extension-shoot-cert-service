@@ -29,6 +29,11 @@ import (
 )
 
 var _ = Describe("Validation", func() {
+	validACME := config.ACME{
+		Email:  "john.doe@example.com",
+		Server: "https://acme-v02.api.letsencrypt.org/directory",
+	}
+
 	DescribeTable("#ValidateConfiguration",
 		func(config config.Configuration, match gomegatypes.GomegaMatcher) {
 			err := validation.ValidateConfiguration(&config)
@@ -67,13 +72,41 @@ var _ = Describe("Validation", func() {
 				"Field": Equal("acme.email"),
 			})),
 		)),
+		Entry("Invalid precheck nameservers and caCertificates", config.Configuration{
+			IssuerName: "gardener",
+			ACME: config.ACME{
+				Email:               validACME.Email,
+				Server:              validACME.Server,
+				PrecheckNameservers: pointer.StringPtr("8.8.8.8,foo.com"),
+				CACertificates:      pointer.StringPtr("blabla"),
+			},
+		}, ConsistOf(
+			PointTo(MatchFields(IgnoreExtras, Fields{
+				"Type":  Equal(field.ErrorTypeInvalid),
+				"Field": Equal("acme.precheckNameservers"),
+			})),
+			PointTo(MatchFields(IgnoreExtras, Fields{
+				"Type":  Equal(field.ErrorTypeInvalid),
+				"Field": Equal("acme.caCertificates"),
+			})),
+		)),
+		Entry("Valid precheck nameservers and caCertificates", config.Configuration{
+			IssuerName: "gardener",
+			ACME: config.ACME{
+				Email:               validACME.Email,
+				Server:              validACME.Server,
+				PrecheckNameservers: pointer.StringPtr("8.8.8.8,172.11.22.253"),
+				CACertificates: pointer.StringPtr(`
+-----BEGIN CERTIFICATE-----
+AAABBBCCCDDD
+-----END CERTIFICATE-----
+`),
+			},
+		}, BeEmpty()),
 		Entry("Invalid DefaultRequestsPerDayQuota", config.Configuration{
 			IssuerName:                 "gardener",
 			DefaultRequestsPerDayQuota: pointer.Int32Ptr(0),
-			ACME: config.ACME{
-				Email:  "john.doe@example.com",
-				Server: "https://acme-v02.api.letsencrypt.org/directory",
-			},
+			ACME:                       validACME,
 		}, ConsistOf(
 			PointTo(MatchFields(IgnoreExtras, Fields{
 				"Type":  Equal(field.ErrorTypeInvalid),
@@ -83,10 +116,7 @@ var _ = Describe("Validation", func() {
 		Entry("Valid configuration", config.Configuration{
 			IssuerName:                 "gardener",
 			DefaultRequestsPerDayQuota: pointer.Int32Ptr(50),
-			ACME: config.ACME{
-				Email:  "john.doe@example.com",
-				Server: "https://acme-v02.api.letsencrypt.org/directory",
-			},
+			ACME:                       validACME,
 		}, BeEmpty()),
 	)
 })

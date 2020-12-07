@@ -242,9 +242,16 @@ func (a *actuator) createSeedResources(ctx context.Context, certConfig *service.
 		},
 	}
 
+	cfg := certManagementConfig["configuration"].(map[string]interface{})
 	if a.serviceConfig.DefaultRequestsPerDayQuota != nil {
-		cfg := certManagementConfig["configuration"].(map[string]interface{})
 		cfg["defaultRequestsPerDayQuota"] = *a.serviceConfig.DefaultRequestsPerDayQuota
+	}
+
+	if a.serviceConfig.ACME.PrecheckNameservers != nil {
+		cfg["precheckNameservers"] = *a.serviceConfig.ACME.PrecheckNameservers
+	}
+	if a.serviceConfig.ACME.CACertificates != nil {
+		cfg["caCertificates"] = *a.serviceConfig.ACME.CACertificates
 	}
 
 	certManagementConfig, err = chart.InjectImages(certManagementConfig, imagevector.ImageVector(), []string{v1alpha1.CertManagementImageName})

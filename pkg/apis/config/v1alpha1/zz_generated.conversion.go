@@ -66,6 +66,8 @@ func autoConvert_v1alpha1_ACME_To_config_ACME(in *ACME, out *config.ACME, s conv
 	out.Server = in.Server
 	out.PrivateKey = (*string)(unsafe.Pointer(in.PrivateKey))
 	out.PropagationTimeout = (*v1.Duration)(unsafe.Pointer(in.PropagationTimeout))
+	out.PrecheckNameservers = (*string)(unsafe.Pointer(in.PrecheckNameservers))
+	out.CACertificates = (*string)(unsafe.Pointer(in.CACertificates))
 	return nil
 }
 
@@ -79,6 +81,8 @@ func autoConvert_config_ACME_To_v1alpha1_ACME(in *config.ACME, out *ACME, s conv
 	out.Server = in.Server
 	out.PrivateKey = (*string)(unsafe.Pointer(in.PrivateKey))
 	out.PropagationTimeout = (*v1.Duration)(unsafe.Pointer(in.PropagationTimeout))
+	out.PrecheckNameservers = (*string)(unsafe.Pointer(in.PrecheckNameservers))
+	out.CACertificates = (*string)(unsafe.Pointer(in.CACertificates))
 	return nil
 }
 

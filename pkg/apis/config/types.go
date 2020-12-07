@@ -48,4 +48,9 @@ type ACME struct {
 	PrivateKey *string
 	// PropagationTimeout is the timeout for DNS01 challenges.
 	PropagationTimeout *metav1.Duration
+	// PrecheckNameservers is used to specify a comma-separated list of DNS servers for checking availability for DNS
+	// challenge before calling ACME CA
+	PrecheckNameservers *string
+	// CACertificates are custom root certificates to be made available for the cert-controller-manager
+	CACertificates *string
 }
