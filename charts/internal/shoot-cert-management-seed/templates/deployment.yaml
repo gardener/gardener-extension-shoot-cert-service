@@ -46,6 +46,9 @@ spec:
         - --source=/etc/shoot-cluster/kubeconfig
         - --issuer.issuer-namespace={{ .Release.Namespace }}
         - --issuer.default-issuer={{ .Values.defaultIssuer.name }}
+        {{- if .Values.configuration.defaultRequestsPerDayQuota }}
+        - --issuer.default-requests-per-day-quota={{ .Values.configuration.defaultRequestsPerDayQuota }}
+        {{- end }}
         {{- if .Values.defaultIssuer.restricted }}
         - --issuer.default-issuer-domain-ranges={{ .Values.defaultIssuer.domains }}
         {{- end }}

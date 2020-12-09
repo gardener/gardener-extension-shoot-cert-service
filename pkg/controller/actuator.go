@@ -242,6 +242,11 @@ func (a *actuator) createSeedResources(ctx context.Context, certConfig *service.
 		},
 	}
 
+	if a.serviceConfig.DefaultRequestsPerDayQuota != nil {
+		cfg := certManagementConfig["configuration"].(map[string]interface{})
+		cfg["defaultRequestsPerDayQuota"] = *a.serviceConfig.DefaultRequestsPerDayQuota
+	}
+
 	certManagementConfig, err = chart.InjectImages(certManagementConfig, imagevector.ImageVector(), []string{v1alpha1.CertManagementImageName})
 	if err != nil {
 		return fmt.Errorf("failed to find image version for %s: %v", v1alpha1.CertManagementImageName, err)

@@ -51,6 +51,7 @@ configuration:
   ingressCertWorkers: 5
   certWorkers: 5
   issuerWorkers: 2
+# defaultRequestsPerDayQuota: 50
 
 additionalConfiguration:
 - --kubeconfig.disable-deploy-crds
