@@ -31,6 +31,10 @@ func ValidateConfiguration(config *config.Configuration) field.ErrorList {
 		allErrs = append(allErrs, field.Required(field.NewPath("issuerName"), "field is required"))
 	}
 
+	if config.DefaultRequestsPerDayQuota != nil && *config.DefaultRequestsPerDayQuota < 1 {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("defaultRequestsPerDayQuota"), *config.DefaultRequestsPerDayQuota, "must be >= 1"))
+	}
+
 	allErrs = append(allErrs, validateACME(&config.ACME, field.NewPath("acme"))...)
 
 	return allErrs

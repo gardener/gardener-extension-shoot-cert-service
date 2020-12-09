@@ -30,6 +30,8 @@ type Configuration struct {
 	IssuerName string
 	// RestrictIssuer restricts the ACME issuer to shoot related domains.
 	RestrictIssuer *bool
+	// DefaultRequestsPerDayQuota restricts the certificate requests per issuer (can be overriden in issuer spec)
+	DefaultRequestsPerDayQuota *int32
 	// ACME contains ACME related configuration.
 	ACME ACME
 	// HealthCheckConfig is the config for the health check controller.

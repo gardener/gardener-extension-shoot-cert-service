@@ -27,6 +27,7 @@ controllers:
     concurrentSyncs: 5
 
 certificateConfig:
+  # defaultRequestsPerDayQuota: 100
   defaultIssuer:
     restricted: true # restrict default issuer to any sub-domain of shoot.spec.dns.domain
     name: gardener

@@ -32,6 +32,9 @@ type Configuration struct {
 	// RestrictIssuer restricts the ACME issuer to shoot related domains.
 	// +optional
 	RestrictIssuer *bool `json:"restrictIssuer,omitempty"`
+	// DefaultRequestsPerDayQuota restricts the certificate requests per issuer (can be overriden in issuer spec)
+	// +optional
+	DefaultRequestsPerDayQuota *int32 `json:"defaultRequestsPerDayQuota,omitempty"`
 	// ACME contains ACME related configuration.
 	ACME ACME `json:"acme"`
 	// HealthCheckConfig is the config for the health check controller.

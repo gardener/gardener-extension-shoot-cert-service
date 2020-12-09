@@ -8,6 +8,9 @@ apiVersion: shoot-cert-service.extensions.config.gardener.cloud/v1alpha1
 kind: Configuration
 issuerName: {{ required ".Values.certificateConfig.defaultIssuer.name is required" .Values.certificateConfig.defaultIssuer.name }}
 restrictIssuer: {{ required ".Values.certificateConfig.defaultIssuer.restricted is required" .Values.certificateConfig.defaultIssuer.restricted }}
+{{- if .Values.certificateConfig.defaultRequestsPerDayQuota }}
+defaultRequestsPerDayQuota: {{ .Values.certificateConfig.defaultRequestsPerDayQuota }}
+{{- end }}
 acme:
   email: {{ required ".Values.certificateConfig.defaultIssuer.acme.email is required" .Values.certificateConfig.defaultIssuer.acme.email }}
   server: {{ required ".Values.certificateConfig.defaultIssuer.acme.server is required" .Values.certificateConfig.defaultIssuer.acme.server }}

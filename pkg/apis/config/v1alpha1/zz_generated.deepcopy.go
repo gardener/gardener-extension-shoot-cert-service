@@ -61,6 +61,11 @@ func (in *Configuration) DeepCopyInto(out *Configuration) {
 		*out = new(bool)
 		**out = **in
 	}
+	if in.DefaultRequestsPerDayQuota != nil {
+		in, out := &in.DefaultRequestsPerDayQuota, &out.DefaultRequestsPerDayQuota
+		*out = new(int32)
+		**out = **in
+	}
 	in.ACME.DeepCopyInto(&out.ACME)
 	if in.HealthCheckConfig != nil {
 		in, out := &in.HealthCheckConfig, &out.HealthCheckConfig

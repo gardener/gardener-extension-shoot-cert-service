@@ -15,6 +15,8 @@
 package validation_test
 
 import (
+	"k8s.io/utils/pointer"
+
 	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/config"
 	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/config/validation"
 
@@ -65,8 +67,22 @@ var _ = Describe("Validation", func() {
 				"Field": Equal("acme.email"),
 			})),
 		)),
+		Entry("Invalid DefaultRequestsPerDayQuota", config.Configuration{
+			IssuerName:                 "gardener",
+			DefaultRequestsPerDayQuota: pointer.Int32Ptr(0),
+			ACME: config.ACME{
+				Email:  "john.doe@example.com",
+				Server: "https://acme-v02.api.letsencrypt.org/directory",
+			},
+		}, ConsistOf(
+			PointTo(MatchFields(IgnoreExtras, Fields{
+				"Type":  Equal(field.ErrorTypeInvalid),
+				"Field": Equal("defaultRequestsPerDayQuota"),
+			})),
+		)),
 		Entry("Valid configuration", config.Configuration{
-			IssuerName: "gardener",
+			IssuerName:                 "gardener",
+			DefaultRequestsPerDayQuota: pointer.Int32Ptr(50),
 			ACME: config.ACME{
 				Email:  "john.doe@example.com",
 				Server: "https://acme-v02.api.letsencrypt.org/directory",

@@ -67,6 +67,18 @@ bool
 </tr>
 <tr>
 <td>
+<code>defaultRequestsPerDayQuota</code></br>
+<em>
+int32
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>DefaultRequestsPerDayQuota restricts the certificate requests per issuer (can be overriden in issuer spec)</p>
+</td>
+</tr>
+<tr>
+<td>
 <code>acme</code></br>
 <em>
 <a href="#shoot-cert-service.extensions.config.gardener.cloud/v1alpha1.ACME">
