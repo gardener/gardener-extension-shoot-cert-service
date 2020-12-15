@@ -39,6 +39,16 @@ func (in *ACME) DeepCopyInto(out *ACME) {
 		*out = new(v1.Duration)
 		**out = **in
 	}
+	if in.PrecheckNameservers != nil {
+		in, out := &in.PrecheckNameservers, &out.PrecheckNameservers
+		*out = new(string)
+		**out = **in
+	}
+	if in.CACertificates != nil {
+		in, out := &in.CACertificates, &out.CACertificates
+		*out = new(string)
+		**out = **in
+	}
 	return
 }
 

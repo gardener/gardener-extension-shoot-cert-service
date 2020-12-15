@@ -21,6 +21,12 @@ acme:
   privateKey: |
 {{ .Values.certificateConfig.defaultIssuer.acme.privateKey | trim | indent 4 }}
   {{- end }}
+  {{- if .Values.certificateConfig.precheckNameservers }}
+  precheckNameservers: {{ .Values.certificateConfig.precheckNameservers }}
+  {{- end }}
+  {{- if .Values.certificateConfig.caCertificates }}
+  caCertificates: {{- toYaml .Values.certificateConfig.caCertificates | indent 2 }}
+  {{- end }}
 {{- end }}
 
 {{-  define "image" -}}

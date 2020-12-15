@@ -15,7 +15,10 @@
 package validation
 
 import (
+	"fmt"
+	"net"
 	"net/url"
+	"strings"
 
 	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/config"
 
@@ -51,5 +54,27 @@ func validateACME(acme *config.ACME, fldPath *field.Path) field.ErrorList {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("email"), acme.Email, "must be a valid mail address"))
 	}
 
+	if acme.PrecheckNameservers != nil {
+		servers := strings.Split(*acme.PrecheckNameservers, ",")
+		if len(servers) == 0 {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("precheckNameservers"), *acme.PrecheckNameservers, "must contain at least one DNS server IP"))
+		}
+		for i, server := range servers {
+			if net.ParseIP(server) == nil {
+				allErrs = append(allErrs, field.Invalid(fldPath.Child("precheckNameservers"), *acme.PrecheckNameservers, fmt.Sprintf("invalid IP for %d. DNS server", i+1)))
+			}
+		}
+	}
+
+	if acme.CACertificates != nil {
+		s := strings.TrimSpace(*acme.CACertificates)
+		if !strings.HasPrefix(s, "-----BEGIN CERTIFICATE-----") || !strings.HasSuffix(s, "-----END CERTIFICATE-----") {
+			short := s
+			if len(short) > 60 {
+				short = s[:30] + "..." + s[len(s)-30:]
+			}
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("caCertificates"), short, "invalid certificate(s), expected PEM format)"))
+		}
+	}
 	return allErrs
 }

@@ -40,6 +40,11 @@ spec:
         - name: shoot-cluster
           mountPath: "/etc/shoot-cluster"
           readOnly: true
+        {{- if .Values.configuration.caCertificates }}
+        - name: ca-certificates
+          mountPath: "/etc/ssl/certs"
+          readOnly: true
+        {{- end }}
         args:
         - --name={{ include "cert-management.fullname" . }}
         - --namespace=kube-system
@@ -51,6 +56,9 @@ spec:
         {{- end }}
         {{- if .Values.defaultIssuer.restricted }}
         - --issuer.default-issuer-domain-ranges={{ .Values.defaultIssuer.domains }}
+        {{- end }}
+        {{- if .Values.configuration.precheckNameservers }}
+        - --issuer.precheck-nameservers={{ .Values.configuration.precheckNameservers }}
         {{- end }}
         {{- if .Values.dnsChallengeOnShoot.enabled }}
         - --dns=/etc/shoot-cluster/kubeconfig
@@ -87,6 +95,11 @@ spec:
       - name: shoot-cluster
         secret:
           secretName: {{ .Values.shootClusterSecret }}
+      {{- if .Values.configuration.caCertificates }}
+      - name: ca-certificates
+        configMap:
+          name: {{ include "cert-management.fullname" . }}-ca-certificates
+      {{- end }}
       serviceAccountName: {{ include "cert-management.name" . }}
       {{- if .Values.priorityClassName }}
       priorityClassName: {{ .Values.priorityClassName }}

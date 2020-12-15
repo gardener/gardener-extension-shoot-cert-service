@@ -54,4 +54,11 @@ type ACME struct {
 	// PropagationTimeout is the timeout for DNS01 challenges.
 	// +optional
 	PropagationTimeout *metav1.Duration `json:"propagationTimeout,omitempty"`
+	// PrecheckNameservers is used to specify a comma-separated list of DNS servers for checking availability for DNS
+	// challenge before calling ACME CA
+	// +optional
+	PrecheckNameservers *string `json:"precheckNameservers,omitempty"`
+	// CACertificates are custom root certificates to be made available for the cert-controller-manager
+	// +optional
+	CACertificates *string `json:"caCertificates,omitempty"`
 }
