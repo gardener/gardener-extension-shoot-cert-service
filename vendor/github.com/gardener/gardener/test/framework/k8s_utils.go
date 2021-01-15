@@ -1,3 +1,17 @@
+// Copyright (c) 2020 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package framework
 
 import (
@@ -21,7 +35,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/rest"
 	k8sretry "k8s.io/client-go/util/retry"
 	"k8s.io/utils/pointer"
@@ -213,18 +226,13 @@ func PodExecByLabel(ctx context.Context, podLabels labels.Selector, podContainer
 }
 
 // DeleteAndWaitForResource deletes a kubernetes resource and waits for its deletion
-func DeleteAndWaitForResource(ctx context.Context, k8sClient kubernetes.Interface, resource runtime.Object, timeout time.Duration) error {
+func DeleteAndWaitForResource(ctx context.Context, k8sClient kubernetes.Interface, resource client.Object, timeout time.Duration) error {
 	if err := kutil.DeleteObject(ctx, k8sClient.DirectClient(), resource); err != nil {
 		return err
 	}
 	return retry.UntilTimeout(ctx, 5*time.Second, timeout, func(ctx context.Context) (done bool, err error) {
-		newResource := resource.DeepCopyObject()
-		key, err := client.ObjectKeyFromObject(resource)
-		if err != nil {
-			return retry.MinorError(err)
-		}
-
-		if err := k8sClient.DirectClient().Get(ctx, key, newResource); err != nil {
+		newResource := resource.DeepCopyObject().(client.Object)
+		if err := k8sClient.DirectClient().Get(ctx, client.ObjectKeyFromObject(resource), newResource); err != nil {
 			if apierrors.IsNotFound(err) {
 				return retry.Ok()
 			}
@@ -403,7 +411,6 @@ func WaitUntilPodIsRunning(ctx context.Context, log *logrus.Logger, podName, pod
 			return retry.SevereError(err)
 		}
 		if !health.IsPodReady(pod) {
-			log.Infof("Waiting for %s to be ready!!", podName)
 			log.Infof("Waiting for %s to be ready!!", podName)
 			return retry.MinorError(fmt.Errorf(`pod "%s/%s" is not ready: %v`, podNamespace, podName, err))
 		}

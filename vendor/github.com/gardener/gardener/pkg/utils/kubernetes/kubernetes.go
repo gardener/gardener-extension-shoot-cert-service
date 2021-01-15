@@ -20,17 +20,25 @@ import (
 	"fmt"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
+	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/gardener/gardener/pkg/utils/retry"
 
+	"github.com/sirupsen/logrus"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/duration"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	corev1client "k8s.io/client-go/kubernetes/typed/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
 // TruncateLabelValue truncates a string at 63 characters so it's suitable for a label value.
@@ -103,6 +111,7 @@ func Key(namespaceOrName string, nameOpt ...string) client.ObjectKey {
 }
 
 // KeyFromObject obtains the client.ObjectKey from the given metav1.Object.
+// Deprecated: use client.ObjectKeyFromObject instead.
 func KeyFromObject(obj metav1.Object) client.ObjectKey {
 	return Key(obj.GetNamespace(), obj.GetName())
 }
@@ -125,12 +134,8 @@ func ObjectMetaFromKey(key client.ObjectKey) metav1.ObjectMeta {
 
 // WaitUntilResourceDeleted deletes the given resource and then waits until it has been deleted. It respects the
 // given interval and timeout.
-func WaitUntilResourceDeleted(ctx context.Context, c client.Client, obj runtime.Object, interval time.Duration) error {
-	key, err := client.ObjectKeyFromObject(obj)
-	if err != nil {
-		return err
-	}
-
+func WaitUntilResourceDeleted(ctx context.Context, c client.Client, obj client.Object, interval time.Duration) error {
+	key := client.ObjectKeyFromObject(obj)
 	return retry.Until(ctx, interval, func(ctx context.Context) (done bool, err error) {
 		if err := c.Get(ctx, key, obj); err != nil {
 			if apierrors.IsNotFound(err) {
@@ -144,17 +149,17 @@ func WaitUntilResourceDeleted(ctx context.Context, c client.Client, obj runtime.
 
 // WaitUntilResourcesDeleted waits until the given resources are gone.
 // It respects the given interval and timeout.
-func WaitUntilResourcesDeleted(ctx context.Context, c client.Client, obj runtime.Object, interval time.Duration, opts ...client.ListOption) error {
+func WaitUntilResourcesDeleted(ctx context.Context, c client.Client, list client.ObjectList, interval time.Duration, opts ...client.ListOption) error {
 	return retry.Until(ctx, interval, func(ctx context.Context) (done bool, err error) {
-		if err := c.List(ctx, obj, opts...); err != nil {
+		if err := c.List(ctx, list, opts...); err != nil {
 			return retry.SevereError(err)
 		}
-		if meta.LenList(obj) == 0 {
+		if meta.LenList(list) == 0 {
 			return retry.Ok()
 		}
 		var remainingItems []string
 		acc := meta.NewAccessor()
-		if err := meta.EachListItem(obj, func(remainingObj runtime.Object) error {
+		if err := meta.EachListItem(list, func(remainingObj runtime.Object) error {
 			name, err := acc.Name(remainingObj)
 			if err != nil {
 				return err
@@ -170,11 +175,47 @@ func WaitUntilResourcesDeleted(ctx context.Context, c client.Client, obj runtime
 
 // WaitUntilResourceDeletedWithDefaults deletes the given resource and then waits until it has been deleted. It
 // uses a default interval and timeout
-func WaitUntilResourceDeletedWithDefaults(ctx context.Context, c client.Client, obj runtime.Object) error {
+func WaitUntilResourceDeletedWithDefaults(ctx context.Context, c client.Client, obj client.Object) error {
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Minute)
 	defer cancel()
 
 	return WaitUntilResourceDeleted(ctx, c, obj, 5*time.Second)
+}
+
+// WaitUntilLoadBalancerIsReady waits until the given external load balancer has
+// been created (i.e., its ingress information has been updated in the service status).
+func WaitUntilLoadBalancerIsReady(ctx context.Context, kubeClient kubernetes.Interface, namespace, name string, timeout time.Duration, logger *logrus.Entry) (string, error) {
+	var loadBalancerIngress string
+	if err := retry.UntilTimeout(ctx, 5*time.Second, timeout, func(ctx context.Context) (done bool, err error) {
+		loadBalancerIngress, err = GetLoadBalancerIngress(ctx, kubeClient.Client(), namespace, name)
+		if err != nil {
+			logger.Infof("Waiting until the %s service deployed is ready...", name)
+			// TODO(AC): This is a quite optimistic check / we should differentiate here
+			return retry.MinorError(fmt.Errorf("%s service deployed is not ready: %v", name, err))
+		}
+		return retry.Ok()
+	}); err != nil {
+		fieldSelector := client.MatchingFields{
+			"involvedObject.kind":      "Service",
+			"involvedObject.name":      name,
+			"involvedObject.namespace": namespace,
+			"type":                     corev1.EventTypeWarning,
+		}
+		eventList := &corev1.EventList{}
+		if err2 := kubeClient.DirectClient().List(ctx, eventList, fieldSelector); err2 != nil {
+			return "", fmt.Errorf("error '%v' occured while fetching more details on error '%v'", err2, err)
+		}
+
+		if len(eventList.Items) > 0 {
+			eventsErrorMessage := buildEventsErrorMessage(eventList.Items)
+			errorMessage := err.Error() + "\n\n" + eventsErrorMessage
+			return "", errors.New(errorMessage)
+		}
+
+		return "", err
+	}
+
+	return loadBalancerIngress, nil
 }
 
 // GetLoadBalancerIngress takes a context, a client, a namespace and a service name. It queries for a load balancer's technical name
@@ -206,7 +247,7 @@ func GetLoadBalancerIngress(ctx context.Context, client client.Client, namespace
 // LookupObject retrieves an obj for the given object key dealing with potential stale cache that still does not contain the obj.
 // It first tries to retrieve the obj using the given cached client.
 // If the object key is not found, then it does live lookup from the API server using the given apiReader.
-func LookupObject(ctx context.Context, c client.Client, apiReader client.Reader, key client.ObjectKey, obj runtime.Object) error {
+func LookupObject(ctx context.Context, c client.Client, apiReader client.Reader, key client.ObjectKey, obj client.Object) error {
 	err := c.Get(ctx, key, obj)
 	if err == nil {
 		return nil
@@ -274,4 +315,225 @@ func ReconcileServicePorts(existingPorts []corev1.ServicePort, desiredPorts []co
 	}
 
 	return out
+}
+
+func buildEventsErrorMessage(events []corev1.Event) string {
+	sortByLastTimestamp := func(o1, o2 controllerutil.Object) bool {
+		obj1, ok1 := o1.(*corev1.Event)
+		obj2, ok2 := o2.(*corev1.Event)
+
+		if !ok1 || !ok2 {
+			return false
+		}
+
+		return obj1.LastTimestamp.Time.Before(obj2.LastTimestamp.Time)
+	}
+
+	list := &corev1.EventList{Items: events}
+	SortBy(sortByLastTimestamp).Sort(list)
+	events = list.Items
+
+	const eventsLimit = 2
+	if len(events) > eventsLimit {
+		events = events[len(events)-eventsLimit:]
+	}
+
+	var builder strings.Builder
+	fmt.Fprintf(&builder, "-> Events:")
+	for _, event := range events {
+		var interval string
+		if event.Count > 1 {
+			interval = fmt.Sprintf("%s ago (x%d over %s)", translateTimestampSince(event.LastTimestamp), event.Count, translateTimestampSince(event.FirstTimestamp))
+		} else {
+			interval = fmt.Sprintf("%s ago", translateTimestampSince(event.FirstTimestamp))
+			if event.FirstTimestamp.IsZero() {
+				interval = fmt.Sprintf("%s ago", translateMicroTimestampSince(event.EventTime))
+			}
+		}
+		source := event.Source.Component
+		if source == "" {
+			source = event.ReportingController
+		}
+
+		fmt.Fprintf(&builder, "\n* %s reported %s: %s", source, interval, event.Message)
+	}
+
+	return builder.String()
+}
+
+// translateTimestampSince returns the elapsed time since timestamp in
+// human-readable approximation.
+func translateTimestampSince(timestamp metav1.Time) string {
+	if timestamp.IsZero() {
+		return "<unknown>"
+	}
+
+	return duration.HumanDuration(time.Since(timestamp.Time))
+}
+
+// translateMicroTimestampSince returns the elapsed time since timestamp in
+// human-readable approximation.
+func translateMicroTimestampSince(timestamp metav1.MicroTime) string {
+	if timestamp.IsZero() {
+		return "<unknown>"
+	}
+
+	return duration.HumanDuration(time.Since(timestamp.Time))
+}
+
+// MergeOwnerReferences merges the newReferences with the list of existing references.
+func MergeOwnerReferences(references []metav1.OwnerReference, newReferences ...metav1.OwnerReference) []metav1.OwnerReference {
+	uids := make(map[types.UID]struct{})
+	for _, reference := range references {
+		uids[reference.UID] = struct{}{}
+	}
+
+	for _, newReference := range newReferences {
+		if _, ok := uids[newReference.UID]; !ok {
+			references = append(references, newReference)
+		}
+	}
+
+	return references
+}
+
+// OwnedBy checks if the given object's owner reference contains an entry with the provided attributes.
+func OwnedBy(obj runtime.Object, apiVersion, kind, name string, uid types.UID) bool {
+	acc, err := meta.Accessor(obj)
+	if err != nil {
+		return false
+	}
+
+	for _, ownerReference := range acc.GetOwnerReferences() {
+		return ownerReference.APIVersion == apiVersion &&
+			ownerReference.Kind == kind &&
+			ownerReference.Name == name &&
+			ownerReference.UID == uid
+	}
+
+	return false
+}
+
+// NewestObject returns the most recently created object based on the provided list object type. If a filter function
+// is provided then it will be applied for each object right after listing all objects. If no object remains then nil
+// is returned. The Items field in the list object will be populated with the result returned from the server after
+// applying the filter function (if provided).
+func NewestObject(ctx context.Context, c client.Client, listObj client.ObjectList, filterFn func(runtime.Object) bool, listOpts ...client.ListOption) (runtime.Object, error) {
+	if err := c.List(ctx, listObj, listOpts...); err != nil {
+		return nil, err
+	}
+
+	if filterFn != nil {
+		var items []runtime.Object
+
+		if err := meta.EachListItem(listObj, func(obj runtime.Object) error {
+			if filterFn(obj) {
+				items = append(items, obj)
+			}
+			return nil
+		}); err != nil {
+			return nil, err
+		}
+
+		if err := meta.SetList(listObj, items); err != nil {
+			return nil, err
+		}
+	}
+
+	if meta.LenList(listObj) == 0 {
+		return nil, nil
+	}
+
+	ByCreationTimestamp().Sort(listObj)
+
+	items, err := meta.ExtractList(listObj)
+	if err != nil {
+		return nil, err
+	}
+
+	return items[meta.LenList(listObj)-1], nil
+}
+
+// NewestPodForDeployment returns the most recently created Pod object for the given deployment.
+func NewestPodForDeployment(ctx context.Context, c client.Client, deployment *appsv1.Deployment) (*corev1.Pod, error) {
+	listOpts := []client.ListOption{client.InNamespace(deployment.Namespace)}
+	if deployment.Spec.Selector != nil {
+		listOpts = append(listOpts, client.MatchingLabels(deployment.Spec.Selector.MatchLabels))
+	}
+
+	replicaSet, err := NewestObject(
+		ctx,
+		c,
+		&appsv1.ReplicaSetList{},
+		func(obj runtime.Object) bool {
+			return OwnedBy(obj, appsv1.SchemeGroupVersion.String(), "Deployment", deployment.Name, deployment.UID)
+		},
+		listOpts...,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if replicaSet == nil {
+		return nil, nil
+	}
+
+	newestReplicaSet, ok := replicaSet.(*appsv1.ReplicaSet)
+	if !ok {
+		return nil, fmt.Errorf("object is not of type *appsv1.ReplicaSet but %T", replicaSet)
+	}
+
+	pod, err := NewestObject(
+		ctx,
+		c,
+		&corev1.PodList{},
+		func(obj runtime.Object) bool {
+			return OwnedBy(obj, appsv1.SchemeGroupVersion.String(), "ReplicaSet", newestReplicaSet.Name, newestReplicaSet.UID)
+		},
+		listOpts...,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if pod == nil {
+		return nil, nil
+	}
+
+	newestPod, ok := pod.(*corev1.Pod)
+	if !ok {
+		return nil, fmt.Errorf("object is not of type *corev1.Pod but %T", pod)
+	}
+
+	return newestPod, nil
+}
+
+// MostRecentCompleteLogs returns the logs of the pod/container in case it is not running. If the pod/container is
+// running then the logs of the previous pod/container are being returned.
+func MostRecentCompleteLogs(
+	ctx context.Context,
+	podInterface corev1client.PodInterface,
+	pod *corev1.Pod,
+	containerName string,
+	tailLines *int64,
+) (
+	string,
+	error,
+) {
+	previousLogs := false
+	for _, containerStatus := range pod.Status.ContainerStatuses {
+		if containerName == "" || containerStatus.Name == containerName {
+			previousLogs = containerStatus.State.Running != nil
+			break
+		}
+	}
+
+	logs, err := kubernetes.GetPodLogs(ctx, podInterface, pod.Name, &corev1.PodLogOptions{
+		Container: containerName,
+		TailLines: tailLines,
+		Previous:  previousLogs,
+	})
+	if err != nil {
+		return "", err
+	}
+
+	return string(logs), nil
 }

@@ -159,8 +159,12 @@ const (
 
 	// DeprecatedShootUID is an annotation key for the shoot namespace in the seed cluster,
 	// which value will be the value of `shoot.status.uid`
-	// +deprecated: Use `Cluster` resource instead.
+	//
+	// Deprecated: Use the `Cluster` resource or the annotation key from the new API group `ShootUID`.
 	DeprecatedShootUID = "shoot.garden.sapcloud.io/uid"
+	// ShootUID is an annotation key for the shoot namespace in the seed cluster,
+	// which value will be the value of `shoot.status.uid`
+	ShootUID = "shoot.gardener.cloud/uid"
 
 	// SeedResourceManagerClass is the resource-class managed by the Gardener-Resource-Manager
 	// instance in the garden namespace on the seeds.
@@ -316,4 +320,11 @@ const (
 
 	// ClusterIdentity is a constant equal to the name and data key (that stores the identity) of the cluster-identity ConfigMap
 	ClusterIdentity = "cluster-identity"
+
+	// SeedNginxIngressClass defines the ingress class for the seed nginx ingress controller
+	SeedNginxIngressClass = "nginx-gardener"
+	// IngressKindNginx defines nginx as kind as managed Seed ingress
+	IngressKindNginx = "nginx"
+	// ShootNginxIngressClass defines the ingress class for the seed nginx ingress controller
+	ShootNginxIngressClass = "nginx"
 )
