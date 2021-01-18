@@ -16,35 +16,37 @@ package app
 
 import (
 	"context"
+	"fmt"
 
 	serviceinstall "github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/service/install"
 	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/controller"
 	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/controller/healthcheck"
 
 	extensionscontroller "github.com/gardener/gardener/extensions/pkg/controller"
-	controllercmd "github.com/gardener/gardener/extensions/pkg/controller/cmd"
 	"github.com/gardener/gardener/extensions/pkg/util"
-	"github.com/gardener/gardener/pkg/client/kubernetes/utils"
 
 	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
 	componentbaseconfig "k8s.io/component-base/config"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
 
 // NewServiceControllerCommand creates a new command that is used to start the Certificate Service controller.
-func NewServiceControllerCommand(ctx context.Context) *cobra.Command {
+func NewServiceControllerCommand() *cobra.Command {
 	options := NewOptions()
 
 	cmd := &cobra.Command{
-		Use:   "shoot-cert-service-controller-manager",
-		Short: "Shoot Cert Service Controller manages components which provide certificate services.",
+		Use:           "shoot-cert-service-controller-manager",
+		Short:         "Shoot Cert Service Controller manages components which provide certificate services.",
+		SilenceErrors: true,
 
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := options.optionAggregator.Complete(); err != nil {
-				controllercmd.LogErrAndExit(err, "Error completing options")
+				return fmt.Errorf("error completing options: %s", err)
 			}
-			options.run(ctx)
+			cmd.SilenceUsage = true
+			return options.run(cmd.Context())
 		},
 	}
 
@@ -53,7 +55,7 @@ func NewServiceControllerCommand(ctx context.Context) *cobra.Command {
 	return cmd
 }
 
-func (o *Options) run(ctx context.Context) {
+func (o *Options) run(ctx context.Context) error {
 	// TODO: Make these flags configurable via command line parameters or component config file.
 	util.ApplyClientConnectionConfigurationToRESTConfig(&componentbaseconfig.ClientConnectionConfiguration{
 		QPS:   100.0,
@@ -61,21 +63,23 @@ func (o *Options) run(ctx context.Context) {
 	}, o.restOptions.Completed().Config)
 
 	mgrOpts := o.managerOptions.Completed().Options()
-	mgrOpts.NewClient = utils.NewClientFuncWithDisabledCacheFor(
+
+	mgrOpts.ClientDisableCacheFor = []client.Object{
 		&corev1.Secret{},    // applied for ManagedResources
 		&corev1.ConfigMap{}, // applied for monitoring config
-	)
+	}
+
 	mgr, err := manager.New(o.restOptions.Completed().Config, mgrOpts)
 	if err != nil {
-		controllercmd.LogErrAndExit(err, "Could not instantiate controller-manager")
+		return fmt.Errorf("could not instantiate controller-manager: %s", err)
 	}
 
 	if err := extensionscontroller.AddToScheme(mgr.GetScheme()); err != nil {
-		controllercmd.LogErrAndExit(err, "Could not update manager scheme")
+		return fmt.Errorf("could not update manager scheme: %s", err)
 	}
 
 	if err := serviceinstall.AddToScheme(mgr.GetScheme()); err != nil {
-		controllercmd.LogErrAndExit(err, "Could not update manager scheme")
+		return fmt.Errorf("could not update manager scheme: %s", err)
 	}
 
 	ctrlConfig := o.certOptions.Completed()
@@ -86,10 +90,12 @@ func (o *Options) run(ctx context.Context) {
 	o.reconcileOptions.Completed().Apply(&controller.DefaultAddOptions.IgnoreOperationAnnotation)
 
 	if err := o.controllerSwitches.Completed().AddToManager(mgr); err != nil {
-		controllercmd.LogErrAndExit(err, "Could not add controllers to manager")
+		return fmt.Errorf("could not add controllers to manager: %s", err)
 	}
 
-	if err := mgr.Start(ctx.Done()); err != nil {
-		controllercmd.LogErrAndExit(err, "Error running manager")
+	if err := mgr.Start(ctx); err != nil {
+		return fmt.Errorf("error running manager: %s", err)
 	}
+
+	return nil
 }

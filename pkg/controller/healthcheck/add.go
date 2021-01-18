@@ -17,6 +17,8 @@ package healthcheck
 import (
 	"time"
 
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	certv1alpha1 "github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/service/v1alpha1"
 	certcontroller "github.com/gardener/gardener-extension-shoot-cert-service/pkg/controller"
 
@@ -49,7 +51,7 @@ func RegisterHealthChecks(mgr manager.Manager, opts healthcheck.DefaultAddArgs) 
 	return healthcheck.DefaultRegistration(
 		certcontroller.Type,
 		extensionsv1alpha1.SchemeGroupVersion.WithKind(extensionsv1alpha1.ExtensionResource),
-		func() runtime.Object { return &extensionsv1alpha1.ExtensionList{} },
+		func() client.ObjectList { return &extensionsv1alpha1.ExtensionList{} },
 		func() extensionsv1alpha1.Object { return &extensionsv1alpha1.Extension{} },
 		mgr,
 		opts,
