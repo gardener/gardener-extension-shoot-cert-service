@@ -27,7 +27,11 @@ import (
 )
 
 var _ = Describe("Validation", func() {
-	DescribeTable("#ValidateCertConfiga",
+	var (
+		zero = 0
+		one  = 1
+	)
+	DescribeTable("#ValidateCertConfig",
 		func(config service.CertConfig, match gomegatypes.GomegaMatcher) {
 			err := validation.ValidateCertConfig(&config)
 			Expect(err).To(match)
@@ -80,6 +84,31 @@ var _ = Describe("Validation", func() {
 					Name:   "issuer",
 					Server: "https://acme-v02.api.letsencrypt.org/directory",
 					Email:  "john@example.com",
+				},
+			},
+		}, BeEmpty()),
+		Entry("Invalid request quota", service.CertConfig{
+			Issuers: []service.IssuerConfig{
+				{
+					Name:                "issuer",
+					Server:              "https://acme-v02.api.letsencrypt.org/directory",
+					Email:               "john@example.com",
+					RequestsPerDayQuota: &zero,
+				},
+			},
+		}, ConsistOf(
+			PointTo(MatchFields(IgnoreExtras, Fields{
+				"Type":  Equal(field.ErrorTypeInvalid),
+				"Field": Equal("issuers[0].requestsPerDayQuota"),
+			})),
+		)),
+		Entry("Valid configuration with request quota", service.CertConfig{
+			Issuers: []service.IssuerConfig{
+				{
+					Name:                "issuer",
+					Server:              "https://acme-v02.api.letsencrypt.org/directory",
+					Email:               "john@example.com",
+					RequestsPerDayQuota: &one,
 				},
 			},
 		}, BeEmpty()),

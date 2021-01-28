@@ -118,6 +118,7 @@ func autoConvert_v1alpha1_IssuerConfig_To_service_IssuerConfig(in *IssuerConfig,
 	out.Name = in.Name
 	out.Server = in.Server
 	out.Email = in.Email
+	out.RequestsPerDayQuota = (*int)(unsafe.Pointer(in.RequestsPerDayQuota))
 	return nil
 }
 
@@ -130,6 +131,7 @@ func autoConvert_service_IssuerConfig_To_v1alpha1_IssuerConfig(in *service.Issue
 	out.Name = in.Name
 	out.Server = in.Server
 	out.Email = in.Email
+	out.RequestsPerDayQuota = (*int)(unsafe.Pointer(in.RequestsPerDayQuota))
 	return nil
 }
 

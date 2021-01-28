@@ -37,6 +37,8 @@ type IssuerConfig struct {
 	Name   string
 	Server string
 	Email  string
+	// RequestsPerDayQuota sets quota for certificate requests per day
+	RequestsPerDayQuota *int
 }
 
 // DNSChallengeOnShoot is used to create DNS01 challenges on shoot and not on seed.

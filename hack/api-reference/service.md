@@ -169,6 +169,18 @@ string
 <td>
 </td>
 </tr>
+<tr>
+<td>
+<code>requestsPerDayQuota</code></br>
+<em>
+int
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>RequestsPerDayQuota sets quota for certificate requests per day</p>
+</td>
+</tr>
 </tbody>
 </table>
 <hr/>

@@ -148,7 +148,7 @@ func (a *actuator) InjectScheme(scheme *runtime.Scheme) error {
 }
 
 func (a *actuator) createIssuerValues(issuers ...service.IssuerConfig) ([]map[string]interface{}, error) {
-	issuerVal := []map[string]interface{}{
+	issuerList := []map[string]interface{}{
 		{
 			"name": a.serviceConfig.IssuerName,
 			"acme": map[string]interface{}{
@@ -163,16 +163,21 @@ func (a *actuator) createIssuerValues(issuers ...service.IssuerConfig) ([]map[st
 		if issuer.Name == a.serviceConfig.IssuerName {
 			continue
 		}
-		issuerVal = append(issuerVal, map[string]interface{}{
+
+		issuerValues := map[string]interface{}{
 			"name": issuer.Name,
 			"acme": map[string]interface{}{
 				"email":  issuer.Email,
 				"server": issuer.Server,
 			},
-		})
+		}
+		if issuer.RequestsPerDayQuota != nil {
+			issuerValues["requestsPerDayQuota"] = *issuer.RequestsPerDayQuota
+		}
+		issuerList = append(issuerList, issuerValues)
 	}
 
-	return issuerVal, nil
+	return issuerList, nil
 }
 
 func createDNSChallengeOnShootValues(cfg *service.DNSChallengeOnShoot) (map[string]interface{}, error) {

@@ -54,6 +54,9 @@ func validateIssuers(issuers []service.IssuerConfig, fldPath *field.Path) field.
 		if !utils.TestEmail(issuer.Email) {
 			allErrs = append(allErrs, field.Invalid(indexFldPath.Child("email"), issuer.Email, "must a valid email address"))
 		}
+		if issuer.RequestsPerDayQuota != nil && *issuer.RequestsPerDayQuota < 1 {
+			allErrs = append(allErrs, field.Invalid(indexFldPath.Child("requestsPerDayQuota"), *issuer.RequestsPerDayQuota, "must be >= 1"))
+		}
 		names.Insert(issuer.Name)
 	}
 
