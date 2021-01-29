@@ -14,7 +14,6 @@ To let the `Shoot-Cert-Service` operate properly, you need to have:
 ### ControllerRegistration
 An example of a `ControllerRegistration` for the `Shoot-Cert-Service` can be found here: https://github.com/gardener/gardener-extension-shoot-cert-service/blob/master/example/controller-registration.yaml
 
-### Configuration
 The `ControllerRegistration` contains a Helm chart which eventually deploy the `Shoot-Cert-Service` to seed clusters. It offers some configuration options, mainly to set up a default issuer for shoot clusters. With a default issuer, pre-existing Let's Encrypt accounts can be used and shared with shoot clusters (See "One Account or Many?" of the [Integration Guide](https://letsencrypt.org/docs/integration-guide/)).
 
 > Please keep the Let's Encrypt [Rate Limits](https://letsencrypt.org/docs/rate-limits/) in mind when using this shared account model. Depending on the amount of shoots and domains it is recommended to use an account with increased rate limits.
@@ -25,7 +24,7 @@ kind: ControllerRegistration
 ...
   values:
     certificateConfig:
-        defaultIssuer:
+      defaultIssuer:
         acme:
             email: foo@example.com
             privateKey: |-
@@ -34,7 +33,24 @@ kind: ControllerRegistration
             -----END RSA PRIVATE KEY-----
             server: https://acme-v02.api.letsencrypt.org/directory
         name: default-issuer
+#       restricted: true # restrict default issuer to any sub-domain of shoot.spec.dns.domain
+
+#    defaultRequestsPerDayQuota: 50
+
+#    precheckNameservers: 8.8.8.8,8.8.4.4
+
+#    caCertificates: | # optional custom CA certificates when using private ACME provider
+#    -----BEGIN CERTIFICATE-----
+#    ...
+#    -----END CERTIFICATE-----
+#
+#    -----BEGIN CERTIFICATE-----
+#    ...
+#    -----END CERTIFICATE-----
+
 ```
+
+#### Enablement
 
 If the `Shoot-Cert-Service` should be enabled for every shoot cluster in your Gardener managed environment, you need to globally enable it in the `ControllerRegistration`:
 ```yaml

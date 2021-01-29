@@ -289,6 +289,30 @@ spec:
 | `metadata.annotations[cert.gardener.cloud/issuer]` |  Optional and may be specified if the certificate is request for a [custom domains](#Custom-Domains).  |
 | `metadata.annotations[dns.gardener.cloud/dnsnames]` | Specifies for which domains the certificate request will be created. The first entry is always taken to fill the `Common Name` field and must therefore comply with the [64 character](#Character-Restrictions) limit.  |
 
+## Quotas
+
+For security reasons there may be a default quota on the certificate requests per day set globally in the controller
+registration of the shoot-cert-service. 
+
+The default quota only applies if there is no explicit quota defined for the issuer itself with the field
+`requestsPerDayQuota`, e.g.:
+
+```yaml
+kind: Shoot
+...
+spec:
+  extensions:
+  - type: shoot-cert-service
+    providerConfig:
+      apiVersion: service.cert.extensions.gardener.cloud/v1alpha1
+      kind: CertConfig
+      issuers:
+        - email: your-email@example.com
+          name: custom-issuer # issuer name must be specified in every custom issuer request, must not be "garden"
+          server: 'https://acme-v02.api.letsencrypt.org/directory'
+          requestsPerDayQuota: 10
+```
+
 <style>
 #body-inner blockquote {
     border: 0;

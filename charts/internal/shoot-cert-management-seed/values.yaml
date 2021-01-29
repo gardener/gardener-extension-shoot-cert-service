@@ -39,6 +39,7 @@ issuers:
   #   -----BEGIN BEGIN RSA PRIVATE KEY-----
   #   ...
   #   -----END RSA PRIVATE KEY-----
+# requestsPerDayQuota: 10
 
 dnsChallengeOnShoot:
   enabled: false

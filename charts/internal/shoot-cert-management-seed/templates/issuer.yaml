@@ -26,4 +26,7 @@ spec:
 {{- if not .acme.privateKey }}
     autoRegistration: true
 {{- end }}
+{{- if .requestsPerDayQuota }}
+  requestsPerDayQuota: {{ .requestsPerDayQuota }}
+{{- end }}
 {{- end }}
