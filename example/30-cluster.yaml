@@ -21,6 +21,17 @@ spec:
         domain: foo.bar.example.com
       kubernetes:
         version: 1.18.2
+      resources:
+        - name: issuer-custom-eab-hmackey
+          resourceRef:
+            apiVersion: v1
+            kind: Secret
+            name: some-issuer-custom-eab-hmackey
+        - name: custom-privatekey
+          resourceRef:
+            apiVersion: v1
+            kind: Secret
+            name: some-custom-privatekey
     status:
       lastOperation:
         state: Succeeded

@@ -22,6 +22,7 @@ import (
 	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/controller"
 	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/controller/healthcheck"
 
+	certv1alpha1 "github.com/gardener/cert-management/pkg/apis/cert/v1alpha1"
 	extensionscontroller "github.com/gardener/gardener/extensions/pkg/controller"
 	"github.com/gardener/gardener/extensions/pkg/util"
 
@@ -79,6 +80,10 @@ func (o *Options) run(ctx context.Context) error {
 	}
 
 	if err := serviceinstall.AddToScheme(mgr.GetScheme()); err != nil {
+		return fmt.Errorf("could not update manager scheme: %s", err)
+	}
+
+	if err := certv1alpha1.AddToScheme(mgr.GetScheme()); err != nil {
 		return fmt.Errorf("could not update manager scheme: %s", err)
 	}
 

@@ -39,6 +39,16 @@ issuers:
   #   -----BEGIN BEGIN RSA PRIVATE KEY-----
   #   ...
   #   -----END RSA PRIVATE KEY-----
+  # privateKeySecretName: my-private-key-secret # alternative to embedded key
+  # externalAccountBinding:
+  #   keyID: aabbccddeeff
+  #   keySecretName: my-eab-key-secret
+  # skipDNSChallengeValidation: true
+  # domains:
+  #   include:
+  #   - my.domain.com
+  #   exclude:
+  #   - private.my.domain.com
 # requestsPerDayQuota: 10
 
 dnsChallengeOnShoot:

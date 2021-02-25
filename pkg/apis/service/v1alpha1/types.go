@@ -68,6 +68,25 @@ type IssuerConfig struct {
 	// RequestsPerDayQuota sets quota for certificate requests per day
 	// +optional
 	RequestsPerDayQuota *int `json:"requestsPerDayQuota,omitempty"`
+
+	// PrivateKeySecretName is the secret name for the ACME private key.
+	// If not provided, a new private key is generated.
+	// +optional
+	PrivateKeySecretName *string `json:"privateKeySecretName,omitempty"`
+
+	// ACMEExternalAccountBinding is a reference to a CA external account of the ACME server.
+	// +optional
+	ExternalAccountBinding *ACMEExternalAccountBinding `json:"externalAccountBinding,omitempty"`
+
+	// SkipDNSChallengeValidation marks that this issuer does not validate DNS challenges.
+	// In this case no DNS entries/records are created for a DNS Challenge and DNS propagation
+	// is not checked.
+	// +optional
+	SkipDNSChallengeValidation *bool `json:"skipDNSChallengeValidation,omitempty"`
+
+	// Domains optionally specifies domains allowed or forbidden for certificate requests
+	// +optional
+	Domains *DNSSelection `json:"domains,omitempty"`
 }
 
 // DNSChallengeOnShoot is used to create DNS01 challenges on shoot and not on seed.
@@ -76,4 +95,26 @@ type DNSChallengeOnShoot struct {
 	Namespace string `json:"namespace"`
 	// +optional
 	DNSClass *string `json:"dnsClass,omitempty"`
+}
+
+// DNSSelection is a restriction on the domains to be allowed or forbidden for certificate requests
+type DNSSelection struct {
+	// Include are domain names for which certificate requests are allowed (including any subdomains)
+	//+ optional
+	Include []string `json:"include,omitempty"`
+	// Exclude are domain names for which certificate requests are forbidden (including any subdomains)
+	// + optional
+	Exclude []string `json:"exclude,omitempty"`
+}
+
+// ACMEExternalAccountBinding is a reference to a CA external account of the ACME server.
+type ACMEExternalAccountBinding struct {
+	// keyID is the ID of the CA key that the External Account is bound to.
+	KeyID string `json:"keyID"`
+
+	// KeySecretName is the secret name of the
+	// Secret which holds the symmetric MAC key of the External Account Binding with data key 'hmacKey'.
+	// The secret key stored in the Secret **must** be un-padded, base64 URL
+	// encoded data.
+	KeySecretName string `json:"keySecretName"`
 }
