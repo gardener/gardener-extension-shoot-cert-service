@@ -4,6 +4,7 @@ go 1.15
 
 require (
 	github.com/ahmetb/gen-crd-api-reference-docs v0.2.0
+	github.com/gardener/cert-management v0.5.0
 	github.com/gardener/gardener v1.15.1-0.20210115062544-6dc08568692a
 	github.com/go-logr/logr v0.3.0
 	github.com/gobuffalo/packr/v2 v2.8.0

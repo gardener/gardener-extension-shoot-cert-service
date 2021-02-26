@@ -59,8 +59,9 @@ func RegisterHealthChecks(mgr manager.Manager, opts healthcheck.DefaultAddArgs) 
 		[]healthcheck.ConditionTypeToHealthCheck{
 			{
 				ConditionType: string(gardencorev1beta1.ShootControlPlaneHealthy),
-				HealthCheck:   general.CheckManagedResource(certv1alpha1.CertManagementResourceNameSeed),
-				PreCheckFunc:  preCheckFunc,
+				HealthCheck: NewIssuerWrapperHealthChecker(
+					general.CheckManagedResource(certv1alpha1.CertManagementResourceNameSeed)),
+				PreCheckFunc: preCheckFunc,
 			},
 			{
 				ConditionType: string(gardencorev1beta1.ShootSystemComponentsHealthy),

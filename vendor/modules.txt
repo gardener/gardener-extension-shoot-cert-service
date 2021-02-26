@@ -31,7 +31,7 @@ github.com/dsnet/compress/bzip2/internal/sais
 github.com/dsnet/compress/internal
 github.com/dsnet/compress/internal/errors
 github.com/dsnet/compress/internal/prefix
-# github.com/emicklei/go-restful v2.9.6+incompatible
+# github.com/emicklei/go-restful v2.11.1+incompatible
 github.com/emicklei/go-restful
 github.com/emicklei/go-restful/log
 # github.com/evanphx/json-patch v4.9.0+incompatible
@@ -40,9 +40,25 @@ github.com/evanphx/json-patch
 github.com/fatih/color
 # github.com/fsnotify/fsnotify v1.4.9
 github.com/fsnotify/fsnotify
+# github.com/gardener/cert-management v0.5.0
+## explicit
+github.com/gardener/cert-management/pkg/apis/cert
+github.com/gardener/cert-management/pkg/apis/cert/v1alpha1
+# github.com/gardener/controller-manager-library v0.2.1-0.20201009144316-bfa57b871e60
+github.com/gardener/controller-manager-library/pkg/ctxutil
+github.com/gardener/controller-manager-library/pkg/errors
+github.com/gardener/controller-manager-library/pkg/fieldpath
+github.com/gardener/controller-manager-library/pkg/informerfactories
+github.com/gardener/controller-manager-library/pkg/kutil
+github.com/gardener/controller-manager-library/pkg/logger
+github.com/gardener/controller-manager-library/pkg/resources
+github.com/gardener/controller-manager-library/pkg/resources/abstract
+github.com/gardener/controller-manager-library/pkg/resources/conditions
+github.com/gardener/controller-manager-library/pkg/resources/errors
+github.com/gardener/controller-manager-library/pkg/utils
 # github.com/gardener/etcd-druid v0.3.0
 github.com/gardener/etcd-druid/api/v1alpha1
-# github.com/gardener/external-dns-management v0.7.18
+# github.com/gardener/external-dns-management v0.7.21
 github.com/gardener/external-dns-management/pkg/apis/dns
 github.com/gardener/external-dns-management/pkg/apis/dns/v1alpha1
 # github.com/gardener/gardener v1.15.1-0.20210115062544-6dc08568692a
@@ -145,7 +161,7 @@ github.com/go-logr/zapr
 github.com/go-openapi/jsonpointer
 # github.com/go-openapi/jsonreference v0.19.3
 github.com/go-openapi/jsonreference
-# github.com/go-openapi/spec v0.19.3
+# github.com/go-openapi/spec v0.19.4
 github.com/go-openapi/spec
 # github.com/go-openapi/swag v0.19.5
 github.com/go-openapi/swag
@@ -206,7 +222,7 @@ github.com/gogo/protobuf/protoc-gen-gogo/plugin
 github.com/gogo/protobuf/sortkeys
 github.com/gogo/protobuf/vanity
 github.com/gogo/protobuf/vanity/command
-# github.com/golang/groupcache v0.0.0-20191227052852-215e87163ea7
+# github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e
 github.com/golang/groupcache/lru
 # github.com/golang/mock v1.4.4-0.20200731163441-8734ec565a4d
 ## explicit
@@ -288,7 +304,7 @@ github.com/matttproud/golang_protobuf_extensions/pbutil
 github.com/mholt/archiver
 # github.com/mitchellh/copystructure v1.0.0
 github.com/mitchellh/copystructure
-# github.com/mitchellh/mapstructure v1.1.2
+# github.com/mitchellh/mapstructure v1.3.3
 github.com/mitchellh/mapstructure
 # github.com/mitchellh/reflectwalk v1.0.1
 github.com/mitchellh/reflectwalk
@@ -350,7 +366,7 @@ github.com/onsi/gomega/matchers/support/goraph/edge
 github.com/onsi/gomega/matchers/support/goraph/node
 github.com/onsi/gomega/matchers/support/goraph/util
 github.com/onsi/gomega/types
-# github.com/pelletier/go-toml v1.6.0
+# github.com/pelletier/go-toml v1.7.0
 github.com/pelletier/go-toml
 # github.com/pierrec/lz4 v2.5.2+incompatible
 ## explicit
@@ -460,11 +476,12 @@ golang.org/x/net/http/httpguts
 golang.org/x/net/http2
 golang.org/x/net/http2/hpack
 golang.org/x/net/idna
-# golang.org/x/oauth2 v0.0.0-20191202225959-858c2ad4c8b6
+# golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
 golang.org/x/oauth2
 golang.org/x/oauth2/internal
 # golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
 golang.org/x/sync/errgroup
+golang.org/x/sync/semaphore
 # golang.org/x/sys v0.0.0-20201112073958-5cba982894dd
 golang.org/x/sys/cpu
 golang.org/x/sys/internal/unsafeheader
@@ -511,7 +528,7 @@ golang.org/x/tools/internal/gopathwalk
 golang.org/x/tools/internal/imports
 golang.org/x/tools/internal/packagesinternal
 golang.org/x/tools/internal/typesinternal
-# golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543
+# golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
 golang.org/x/xerrors
 golang.org/x/xerrors/internal
 # gomodules.xyz/jsonpatch/v2 v2.1.0
@@ -557,7 +574,7 @@ google.golang.org/protobuf/types/known/durationpb
 google.golang.org/protobuf/types/known/timestamppb
 # gopkg.in/inf.v0 v0.9.1
 gopkg.in/inf.v0
-# gopkg.in/ini.v1 v1.51.0
+# gopkg.in/ini.v1 v1.57.0
 gopkg.in/ini.v1
 # gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7
 gopkg.in/tomb.v1

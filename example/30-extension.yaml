@@ -13,6 +13,20 @@ spec:
     - name: custom
       server: https://acme-v02.api.letsencrypt.org/directory
       email: john.doe@example.com
+      privateKeySecretName: custom-privatekey # referenced resource, the private key must be stored in the secret at `data.privateKey`
+    - name: custom-eab
+      server: https://acme.my-eab-ca-provider.com/v2/acme/directory/
+      email: john.doe@example.com
+      externalAccountBinding:
+        keyID: aaaabbbbccccddddeee
+        keySecretName: issuer-custom-eab-hmackey # referenced resource, the "MAC key" must be stored in the secret at `data.hmacKey`
+      skipDNSChallengeValidation: true
+      domains:
+        include:
+          - sub1.my-domain.com
+          - sub2.my-domain.com
+        exclude:
+          - private.sub1.my-domain.com
     dnsChallengeOnShoot: # controls where the DNS entries for DNS01 challenges are created
       enabled: false
       # namespace: kube-system

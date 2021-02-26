@@ -19,22 +19,23 @@ import (
 
 	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/service"
 
+	"github.com/gardener/gardener/extensions/pkg/controller"
 	"github.com/gardener/gardener/pkg/utils"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
 // ValidateCertConfig validates the passed configuration instance.
-func ValidateCertConfig(config *service.CertConfig) field.ErrorList {
+func ValidateCertConfig(config *service.CertConfig, cluster *controller.Cluster) field.ErrorList {
 	allErrs := field.ErrorList{}
-	allErrs = append(allErrs, validateIssuers(config.Issuers, field.NewPath("issuers"))...)
+	allErrs = append(allErrs, validateIssuers(cluster, config.Issuers, field.NewPath("issuers"))...)
 
 	allErrs = append(allErrs, validateDNSChallengeOnShoot(config.DNSChallengeOnShoot, field.NewPath("dnsChallengeOnShoot"))...)
 
 	return allErrs
 }
 
-func validateIssuers(issuers []service.IssuerConfig, fldPath *field.Path) field.ErrorList {
+func validateIssuers(cluster *controller.Cluster, issuers []service.IssuerConfig, fldPath *field.Path) field.ErrorList {
 	var (
 		allErrs = field.ErrorList{}
 		names   = sets.NewString()
@@ -54,6 +55,29 @@ func validateIssuers(issuers []service.IssuerConfig, fldPath *field.Path) field.
 		if !utils.TestEmail(issuer.Email) {
 			allErrs = append(allErrs, field.Invalid(indexFldPath.Child("email"), issuer.Email, "must a valid email address"))
 		}
+		if issuer.PrivateKeySecretName != nil {
+			detail := checkReferencedResource(cluster, *issuer.PrivateKeySecretName)
+			if detail != "" {
+				allErrs = append(allErrs, field.Invalid(indexFldPath.Child("privateKeySecretName"),
+					*issuer.PrivateKeySecretName, detail))
+			}
+		}
+		if issuer.ExternalAccountBinding != nil {
+			if issuer.ExternalAccountBinding.KeyID == "" {
+				allErrs = append(allErrs, field.Invalid(indexFldPath.Child("externalAccountBinding").Child("keyID"),
+					issuer.ExternalAccountBinding.KeyID, "must not be empty"))
+			}
+			detail := checkReferencedResource(cluster, issuer.ExternalAccountBinding.KeySecretName)
+			if detail != "" {
+				allErrs = append(allErrs, field.Invalid(indexFldPath.Child("externalAccountBinding").Child("keySecretName"),
+					issuer.ExternalAccountBinding.KeySecretName, detail))
+			}
+		}
+		if issuer.SkipDNSChallengeValidation != nil && *issuer.SkipDNSChallengeValidation &&
+			issuer.ExternalAccountBinding == nil {
+			allErrs = append(allErrs, field.Invalid(indexFldPath.Child("skipDNSChallengeValidation"),
+				*issuer.SkipDNSChallengeValidation, "is only allowed for external account binding"))
+		}
 		if issuer.RequestsPerDayQuota != nil && *issuer.RequestsPerDayQuota < 1 {
 			allErrs = append(allErrs, field.Invalid(indexFldPath.Child("requestsPerDayQuota"), *issuer.RequestsPerDayQuota, "must be >= 1"))
 		}
@@ -61,6 +85,21 @@ func validateIssuers(issuers []service.IssuerConfig, fldPath *field.Path) field.
 	}
 
 	return allErrs
+}
+
+func checkReferencedResource(cluster *controller.Cluster, refname string) string {
+	if cluster.Shoot == nil {
+		return "shoot spec not set"
+	}
+	for _, ref := range cluster.Shoot.Spec.Resources {
+		if ref.Name == refname {
+			if ref.ResourceRef.Kind != "Secret" {
+				return "expected secret resource"
+			}
+			return "" // ok
+		}
+	}
+	return "referenced resource not found"
 }
 
 func validateDNSChallengeOnShoot(dnsChallenge *service.DNSChallengeOnShoot, fldPath *field.Path) field.ErrorList {

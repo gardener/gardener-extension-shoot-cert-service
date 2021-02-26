@@ -41,3 +41,12 @@ rules:
   - get
   - update
   - patch
+- apiGroups:
+    - coordination.k8s.io
+  resources:
+    - leases
+  verbs:
+    - create
+    - update
+    - get
+    - watch

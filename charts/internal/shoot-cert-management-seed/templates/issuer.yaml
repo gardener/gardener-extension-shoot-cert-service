@@ -21,10 +21,35 @@ spec:
     server: {{ .acme.server }}
     email: {{ .acme.email }}
     privateKeySecretRef:
+{{- if .acme.privateKeySecretName }}
+      name: {{ .acme.privateKeySecretName }}
+{{- else }}
       name: extension-shoot-cert-service-issuer-{{ .name }}
+{{- end }}
       namespace: {{ $.Release.Namespace }}
-{{- if not .acme.privateKey }}
+{{- if and (not .acme.privateKey) (not .acme.privateKeySecretName) }}
     autoRegistration: true
+{{- end }}
+{{- if .acme.externalAccountBinding }}
+    externalAccountBinding:
+      keyID: {{ .acme.externalAccountBinding.keyID }}
+      keySecretRef:
+        name: {{ .acme.externalAccountBinding.keySecretName }}
+        namespace: {{ $.Release.Namespace }}
+{{- end }}
+{{- if .acme.skipDNSChallengeValidation }}
+    skipDNSChallengeValidation: {{ .acme.skipDNSChallengeValidation }}
+{{- end }}
+{{- if .acme.domains }}
+    domains:
+{{- if .acme.domains.include }}
+      include:
+{{ toYaml .acme.domains.include | indent 6 }}
+{{- end }}
+{{- if .acme.domains.exclude }}
+      exclude:
+{{ toYaml .acme.domains.exclude | indent 6 }}
+{{- end }}
 {{- end }}
 {{- if .requestsPerDayQuota }}
   requestsPerDayQuota: {{ .requestsPerDayQuota }}

@@ -20,6 +20,7 @@ import (
 	"path/filepath"
 	"time"
 
+	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
 	"github.com/gardener/gardener/pkg/utils"
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
@@ -85,7 +86,7 @@ func (a *actuator) Reconcile(ctx context.Context, ex *extensionsv1alpha1.Extensi
 		if _, _, err := a.decoder.Decode(ex.Spec.ProviderConfig.Raw, nil, certConfig); err != nil {
 			return fmt.Errorf("failed to decode provider config: %+v", err)
 		}
-		if errs := validation.ValidateCertConfig(certConfig); len(errs) > 0 {
+		if errs := validation.ValidateCertConfig(certConfig, cluster); len(errs) > 0 {
 			return errs.ToAggregate()
 		}
 	}
@@ -147,7 +148,7 @@ func (a *actuator) InjectScheme(scheme *runtime.Scheme) error {
 	return nil
 }
 
-func (a *actuator) createIssuerValues(issuers ...service.IssuerConfig) ([]map[string]interface{}, error) {
+func (a *actuator) createIssuerValues(cluster *controller.Cluster, issuers ...service.IssuerConfig) ([]map[string]interface{}, error) {
 	issuerList := []map[string]interface{}{
 		{
 			"name": a.serviceConfig.IssuerName,
@@ -164,12 +165,39 @@ func (a *actuator) createIssuerValues(issuers ...service.IssuerConfig) ([]map[st
 			continue
 		}
 
+		acme := map[string]interface{}{
+			"email":  issuer.Email,
+			"server": issuer.Server,
+		}
 		issuerValues := map[string]interface{}{
 			"name": issuer.Name,
-			"acme": map[string]interface{}{
-				"email":  issuer.Email,
-				"server": issuer.Server,
-			},
+			"acme": acme,
+		}
+		if issuer.PrivateKeySecretName != nil {
+			secretName := a.lookupReferencedSecret(cluster, *issuer.PrivateKeySecretName)
+			acme["privateKeySecretName"] = secretName
+		}
+		if issuer.ExternalAccountBinding != nil {
+			secretName := a.lookupReferencedSecret(cluster, issuer.ExternalAccountBinding.KeySecretName)
+			acme["externalAccountBinding"] = map[string]interface{}{
+				"keyID":         issuer.ExternalAccountBinding.KeyID,
+				"keySecretName": secretName,
+			}
+		}
+		if issuer.SkipDNSChallengeValidation != nil && *issuer.SkipDNSChallengeValidation {
+			acme["skipDNSChallengeValidation"] = true
+		}
+		if issuer.Domains != nil && len(issuer.Domains.Include)+len(issuer.Domains.Exclude) > 0 {
+			selection := map[string]interface{}{}
+			if issuer.Domains.Include != nil {
+				selection["include"] = issuer.Domains.Include
+			}
+			if issuer.Domains.Exclude != nil {
+				selection["exclude"] = issuer.Domains.Exclude
+			}
+			if len(selection) > 0 {
+				acme["domains"] = selection
+			}
 		}
 		if issuer.RequestsPerDayQuota != nil {
 			issuerValues["requestsPerDayQuota"] = *issuer.RequestsPerDayQuota
@@ -178,6 +206,22 @@ func (a *actuator) createIssuerValues(issuers ...service.IssuerConfig) ([]map[st
 	}
 
 	return issuerList, nil
+}
+
+func (a *actuator) lookupReferencedSecret(cluster *controller.Cluster, refname string) string {
+	if cluster.Shoot != nil {
+		for _, ref := range cluster.Shoot.Spec.Resources {
+			if ref.Name == refname {
+				if ref.ResourceRef.Kind != "Secret" {
+					a.logger.Info("invalid referenced resource, expected kind Secret, not %s: %s", ref.ResourceRef.Kind, refname)
+					return "invalid-kind"
+				}
+				return v1beta1constants.ReferencedResourcesPrefix + ref.ResourceRef.Name
+			}
+		}
+	}
+	a.logger.Info("invalid referenced resource: %s", refname)
+	return "invalid"
 }
 
 func createDNSChallengeOnShootValues(cfg *service.DNSChallengeOnShoot) (map[string]interface{}, error) {
@@ -204,7 +248,7 @@ func createDNSChallengeOnShootValues(cfg *service.DNSChallengeOnShoot) (map[stri
 }
 
 func (a *actuator) createSeedResources(ctx context.Context, certConfig *service.CertConfig, cluster *controller.Cluster, namespace string) error {
-	issuers, err := a.createIssuerValues(certConfig.Issuers...)
+	issuers, err := a.createIssuerValues(cluster, certConfig.Issuers...)
 	if err != nil {
 		return err
 	}

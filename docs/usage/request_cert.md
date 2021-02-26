@@ -112,6 +112,13 @@ spec:
         - email: your-email@example.com
           name: custom-issuer # issuer name must be specified in every custom issuer request, must not be "garden"
           server: 'https://acme-v02.api.letsencrypt.org/directory'
+          privateKeySecretName: my-privatekey # referenced resource, the private key must be stored in the secret at `data.privateKey`
+  resources:
+  - name: my-privatekey
+    resourceRef:
+      apiVersion: v1
+      kind: Secret
+      name: custom-issuer-privatekey # name of secret in Gardener project
 ```
 
 ## Examples
