@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cert-controller-manager-observability-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    extensions.gardener.cloud/configuration: monitoring
+data:
+  scrape_config: |
+    - job_name: cert-controller-manager
+      scheme: http
+      honor_labels: false
+      kubernetes_sd_configs:
+      - role: endpoints
+        namespaces:
+          names: [{{ .Release.Namespace }}]
+      relabel_configs:
+      - source_labels:
+        - __meta_kubernetes_service_name
+        - __meta_kubernetes_endpoint_port_name
+        action: keep
+        regex: cert-controller-manager;metrics
+      # common metrics
+      - action: labelmap
+        regex: __meta_kubernetes_service_label_(.+)
+      - source_labels: [ __meta_kubernetes_pod_name ]
+        target_label: pod
+      metric_relabel_configs:
+      - source_labels: [ __name__ ]
+        regex: ^(cert_management_.+)$
+        action: keep
+
+  dashboard_operators: |
+    cert-controller-manager-dashboard.json: |-
+{{- .Files.Get "cert-dashboard.json" | nindent 6 }}
+
+  dashboard_users: |
+    cert-controller-manager-dashboard.json: |-
+{{- .Files.Get "cert-dashboard.json" | nindent 6 }}
