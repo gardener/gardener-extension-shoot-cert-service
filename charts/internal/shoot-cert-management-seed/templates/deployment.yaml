@@ -82,7 +82,8 @@ spec:
         - {{ $flag }}
         {{- end }}
         ports:
-        - containerPort: {{ .Values.configuration.serverPortHttp }}
+        - name: metrics
+          containerPort: {{ .Values.configuration.serverPortHttp }}
           protocol: TCP
         livenessProbe:
           httpGet:
