@@ -144,7 +144,7 @@ func (a *actuator) InjectClient(client client.Client) error {
 
 // InjectScheme injects the given scheme into the reconciler.
 func (a *actuator) InjectScheme(scheme *runtime.Scheme) error {
-	a.decoder = serializer.NewCodecFactory(scheme).UniversalDecoder()
+	a.decoder = serializer.NewCodecFactory(scheme, serializer.EnableStrict).UniversalDecoder()
 	return nil
 }
 
