@@ -123,7 +123,7 @@ func (a *actuator) Restore(ctx context.Context, ex *extensionsv1alpha1.Extension
 // Migrate the Extension resource.
 func (a *actuator) Migrate(ctx context.Context, ex *extensionsv1alpha1.Extension) error {
 	// Keep objects for shoot managed resources so that they are not deleted from the shoot during the migration
-	if err := managedresources.KeepManagedResourceObjects(ctx, a.client, ex.GetNamespace(), v1alpha1.CertManagementResourceNameShoot, true); err != nil {
+	if err := managedresources.SetKeepObjects(ctx, a.client, ex.GetNamespace(), v1alpha1.CertManagementResourceNameShoot, true); err != nil {
 		return err
 	}
 
@@ -346,24 +346,24 @@ func (a *actuator) deleteSeedResources(ctx context.Context, namespace string) er
 	if err := a.client.Delete(ctx, secret); client.IgnoreNotFound(err) != nil {
 		return err
 	}
-	if err := managedresources.DeleteManagedResource(ctx, a.client, namespace, v1alpha1.CertManagementResourceNameSeed); err != nil {
+	if err := managedresources.Delete(ctx, a.client, namespace, v1alpha1.CertManagementResourceNameSeed, false); err != nil {
 		return err
 	}
 
 	timeoutCtx, cancel := context.WithTimeout(ctx, 2*time.Minute)
 	defer cancel()
-	return managedresources.WaitUntilManagedResourceDeleted(timeoutCtx, a.client, namespace, v1alpha1.CertManagementResourceNameSeed)
+	return managedresources.WaitUntilDeleted(timeoutCtx, a.client, namespace, v1alpha1.CertManagementResourceNameSeed)
 }
 
 func (a *actuator) deleteShootResources(ctx context.Context, namespace string) error {
 	a.logger.Info("Deleting managed resource for shoot", "namespace", namespace)
-	if err := managedresources.DeleteManagedResource(ctx, a.client, namespace, v1alpha1.CertManagementResourceNameShoot); err != nil {
+	if err := managedresources.Delete(ctx, a.client, namespace, v1alpha1.CertManagementResourceNameShoot, false); err != nil {
 		return err
 	}
 
 	timeoutCtx, cancel := context.WithTimeout(ctx, 2*time.Minute)
 	defer cancel()
-	return managedresources.WaitUntilManagedResourceDeleted(timeoutCtx, a.client, namespace, v1alpha1.CertManagementResourceNameShoot)
+	return managedresources.WaitUntilDeleted(timeoutCtx, a.client, namespace, v1alpha1.CertManagementResourceNameShoot)
 }
 
 func (a *actuator) createKubeconfigForCertManagement(ctx context.Context, namespace string) (*corev1.Secret, error) {
@@ -382,7 +382,10 @@ func (a *actuator) createManagedResource(ctx context.Context, namespace, name, c
 		return err
 	}
 
-	return managedresources.CreateManagedResource(ctx, a.client, namespace, name, class, chartName, chart.Manifest(), false, injectedLabels, false)
+	data := map[string][]byte{chartName: chart.Manifest()}
+	keepObjects := false
+	forceOverwriteAnnotations := false
+	return managedresources.Create(ctx, a.client, namespace, name, false, class, data, &keepObjects, injectedLabels, &forceOverwriteAnnotations)
 }
 
 func (a *actuator) updateStatus(ctx context.Context, ex *extensionsv1alpha1.Extension, certConfig *service.CertConfig) error {
