@@ -90,7 +90,6 @@ func (healthChecker *IssuerWrapperHealthChecker) Check(ctx context.Context, requ
 		return &healthcheck.SingleCheckResult{
 			Status: gardencorev1beta1.ConditionFalse,
 			Detail: fmt.Sprintf("%d/%d issuers not ready: %v", len(notReady), len(list.Items), notReady),
-			Reason: "issuer not ready",
 		}, nil
 	}
 
