@@ -22,6 +22,7 @@ import (
 	"strings"
 
 	"github.com/gardener/gardener/pkg/apis/core"
+	gardencorev1alpha1 "github.com/gardener/gardener/pkg/apis/core/v1alpha1"
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
 	gardencorev1beta1helper "github.com/gardener/gardener/pkg/apis/core/v1beta1/helper"
@@ -66,6 +67,9 @@ func NewBuilder() *Builder {
 		},
 		shootSecretFunc: func(context.Context, string, string) (*corev1.Secret, error) {
 			return nil, fmt.Errorf("shoot secret object is required but not set")
+		},
+		exposureClassFunc: func(context.Context, string) (*gardencorev1alpha1.ExposureClass, error) {
+			return nil, nil
 		},
 	}
 }
@@ -148,6 +152,19 @@ func (b *Builder) WithShootSecretFromReader(c client.Reader) *Builder {
 	return b
 }
 
+// WithExposureClassFromReader sets the exposureClassFunc attribute at the Builder after fetching
+// the exposure class with the given API reader.
+func (b *Builder) WithExposureClassFromReader(c client.Reader) *Builder {
+	b.exposureClassFunc = func(ctx context.Context, exposureClassName string) (*gardencorev1alpha1.ExposureClass, error) {
+		exposureClass := &gardencorev1alpha1.ExposureClass{}
+		if err := c.Get(ctx, kutil.Key(exposureClassName), exposureClass); err != nil {
+			return nil, err
+		}
+		return exposureClass, nil
+	}
+	return b
+}
+
 // WithDisableDNS sets the disableDNS attribute at the Builder.
 func (b *Builder) WithDisableDNS(disableDNS bool) *Builder {
 	b.disableDNS = disableDNS
@@ -194,6 +211,14 @@ func (b *Builder) Build(ctx context.Context, c client.Client) (*Shoot, error) {
 	}
 	shoot.Secret = secret
 
+	if shootObject.Spec.ExposureClassName != nil {
+		exposureClass, err := b.exposureClassFunc(ctx, *shootObject.Spec.ExposureClassName)
+		if err != nil {
+			return nil, err
+		}
+		shoot.ExposureClass = exposureClass
+	}
+
 	shoot.DisableDNS = b.disableDNS
 	shoot.HibernationEnabled = gardencorev1beta1helper.HibernationIsEnabled(shootObject)
 	shoot.SeedNamespace = ComputeTechnicalID(b.projectName, shootObject)
@@ -236,6 +261,17 @@ func (b *Builder) Build(ctx context.Context, c client.Client) (*Shoot, error) {
 		shoot.KonnectivityTunnelEnabled = konnectivityTunnelEnabled
 	}
 
+	shoot.ReversedVPNEnabled = gardenletfeatures.FeatureGate.Enabled(features.ReversedVPN) && kubernetesVersionGeq118
+	if reversedVPNEnabled, err := strconv.ParseBool(shoot.Info.Annotations[v1beta1constants.AnnotationReversedVPN]); err == nil && kubernetesVersionGeq118 {
+		if gardenletfeatures.FeatureGate.Enabled(features.APIServerSNI) {
+			shoot.ReversedVPNEnabled = reversedVPNEnabled
+		}
+	}
+
+	if shoot.ReversedVPNEnabled {
+		shoot.KonnectivityTunnelEnabled = false
+	}
+
 	needsClusterAutoscaler, err := gardencorev1beta1helper.ShootWantsClusterAutoscaler(shootObject)
 	if err != nil {
 		return nil, err
@@ -254,10 +290,10 @@ func (b *Builder) Build(ctx context.Context, c client.Client) (*Shoot, error) {
 	return shoot, nil
 }
 
-// GetExtensionComponents returns a list of component.DeployMigrateWaiters of all extension components.
-func (s *Shoot) GetExtensionComponents() []component.DeployMigrateWaiter {
+// GetExtensionComponentsForMigration returns a list of component.DeployMigrateWaiters of extension components that
+// should be migrated by the shoot controller.
+func (s *Shoot) GetExtensionComponentsForMigration() []component.DeployMigrateWaiter {
 	return []component.DeployMigrateWaiter{
-		s.Components.Extensions.BackupEntry,
 		s.Components.Extensions.ContainerRuntime,
 		s.Components.Extensions.ControlPlane,
 		s.Components.Extensions.ControlPlaneExposure,
@@ -493,7 +529,7 @@ func ToNetworks(s *gardencorev1beta1.Shoot) (*Networks, error) {
 
 // ComputeRequiredExtensions compute the extension kind/type combinations that are required for the
 // reconciliation flow.
-func ComputeRequiredExtensions(shoot *gardencorev1beta1.Shoot, seed *gardencorev1beta1.Seed, controllerRegistrationList []*gardencorev1beta1.ControllerRegistration, internalDomain, externalDomain *garden.Domain) sets.String {
+func ComputeRequiredExtensions(shoot *gardencorev1beta1.Shoot, seed *gardencorev1beta1.Seed, controllerRegistrationList *gardencorev1beta1.ControllerRegistrationList, internalDomain, externalDomain *garden.Domain) sets.String {
 	requiredExtensions := sets.NewString()
 
 	if seed.Spec.Backup != nil {
@@ -550,7 +586,7 @@ func ComputeRequiredExtensions(shoot *gardencorev1beta1.Shoot, seed *gardencorev
 		}
 	}
 
-	for _, controllerRegistration := range controllerRegistrationList {
+	for _, controllerRegistration := range controllerRegistrationList.Items {
 		for _, resource := range controllerRegistration.Spec.Resources {
 			id := gardenerextensions.Id(extensionsv1alpha1.ExtensionResource, resource.Type)
 			if resource.Kind == extensionsv1alpha1.ExtensionResource && resource.GloballyEnabled != nil && *resource.GloballyEnabled && !disabledExtensions.Has(id) {

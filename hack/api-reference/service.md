@@ -70,6 +70,21 @@ DNSChallengeOnShoot
 If not specified the DNS01 challenges are written to the control plane namespace on the seed.</p>
 </td>
 </tr>
+<tr>
+<td>
+<code>shootIssuers</code></br>
+<em>
+<a href="#service.cert.extensions.gardener.cloud/v1alpha1.ShootIssuers">
+ShootIssuers
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>ShootIssuers contains enablement for issuers on shoot cluster
+If specified, it overwrites the ShootIssuers settings of the service configuration.</p>
+</td>
+</tr>
 </tbody>
 </table>
 <h3 id="service.cert.extensions.gardener.cloud/v1alpha1.ACMEExternalAccountBinding">ACMEExternalAccountBinding
@@ -319,6 +334,36 @@ DNSSelection
 <td>
 <em>(Optional)</em>
 <p>Domains optionally specifies domains allowed or forbidden for certificate requests</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="service.cert.extensions.gardener.cloud/v1alpha1.ShootIssuers">ShootIssuers
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#service.cert.extensions.gardener.cloud/v1alpha1.CertConfig">CertConfig</a>)
+</p>
+<p>
+<p>ShootIssuers holds enablement for issuers on shoot cluster
+If specified, it overwrites the ShootIssuers settings of the service configuration.</p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>enabled</code></br>
+<em>
+bool
+</em>
+</td>
+<td>
 </td>
 </tr>
 </tbody>

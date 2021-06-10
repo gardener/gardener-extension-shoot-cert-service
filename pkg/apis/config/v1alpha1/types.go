@@ -35,11 +35,19 @@ type Configuration struct {
 	// DefaultRequestsPerDayQuota restricts the certificate requests per issuer (can be overriden in issuer spec)
 	// +optional
 	DefaultRequestsPerDayQuota *int32 `json:"defaultRequestsPerDayQuota,omitempty"`
+	// ShootIssuers contains enablement for issuers on shoot cluster
+	// +optional
+	ShootIssuers *ShootIssuers `json:"shootIssuers,omitempty"`
 	// ACME contains ACME related configuration.
 	ACME ACME `json:"acme"`
 	// HealthCheckConfig is the config for the health check controller.
 	// +optional
 	HealthCheckConfig *healthcheckconfigv1alpha1.HealthCheckConfig `json:"healthCheckConfig,omitempty"`
+}
+
+// ShootIssuers holds enablement for issuers on shoot cluster
+type ShootIssuers struct {
+	Enabled bool `json:"enabled"`
 }
 
 // ACME holds information about the ACME issuer used for the certificate service.

@@ -61,8 +61,8 @@ const (
 	ServerAgentPort int32 = 8132
 )
 
-// KonnectivityServer contains functions for a konnectivity-server deployer.
-type KonnectivityServer interface {
+// Interface contains functions for a konnectivity-server deployer.
+type Interface interface {
 	component.DeployWaiter
 	// SetSecrets sets the konnectivity-server's secrets.
 	SetSecrets(ServerSecrets)
@@ -103,8 +103,8 @@ type ServerOptions struct {
 	Removed Prober
 }
 
-// NewServer creates a new instance of KonnectivityServer for the konnectivity-server.
-func NewServer(so *ServerOptions) (KonnectivityServer, error) {
+// NewServer creates a new instance of Interface for the konnectivity-server.
+func NewServer(so *ServerOptions) (Interface, error) {
 	if so == nil {
 		return nil, errors.New("serveroptions are required")
 	}
@@ -129,7 +129,7 @@ func NewServer(so *ServerOptions) (KonnectivityServer, error) {
 }
 
 // OpDestroy destroys components created by connectivity server instead of creating them.
-func OpDestroy(ks KonnectivityServer) KonnectivityServer {
+func OpDestroy(ks Interface) Interface {
 	return &opDestroy{component.OpDestroy(ks)}
 }
 
@@ -260,7 +260,6 @@ func (k *konnectivityServer) Deploy(ctx context.Context) error {
 									HTTPGet: &corev1.HTTPGetAction{
 										Path:   "/healthz",
 										Port:   intstr.IntOrString{Type: intstr.Int, IntVal: healthPort},
-										Host:   "127.0.0.1",
 										Scheme: corev1.URISchemeHTTP,
 									},
 								},
@@ -278,19 +277,15 @@ func (k *konnectivityServer) Deploy(ctx context.Context) error {
 							Ports: []corev1.ContainerPort{{
 								Name:          "server",
 								ContainerPort: ServerHTTPSPort,
-								HostPort:      ServerHTTPSPort,
 							}, {
 								Name:          "agent",
 								ContainerPort: ServerAgentPort,
-								HostPort:      ServerAgentPort,
 							}, {
 								Name:          "admin",
 								ContainerPort: adminPort,
-								HostPort:      adminPort,
 							}, {
 								Name:          "health",
 								ContainerPort: healthPort,
-								HostPort:      healthPort,
 							}},
 							VolumeMounts: []corev1.VolumeMount{
 								{

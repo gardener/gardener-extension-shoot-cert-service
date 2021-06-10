@@ -60,8 +60,8 @@ const (
 	volumeMountPathServer = "/srv/metrics-server/tls"
 )
 
-// MetricsServer contains functions for a metrics-server deployer.
-type MetricsServer interface {
+// Interface contains functions for a metrics-server deployer.
+type Interface interface {
 	component.DeployWaiter
 	// SetSecrets sets the secrets.
 	SetSecrets(Secrets)
@@ -76,7 +76,7 @@ func New(
 	image string,
 	vpaEnabled bool,
 	kubeAPIServerHost *string,
-) MetricsServer {
+) Interface {
 	return &metricsServer{
 		client:            client,
 		namespace:         namespace,
@@ -350,7 +350,7 @@ func (m *metricsServer) computeResourcesData() (map[string][]byte, error) {
 									corev1.ResourceMemory: resource.MustParse("150Mi"),
 								},
 								Limits: corev1.ResourceList{
-									corev1.ResourceCPU:    resource.MustParse("100m"),
+									corev1.ResourceCPU:    resource.MustParse("500m"),
 									corev1.ResourceMemory: resource.MustParse("1Gi"),
 								},
 							},
@@ -383,11 +383,6 @@ func (m *metricsServer) computeResourcesData() (map[string][]byte, error) {
 	}
 
 	if m.vpaEnabled {
-		deployment.Spec.Template.Spec.Containers[0].Resources.Limits = corev1.ResourceList{
-			corev1.ResourceCPU:    resource.MustParse("80m"),
-			corev1.ResourceMemory: resource.MustParse("400Mi"),
-		}
-
 		vpaUpdateMode := autoscalingv1beta2.UpdateModeAuto
 		vpa = &autoscalingv1beta2.VerticalPodAutoscaler{
 			ObjectMeta: metav1.ObjectMeta{

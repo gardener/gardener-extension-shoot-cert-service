@@ -71,8 +71,8 @@ leaderElection:
   leaderElect: true`
 )
 
-// KubeScheduler contains functions for a kube-scheduler deployer.
-type KubeScheduler interface {
+// Interface contains functions for a kube-scheduler deployer.
+type Interface interface {
 	component.DeployWaiter
 	component.MonitoringComponent
 	// SetSecrets sets the secrets.
@@ -87,7 +87,7 @@ func New(
 	image string,
 	replicas int32,
 	config *gardencorev1beta1.KubeSchedulerConfig,
-) KubeScheduler {
+) Interface {
 	return &kubeScheduler{
 		client:    client,
 		namespace: namespace,
@@ -280,6 +280,17 @@ func (k *kubeScheduler) Deploy(ctx context.Context) error {
 		}
 		vpa.Spec.UpdatePolicy = &autoscalingv1beta2.PodUpdatePolicy{
 			UpdateMode: &vpaUpdateMode,
+		}
+		vpa.Spec.ResourcePolicy = &autoscalingv1beta2.PodResourcePolicy{
+			ContainerPolicies: []autoscalingv1beta2.ContainerResourcePolicy{
+				{
+					ContainerName: autoscalingv1beta2.DefaultContainerResourcePolicy,
+					MinAllowed: corev1.ResourceList{
+						corev1.ResourceCPU:    resource.MustParse("20m"),
+						corev1.ResourceMemory: resource.MustParse("50Mi"),
+					},
+				},
+			},
 		}
 		return nil
 	}); err != nil {

@@ -79,6 +79,20 @@ int32
 </tr>
 <tr>
 <td>
+<code>shootIssuers</code></br>
+<em>
+<a href="#shoot-cert-service.extensions.config.gardener.cloud/v1alpha1.ShootIssuers">
+ShootIssuers
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>ShootIssuers contains enablement for issuers on shoot cluster</p>
+</td>
+</tr>
+<tr>
+<td>
 <code>acme</code></br>
 <em>
 <a href="#shoot-cert-service.extensions.config.gardener.cloud/v1alpha1.ACME">
@@ -194,6 +208,35 @@ string
 <td>
 <em>(Optional)</em>
 <p>CACertificates are custom root certificates to be made available for the cert-controller-manager</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="shoot-cert-service.extensions.config.gardener.cloud/v1alpha1.ShootIssuers">ShootIssuers
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#shoot-cert-service.extensions.config.gardener.cloud/v1alpha1.Configuration">Configuration</a>)
+</p>
+<p>
+<p>ShootIssuers holds enablement for issuers on shoot cluster</p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>enabled</code></br>
+<em>
+bool
+</em>
+</td>
+<td>
 </td>
 </tr>
 </tbody>

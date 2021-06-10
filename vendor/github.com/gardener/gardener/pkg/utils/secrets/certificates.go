@@ -21,9 +21,9 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"fmt"
-	"io/ioutil"
 	"math/big"
 	"net"
+	"os"
 	"path/filepath"
 	"sync"
 	"time"
@@ -82,6 +82,10 @@ type CertificateSecretConfig struct {
 	PKCS      int
 
 	Validity *time.Duration
+
+	// Now should only be set in tests.
+	// Defaults to time.Now
+	Now func() time.Time
 }
 
 // Certificate contains the private key, and the certificate. It does also contain the CA certificate
@@ -285,7 +289,13 @@ func LoadCAFromSecret(ctx context.Context, k8sClient client.Client, namespace, n
 // or both, depending on the <certType> value. If <isCACert> is true, then a CA certificate is being created.
 // The certificates a valid for 10 years.
 func (s *CertificateSecretConfig) generateCertificateTemplate() *x509.Certificate {
-	now := time.Now()
+	nowFunc := time.Now
+
+	if s.Now != nil {
+		nowFunc = s.Now
+	}
+
+	now := nowFunc()
 	expiration := now.AddDate(10, 0, 0) // + 10 years
 	if s.Validity != nil {
 		expiration = now.Add(*s.Validity)
@@ -432,7 +442,7 @@ const TemporaryDirectoryForSelfGeneratedTLSCertificatesPattern = "self-generated
 // The function will return the *Certificate object as well as the path of the temporary directory where the
 // certificates are stored.
 func SelfGenerateTLSServerCertificate(name string, dnsNames []string, ips []net.IP) (cert *Certificate, ca *Certificate, dir string, rErr error) {
-	tempDir, err := ioutil.TempDir("", TemporaryDirectoryForSelfGeneratedTLSCertificatesPattern)
+	tempDir, err := os.MkdirTemp("", TemporaryDirectoryForSelfGeneratedTLSCertificatesPattern)
 	if err != nil {
 		return nil, nil, "", err
 	}
@@ -446,10 +456,10 @@ func SelfGenerateTLSServerCertificate(name string, dnsNames []string, ips []net.
 	if err != nil {
 		return nil, nil, "", err
 	}
-	if err := ioutil.WriteFile(filepath.Join(tempDir, DataKeyCertificateCA), caCertificate.CertificatePEM, 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(tempDir, DataKeyCertificateCA), caCertificate.CertificatePEM, 0644); err != nil {
 		return nil, nil, "", err
 	}
-	if err := ioutil.WriteFile(filepath.Join(tempDir, DataKeyPrivateKeyCA), caCertificate.PrivateKeyPEM, 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(tempDir, DataKeyPrivateKeyCA), caCertificate.PrivateKeyPEM, 0644); err != nil {
 		return nil, nil, "", err
 	}
 
@@ -465,10 +475,10 @@ func SelfGenerateTLSServerCertificate(name string, dnsNames []string, ips []net.
 	if err != nil {
 		return nil, nil, "", err
 	}
-	if err := ioutil.WriteFile(filepath.Join(tempDir, DataKeyCertificate), certificate.CertificatePEM, 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(tempDir, DataKeyCertificate), certificate.CertificatePEM, 0644); err != nil {
 		return nil, nil, "", err
 	}
-	if err := ioutil.WriteFile(filepath.Join(tempDir, DataKeyPrivateKey), certificate.PrivateKeyPEM, 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(tempDir, DataKeyPrivateKey), certificate.PrivateKeyPEM, 0644); err != nil {
 		return nil, nil, "", err
 	}
 

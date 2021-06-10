@@ -51,6 +51,9 @@ certificateConfig:
   #  ...
   #  -----END CERTIFICATE-----
 
+  shootIssuers:
+    enabled: true # allows to specify issuers in the shoot clusters
+
 disableControllers: []
 
 # imageVectorOverwrite: |

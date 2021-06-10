@@ -273,6 +273,8 @@ func (a *actuator) createSeedResources(ctx context.Context, certConfig *service.
 		propagationTimeout = a.serviceConfig.ACME.PropagationTimeout.Duration.String()
 	}
 
+	shootIssuers := a.createShootIssuersValues(certConfig)
+
 	certManagementConfig := map[string]interface{}{
 		"replicaCount": controller.GetReplicas(cluster, 1),
 		"defaultIssuer": map[string]interface{}{
@@ -286,6 +288,7 @@ func (a *actuator) createSeedResources(ctx context.Context, certConfig *service.
 		},
 		"dnsChallengeOnShoot": dnsChallengeOnShoot,
 		"shootClusterSecret":  v1alpha1.CertManagementKubecfg,
+		"shootIssuers":        shootIssuers,
 		"podAnnotations": map[string]interface{}{
 			"checksum/secret-kubeconfig": utils.ComputeChecksum(shootKubeconfig.Data),
 		},
@@ -324,9 +327,12 @@ func (a *actuator) createShootResources(ctx context.Context, certConfig *service
 		return err
 	}
 
+	shootIssuers := a.createShootIssuersValues(certConfig)
+
 	values := map[string]interface{}{
 		"shootUserName":       v1alpha1.CertManagementUserName,
 		"dnsChallengeOnShoot": dnsChallengeOnShoot,
+		"shootIssuers":        shootIssuers,
 	}
 
 	renderer, err := util.NewChartRendererForShoot(cluster.Shoot.Spec.Kubernetes.Version)
@@ -406,4 +412,16 @@ func (a *actuator) updateStatus(ctx context.Context, ex *extensionsv1alpha1.Exte
 		ex.Status.Resources = resources
 		return nil
 	})
+}
+
+func (a *actuator) createShootIssuersValues(certConfig *service.CertConfig) map[string]interface{} {
+	shootIssuersEnabled := false
+	if certConfig.ShootIssuers != nil {
+		shootIssuersEnabled = certConfig.ShootIssuers.Enabled
+	} else if a.serviceConfig.ShootIssuers != nil {
+		shootIssuersEnabled = a.serviceConfig.ShootIssuers.Enabled
+	}
+	return map[string]interface{}{
+		"enabled": shootIssuersEnabled,
+	}
 }

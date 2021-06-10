@@ -30,6 +30,10 @@ type CertConfig struct {
 	// DNSChallengeOnShoot controls where the DNS entries for DNS01 challenges are created.
 	// If not specified the DNS01 challenges are written to the control plane namespace on the seed.
 	DNSChallengeOnShoot *DNSChallengeOnShoot
+
+	// ShootIssuers contains enablement for issuers on shoot cluster
+	// If specified, it overwrites the ShootIssuers settings of the service configuration.
+	ShootIssuers *ShootIssuers
 }
 
 // IssuerConfig contains information for certificate issuers.
@@ -81,4 +85,10 @@ type ACMEExternalAccountBinding struct {
 	// The secret key stored in the Secret **must** be un-padded, base64 URL
 	// encoded data.
 	KeySecretName string
+}
+
+// ShootIssuers holds enablement for issuers on shoot cluster
+// If specified, it overwrites the ShootIssuers settings of the service configuration.
+type ShootIssuers struct {
+	Enabled bool
 }

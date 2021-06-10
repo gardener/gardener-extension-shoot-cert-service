@@ -78,6 +78,9 @@ spec:
         {{- if .Values.configuration.propagationTimeout }}
         - --propagation-timeout={{ .Values.configuration.propagationTimeout }}
         {{- end }}
+        {{- if .Values.shootIssuers.enabled }}
+        - --allow-target-issuers
+        {{- end }}
         {{- range $idx, $flag := .Values.additionalConfiguration }}
         - {{ $flag }}
         {{- end }}
