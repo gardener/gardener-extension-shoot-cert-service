@@ -49,7 +49,7 @@ kind: ControllerRegistration
 #     -----END CERTIFICATE-----
 
       shootIssuers:
-        enabled: true # allows to specify issuers in the shoot clusters
+        enabled: false # if true, allows to specify issuers in the shoot clusters
 
 ```
 

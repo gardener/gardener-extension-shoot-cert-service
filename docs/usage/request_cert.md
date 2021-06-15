@@ -82,8 +82,12 @@ If you want to request certificates for domains other then any subdomain of `sho
 ### DNS provider
 In order to issue certificates for a custom domain you need to specify a DNS provider which is permitted to create DNS records for subdomains of your requested domain in the certificate. For example, if you request a certificate for `host.example.com` your DNS provider must be capable of managing subdomains of `host.example.com`.
 
-DNS providers are specified either in the shoot manifest or (if enabled) directly in
+DNS providers are normally specified in the shoot manifest. 
+
+If the `DNSProvider` replication feature is enabled, an provider can alternatively defined in
 the shoot cluster.
+
+#### Provider in the shoot manifest
 
 Example for a provider in the shoot manifest:
 
@@ -98,6 +102,25 @@ spec:
 ```
 
 The secret referenced by `secretName` can also be conveniently created via the Gardener dashboard.
+
+#### Provider resouce in the shoot cluster
+
+*Prerequiste*: The `DNSProvider` replication feature has to be enabled.
+It is either enabled globally in the `ControllerDeployment` or in the shoot manifest
+with:
+
+```yaml
+...
+spec:
+  extensions:
+    - type: shoot-dns-service
+      providerConfig:
+        apiVersion: service.dns.extensions.gardener.cloud/v1alpha1
+        kind: DNSConfig
+        dnsProviderReplication:
+          enabled: true
+...
+```
 
 Example for specifying a `DNSProvider` resource and its `Secret` in any namespace of the shoot cluster:
 
@@ -132,8 +155,11 @@ data:
 ### Issuer
 Another prerequisite to request certificates for custom domains is a dedicated issuer.
 
-The custom issuers are specified either in the shoot manifest or (if enabled) directly
-in the shoot cluster.
+The custom issuers are specified normally in the shoot manifest.
+
+If the `shootIssuers` feature is enabled, it can alternatively be defined in the shoot cluster.
+
+#### Issuer in the shoot manifest
 
 Example for an issuer in the shoot manifest:
 
@@ -152,13 +178,33 @@ spec:
           server: 'https://acme-v02.api.letsencrypt.org/directory'
           privateKeySecretName: my-privatekey # referenced resource, the private key must be stored in the secret at `data.privateKey`
       #shootIssuers:
-      #  enabled: true # allows to specify issuers in the shoot cluster if not enabled globally
+      #  enabled: true # if true, allows to specify issuers in the shoot cluster
   resources:
   - name: my-privatekey
     resourceRef:
       apiVersion: v1
       kind: Secret
       name: custom-issuer-privatekey # name of secret in Gardener project
+```
+
+####
+
+*Prerequiste*: The `shootIssuers` feature has to be enabled.
+It is either enabled globally in the `ControllerDeployment` or in the shoot manifest
+with:
+
+```yaml
+kind: Shoot
+...
+spec:
+  extensions:
+  - type: shoot-cert-service
+    providerConfig:
+      apiVersion: service.cert.extensions.gardener.cloud/v1alpha1
+      kind: CertConfig
+      shootIssuers:
+        enabled: true # if true, allows to specify issuers in the shoot cluster
+...
 ```
 
 Example for specifying an `Issuer` resource and its `Secret` directly in any
