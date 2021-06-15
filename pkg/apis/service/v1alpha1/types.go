@@ -58,6 +58,11 @@ type CertConfig struct {
 	// If not specified the DNS01 challenges are written to the control plane namespace on the seed.
 	// +optional
 	DNSChallengeOnShoot *DNSChallengeOnShoot `json:"dnsChallengeOnShoot,omitempty"`
+
+	// ShootIssuers contains enablement for issuers on shoot cluster
+	// If specified, it overwrites the ShootIssuers settings of the service configuration.
+	// +optional
+	ShootIssuers *ShootIssuers `json:"shootIssuers,omitempty"`
 }
 
 // IssuerConfig contains information for certificate issuers.
@@ -117,4 +122,10 @@ type ACMEExternalAccountBinding struct {
 	// The secret key stored in the Secret **must** be un-padded, base64 URL
 	// encoded data.
 	KeySecretName string `json:"keySecretName"`
+}
+
+// ShootIssuers holds enablement for issuers on shoot cluster
+// If specified, it overwrites the ShootIssuers settings of the service configuration.
+type ShootIssuers struct {
+	Enabled bool `json:"enabled"`
 }

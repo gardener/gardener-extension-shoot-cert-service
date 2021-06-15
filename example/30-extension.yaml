@@ -31,3 +31,5 @@ spec:
       enabled: false
       # namespace: kube-system
       # dnsClass: foo
+    #shootIssuers: # optionally overwrite global service configuration for issuers on shoot cluster
+    #  enabled: false

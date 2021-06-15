@@ -44,6 +44,10 @@ rules:
   - certificates/status
   - certificaterevocations
   - certificaterevocations/status
+  {{- if .Values.shootIssuers.enabled }}
+  - issuers
+  - issuers/status
+  {{- end }}
   verbs:
   - get
   - list

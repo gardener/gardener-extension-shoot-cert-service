@@ -18,18 +18,18 @@ import (
 	"context"
 	"fmt"
 
+	gardencorev1alpha1 "github.com/gardener/gardener/pkg/apis/core/v1alpha1"
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
-	gardencorelisters "github.com/gardener/gardener/pkg/client/core/listers/core/v1beta1"
+	gardenoperationsv1alpha1 "github.com/gardener/gardener/pkg/apis/operations/v1alpha1"
 	"github.com/gardener/gardener/pkg/logger"
 
 	"k8s.io/apimachinery/pkg/api/meta"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // DetermineShootsAssociatedTo gets a <shootLister> to determine the Shoots resources which are associated
-// to given <obj> (either a CloudProfile a or a Seed object).
+// to given <obj> (either a CloudProfile, Seed, Secretbinding a or a ExposureClass object).
 func DetermineShootsAssociatedTo(ctx context.Context, gardenClient client.Reader, obj interface{}) ([]string, error) {
 	shootList := &gardencorev1beta1.ShootList{}
 	if err := gardenClient.List(ctx, shootList); err != nil {
@@ -56,6 +56,11 @@ func DetermineShootsAssociatedTo(ctx context.Context, gardenClient client.Reader
 			if shoot.Spec.SecretBindingName == binding.Name && shoot.Namespace == binding.Namespace {
 				associatedShoots = append(associatedShoots, fmt.Sprintf("%s/%s", shoot.Namespace, shoot.Name))
 			}
+		case *gardencorev1alpha1.ExposureClass:
+			exposureClass := obj.(*gardencorev1alpha1.ExposureClass)
+			if shoot.Spec.ExposureClassName != nil && *shoot.Spec.ExposureClassName == exposureClass.Name {
+				associatedShoots = append(associatedShoots, fmt.Sprintf("%s/%s", shoot.Namespace, shoot.Name))
+			}
 		default:
 			return nil, fmt.Errorf("unable to determine Shoot associations, due to unknown type %t", t)
 		}
@@ -66,14 +71,14 @@ func DetermineShootsAssociatedTo(ctx context.Context, gardenClient client.Reader
 
 // DetermineSecretBindingAssociations gets a <bindingLister> to determine the SecretBinding
 // resources which are associated to given Quota <obj>.
-func DetermineSecretBindingAssociations(quota *gardencorev1beta1.Quota, bindingLister gardencorelisters.SecretBindingLister) ([]string, error) {
-	var associatedBindings []string
-	bindings, err := bindingLister.List(labels.Everything())
-	if err != nil {
+func DetermineSecretBindingAssociations(ctx context.Context, c client.Client, quota *gardencorev1beta1.Quota) ([]string, error) {
+	bindings := &gardencorev1beta1.SecretBindingList{}
+	if err := c.List(ctx, bindings); err != nil {
 		return nil, err
 	}
 
-	for _, binding := range bindings {
+	var associatedBindings []string
+	for _, binding := range bindings.Items {
 		for _, quotaRef := range binding.Quotas {
 			if quotaRef.Name == quota.Name && quotaRef.Namespace == quota.Namespace {
 				associatedBindings = append(associatedBindings, fmt.Sprintf("%s/%s", binding.Namespace, binding.Name))
@@ -110,6 +115,21 @@ func DetermineBackupEntryAssociations(ctx context.Context, c client.Client, seed
 			return "", nil
 		}
 		return *backupEntry.Spec.SeedName, nil
+	})
+}
+
+// DetermineBastionAssociations determine the Bastion resources which are associated
+// to seed with name <seedName>
+func DetermineBastionAssociations(ctx context.Context, c client.Client, seedName string) ([]string, error) {
+	return determineAssociations(ctx, c, seedName, &gardenoperationsv1alpha1.BastionList{}, func(o runtime.Object) (string, error) {
+		bastion, ok := o.(*gardenoperationsv1alpha1.Bastion)
+		if !ok {
+			return "", fmt.Errorf("got unexpected object when expecting Bastion")
+		}
+		if bastion.Spec.SeedName == nil {
+			return "", nil
+		}
+		return *bastion.Spec.SeedName, nil
 	})
 }
 

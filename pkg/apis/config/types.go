@@ -32,10 +32,17 @@ type Configuration struct {
 	RestrictIssuer *bool
 	// DefaultRequestsPerDayQuota restricts the certificate requests per issuer (can be overriden in issuer spec)
 	DefaultRequestsPerDayQuota *int32
+	// ShootIssuers contains enablement for issuers on shoot cluster
+	ShootIssuers *ShootIssuers
 	// ACME contains ACME related configuration.
 	ACME ACME
 	// HealthCheckConfig is the config for the health check controller.
 	HealthCheckConfig *healthcheckconfig.HealthCheckConfig
+}
+
+// ShootIssuers holds enablement for issuers on shoot cluster
+type ShootIssuers struct {
+	Enabled bool
 }
 
 // ACME holds information about the ACME issuer used for the certificate service.

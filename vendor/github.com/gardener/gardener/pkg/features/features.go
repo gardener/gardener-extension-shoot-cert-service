@@ -24,7 +24,7 @@ const (
 	// // MyFeature enable Foo.
 	// // owner: @username
 	// // alpha: v5.X
-	// MyFeature utilfeature.Feature = "MyFeature"
+	// MyFeature featuregate.Feature = "MyFeature"
 
 	// Logging enables logging stack for clusters.
 	// owner @mvladev
@@ -90,4 +90,14 @@ const (
 	// owner: @mvladev
 	// alpha: v1.15.0
 	SeedKubeScheduler featuregate.Feature = "SeedKubeScheduler"
+
+	// ReversedVPN moves the openvpn server to the seed.
+	// owner: @scheererj @docktofuture
+	// alpha: v1.22.0
+	ReversedVPN featuregate.Feature = "ReversedVPN"
+
+	// AdminKubeconfigRequest enables the AdminKubeconfigRequest endpoint on shoot resources.
+	// owner: @mvladev
+	// alpha: v1.23.0
+	AdminKubeconfigRequest featuregate.Feature = "AdminKubeconfigRequest"
 )

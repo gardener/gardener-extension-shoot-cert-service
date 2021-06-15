@@ -35,18 +35,21 @@ kind: ControllerRegistration
         name: default-issuer
 #       restricted: true # restrict default issuer to any sub-domain of shoot.spec.dns.domain
 
-#    defaultRequestsPerDayQuota: 50
+#     defaultRequestsPerDayQuota: 50
 
-#    precheckNameservers: 8.8.8.8,8.8.4.4
+#     precheckNameservers: 8.8.8.8,8.8.4.4
 
-#    caCertificates: | # optional custom CA certificates when using private ACME provider
-#    -----BEGIN CERTIFICATE-----
-#    ...
-#    -----END CERTIFICATE-----
+#     caCertificates: | # optional custom CA certificates when using private ACME provider
+#     -----BEGIN CERTIFICATE-----
+#     ...
+#     -----END CERTIFICATE-----
 #
-#    -----BEGIN CERTIFICATE-----
-#    ...
-#    -----END CERTIFICATE-----
+#     -----BEGIN CERTIFICATE-----
+#     ...
+#     -----END CERTIFICATE-----
+
+      shootIssuers:
+        enabled: false # if true, allows to specify issuers in the shoot clusters
 
 ```
 
@@ -73,32 +76,3 @@ spec:
   - type: shoot-cert-service
 ...
 ```
-
-<style>
-#body-inner blockquote {
-    border: 0;
-    padding: 10px;
-    margin-top: 40px;
-    margin-bottom: 40px;
-    border-radius: 4px;
-    background-color: rgba(0,0,0,0.05);
-    box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
-    position:relative;
-    padding-left:60px;
-}
-#body-inner blockquote:before {
-    content: "!";
-    font-weight: bold;
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    background-color: #00a273;
-    color: white;
-    vertical-align: middle;
-    margin: auto;
-    width: 36px;
-    font-size: 30px;
-    text-align: center;
-}
-</style>

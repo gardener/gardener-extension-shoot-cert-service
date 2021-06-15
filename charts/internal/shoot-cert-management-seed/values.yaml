@@ -23,7 +23,7 @@ tolerations: []
 affinity: {}
 # priorityClassName: ""
 
-podAnnotations:
+podAnnotations: {}
 
 defaultIssuer:
   retricted: true
@@ -50,6 +50,9 @@ issuers:
   #   exclude:
   #   - private.my.domain.com
 # requestsPerDayQuota: 10
+
+shootIssuers:
+  enabled: true
 
 dnsChallengeOnShoot:
   enabled: false
