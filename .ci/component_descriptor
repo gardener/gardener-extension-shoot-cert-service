@@ -37,11 +37,11 @@ def add_image_dependency(component, image_name, image_reference, image_version):
     )
 
 
-def add_component_dependency(component, dependency_name, dependency_version):
+def add_component_dependency(component, dependency_compname, dependency_name, dependency_version):
     component.componentReferences.append(
         gci.componentmodel.ComponentReference(
             name=dependency_name,
-            componentName=dependency_name,
+            componentName=dependency_compname,
             version=dependency_version,
             labels=[],
         )
@@ -65,7 +65,8 @@ for image in images_list_contents.get('images', []):
     if image['repository'].startswith('eu.gcr.io/gardener-project'):
         add_component_dependency(
             component=own_component,
-            dependency_name=image['sourceRepository'],
+            dependency_compname=image['sourceRepository'],
+            dependency_name=image['name'],
             dependency_version=image['tag'],
         )
     # ... otherwise assume it's an image dependency
