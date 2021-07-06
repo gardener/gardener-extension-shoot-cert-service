@@ -5,6 +5,35 @@ metadata:
   name: extensions.gardener.cloud:extension-shoot-cert-service:cert-controller-manager
   namespace: {{ .Release.Namespace }}
 rules:
-- apiGroups: [""]
-  resources: ["configmaps"]
-  verbs: ["get", "watch", "list", "delete", "update", "create"]
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+    verbs:
+      - create
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+    verbs:
+      - get
+      - watch
+      - update
+    resourceNames:
+      - shoot-cert-service
+  - apiGroups:
+      - coordination.k8s.io
+    resources:
+      - leases
+    verbs:
+      - create
+  - apiGroups:
+      - coordination.k8s.io
+    resources:
+      - leases
+    resourceNames:
+      - shoot-cert-service
+    verbs:
+      - get
+      - watch
+      - update
