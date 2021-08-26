@@ -75,6 +75,9 @@ const (
 	// AlertManagerPrefix is a constant for a prefix used for the AlertManager instance.
 	AlertManagerPrefix = "au"
 
+	// LokiPrefix is a constant for a prefix used for the Loki instance.
+	LokiPrefix = "l"
+
 	// CoreDNSDeploymentName is the name of the coredns deployment.
 	CoreDNSDeploymentName = "coredns"
 
@@ -83,15 +86,6 @@ const (
 
 	// KubecfgSecretName is the name of the kubecfg secret.
 	KubecfgSecretName = "kubecfg"
-
-	// DependencyWatchdogExternalProbeSecretName is the name of the kubecfg secret with internal DNS for external access.
-	DependencyWatchdogExternalProbeSecretName = "dependency-watchdog-external-probe"
-
-	// DependencyWatchdogInternalProbeSecretName is the name of the kubecfg secret with cluster IP access.
-	DependencyWatchdogInternalProbeSecretName = "dependency-watchdog-internal-probe"
-
-	// DependencyWatchdogUserName is the user name of the dependency-watchdog.
-	DependencyWatchdogUserName = "gardener.cloud:system:dependency-watchdog"
 
 	// KubeAPIServerHealthCheck is a key for the kube-apiserver-health-check user.
 	KubeAPIServerHealthCheck = "kube-apiserver-health-check"
@@ -136,6 +130,8 @@ const (
 	GrafanaTLS = "grafana-tls"
 	// PrometheusTLS is the name of the secret resource which holds the TLS certificate for Prometheus.
 	PrometheusTLS = "prometheus-tls"
+	// LokiTLS is the name of the secret resource which holds the TLS certificate for Loki.
+	LokiTLS = "loki-tls"
 
 	// EndUserCrtValidity is the time period a user facing certificate is valid.
 	EndUserCrtValidity = 730 * 24 * time.Hour // ~2 years, see https://support.apple.com/en-us/HT210176
@@ -152,4 +148,7 @@ const (
 	// MonitoringIngressCredentialsUsers is a constant for the name of a secret containing the monitoring credentials
 	// for users monitoring for shoots.
 	MonitoringIngressCredentialsUsers = "monitoring-ingress-credentials-users"
+
+	// NodeLocalIPVSAddress is the IPv4 address used by node local dns when IPVS is used.
+	NodeLocalIPVSAddress = "169.254.20.10"
 )

@@ -16,6 +16,7 @@ package framework
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -28,7 +29,6 @@ import (
 	"github.com/gardener/gardener/pkg/utils/kubernetes/health"
 	"github.com/gardener/gardener/pkg/utils/retry"
 
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -36,7 +36,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/rest"
-	k8sretry "k8s.io/client-go/util/retry"
 	"k8s.io/utils/pointer"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -130,7 +129,7 @@ func (f *CommonFramework) WaitUntilNamespaceIsDeleted(ctx context.Context, k8sCl
 			}
 			return retry.MinorError(err)
 		}
-		return retry.MinorError(errors.Errorf("Namespace %q is not deleted yet", ns))
+		return retry.MinorError(fmt.Errorf("Namespace %q is not deleted yet", ns))
 	})
 }
 
@@ -256,7 +255,7 @@ func ScaleDeployment(timeout time.Duration, client client.Client, desiredReplica
 		return nil, nil
 	}
 	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve the replica count of deployment %q: '%v'", name, err)
+		return nil, fmt.Errorf("failed to retrieve the replica count of deployment %q: '%w'", name, err)
 	}
 	if replicas == nil || *replicas == *desiredReplicas {
 		return replicas, nil
@@ -264,12 +263,12 @@ func ScaleDeployment(timeout time.Duration, client client.Client, desiredReplica
 
 	// scale the deployment
 	if err := kubernetes.ScaleDeployment(ctxSetup, client, kutil.Key(namespace, name), *desiredReplicas); err != nil {
-		return nil, fmt.Errorf("failed to scale the replica count of deployment %q: '%v'", name, err)
+		return nil, fmt.Errorf("failed to scale the replica count of deployment %q: '%w'", name, err)
 	}
 
 	// wait until scaled
 	if err := WaitUntilDeploymentScaled(ctxSetup, client, namespace, name, *desiredReplicas); err != nil {
-		return nil, fmt.Errorf("failed to wait until deployment %q is scaled: '%v'", name, err)
+		return nil, fmt.Errorf("failed to wait until deployment %q is scaled: '%w'", name, err)
 	}
 	return replicas, nil
 }
@@ -348,19 +347,16 @@ func DownloadKubeconfig(ctx context.Context, client kubernetes.Interface, namesp
 	return nil
 }
 
-// UpdateSecret updates the Secret with an backoff
-func UpdateSecret(ctx context.Context, k8sClient kubernetes.Interface, secret *corev1.Secret) error {
-	if err := k8sretry.RetryOnConflict(k8sretry.DefaultBackoff, func() (err error) {
-		existingSecret := &corev1.Secret{}
-		if err = k8sClient.Client().Get(ctx, client.ObjectKey{Namespace: secret.Namespace, Name: secret.Name}, existingSecret); err != nil {
-			return err
-		}
-		existingSecret.Data = secret.Data
-		return k8sClient.Client().Update(ctx, existingSecret)
-	}); err != nil {
+// PatchSecret patches the Secret.
+func PatchSecret(ctx context.Context, c client.Client, secret *corev1.Secret) error {
+	existingSecret := &corev1.Secret{}
+	if err := c.Get(ctx, client.ObjectKey{Namespace: secret.Namespace, Name: secret.Name}, existingSecret); err != nil {
 		return err
 	}
-	return nil
+	patch := client.MergeFrom(existingSecret.DeepCopy())
+
+	existingSecret.Data = secret.Data
+	return c.Patch(ctx, existingSecret, patch)
 }
 
 // GetObjectFromSecret returns object from secret
@@ -458,7 +454,7 @@ func DeployRootPod(ctx context.Context, c client.Client, namespace string, noden
 			Containers: []corev1.Container{
 				{
 					Name:  "root-container",
-					Image: "busybox",
+					Image: "eu.gcr.io/gardener-project/3rd/busybox:1.29.2",
 					Command: []string{
 						"sleep",
 						"10000000",
@@ -468,7 +464,7 @@ func DeployRootPod(ctx context.Context, c client.Client, namespace string, noden
 					TerminationMessagePolicy: corev1.TerminationMessageReadFile,
 					ImagePullPolicy:          corev1.PullIfNotPresent,
 					SecurityContext: &corev1.SecurityContext{
-						Privileged: pointer.BoolPtr(true),
+						Privileged: pointer.Bool(true),
 					},
 					Stdin: true,
 					VolumeMounts: []corev1.VolumeMount{
