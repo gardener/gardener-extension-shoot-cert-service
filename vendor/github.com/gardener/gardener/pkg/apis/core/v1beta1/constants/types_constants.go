@@ -36,6 +36,10 @@ const (
 	// SecretNameSSHKeyPair is a constant for the name of a Kubernetes secret object that contains the SSH key pair
 	// (public and private key) that can be used to SSH into the shoot nodes.
 	SecretNameSSHKeyPair = "ssh-keypair"
+	// SecretNameOldSSHKeyPair is a constant for the name of a Kubernetes secret object that contains the previous
+	// SSH key pair for a shoot cluster. This exists only after the first key rotation. Both the current and the
+	// old key are placed onto each shoot node.
+	SecretNameOldSSHKeyPair = "ssh-keypair.old"
 	// SecretNameServiceAccountKey is a constant for the name of a Kubernetes secret object that contains a
 	// PEM-encoded private RSA or ECDSA key used by the Kube Controller Manager to sign service account tokens
 	SecretNameServiceAccountKey = "service-account-key"
@@ -216,7 +220,7 @@ const (
 	// Note that this annotation is alpha and can be removed anytime without further notice. Only use it if you know
 	// what you do.
 	ShootAlphaScalingAPIServerClass = "alpha.kube-apiserver.scaling.shoot.gardener.cloud/class"
-	// ShootAlphaControlPlaneScaleDownDisabled is a constant for an annotation on the Shoot resource staiting that the
+	// ShootAlphaControlPlaneScaleDownDisabled is a constant for an annotation on the Shoot resource stating that the
 	// automatic scale-down shall be disabled for the etcd, kube-apiserver, kube-controller-manager.
 	// Note that this annotation is alpha and can be removed anytime without further notice. Only use it if you know
 	// what you do.
@@ -247,6 +251,9 @@ const (
 	// ShootOperationRotateKubeconfigCredentials is a constant for an annotation on a Shoot indicating that the credentials
 	// contained in the kubeconfig that is handed out to the user shall be rotated.
 	ShootOperationRotateKubeconfigCredentials = "rotate-kubeconfig-credentials"
+	// ShootOperationRotateSSHKeypair is a constant for an annotation on a Shoot indicating that the SSH keypair for the shoot
+	// nodes shall be rotated.
+	ShootOperationRotateSSHKeypair = "rotate-ssh-keypair"
 
 	// SeedResourceManagerClass is the resource-class managed by the Gardener-Resource-Manager
 	// instance in the garden namespace on the seeds.
@@ -350,11 +357,28 @@ const (
 	// AnnotationShootSkipCleanup is a key for an annotation on a Shoot resource that declares that the clean up steps should be skipped when the
 	// cluster is deleted. Concretely, this will skip everything except the deletion of (load balancer) services and persistent volume resources.
 	AnnotationShootSkipCleanup = "shoot.gardener.cloud/skip-cleanup"
-	// AnnotationShootKonnectivityTunnel is the key for an annotation of a Shoot cluster whose value indicates
-	// if a konnectivity-tunnel should be deployed into the shoot cluster or not.
-	AnnotationShootKonnectivityTunnel = "alpha.featuregates.shoot.gardener.cloud/konnectivity-tunnel"
+	// AnnotationShootCleanupWebhooksFinalizeGracePeriodSeconds is a key for an annotation on a Shoot resource that
+	// declares the grace period in seconds for finalizing the resources handled in the 'cleanup webhooks' step.
+	// Concretely, after the specified seconds, all the finalizers of the affected resources are forcefully removed.
+	AnnotationShootCleanupWebhooksFinalizeGracePeriodSeconds = "shoot.gardener.cloud/cleanup-webhooks-finalize-grace-period-seconds"
+	// AnnotationShootCleanupExtendedAPIsFinalizeGracePeriodSeconds is a key for an annotation on a Shoot resource that
+	// declares the grace period in seconds for finalizing the resources handled in the 'cleanup extended APIs' step.
+	// Concretely, after the specified seconds, all the finalizers of the affected resources are forcefully removed.
+	AnnotationShootCleanupExtendedAPIsFinalizeGracePeriodSeconds = "shoot.gardener.cloud/cleanup-extended-apis-finalize-grace-period-seconds"
+	// AnnotationShootCleanupKubernetesResourcesFinalizeGracePeriodSeconds is a key for an annotation on a Shoot
+	// resource that declares the grace period in seconds for finalizing the resources handled in the 'cleanup
+	// Kubernetes resources' step. Concretely, after the specified seconds, all the finalizers of the affected resources
+	// are forcefully removed.
+	AnnotationShootCleanupKubernetesResourcesFinalizeGracePeriodSeconds = "shoot.gardener.cloud/cleanup-kubernetes-resources-finalize-grace-period-seconds"
+	// AnnotationShootCleanupNamespaceResourcesFinalizeGracePeriodSeconds is a key for an annotation on a Shoot
+	// resource that declares the grace period in seconds for finalizing the resources handled in the 'cleanup shoot
+	// namespaces' step. Concretely, after the specified seconds, all the finalizers of the affected resources are
+	// forcefully removed.
+	AnnotationShootCleanupNamespaceResourcesFinalizeGracePeriodSeconds = "shoot.gardener.cloud/cleanup-namespaces-finalize-grace-period-seconds"
 	// AnnotationReversedVPN moves the vpn-server to the seed.
 	AnnotationReversedVPN = "alpha.featuregates.shoot.gardener.cloud/reversed-vpn"
+	// AnnotationNodeLocalDNS enables a per node dns cache on the shoot cluster.
+	AnnotationNodeLocalDNS = "alpha.featuregates.shoot.gardener.cloud/node-local-dns"
 
 	// AnnotationShootAPIServerSNIPodInjector is the key for an annotation of a Shoot cluster whose value indicates
 	// if pod injection of 'KUBERNETES_SERVICE_HOST' environment variable should happen for clusters where APIServerSNI
@@ -375,6 +399,12 @@ const (
 	OperatingSystemConfigFilePathKernelSettings = "/etc/sysctl.d/99-k8s-general.conf"
 	// OperatingSystemConfigFilePathKubeletConfig is a constant for a path to a file in the operating system config that contains the kubelet configuration.
 	OperatingSystemConfigFilePathKubeletConfig = "/var/lib/kubelet/config/kubelet"
+	// OperatingSystemConfigUnitNamePromtailService is a constant for a unit in the operating system config that contains the promtail service.
+	OperatingSystemConfigUnitNamePromtailService = "promtail.service"
+	// OperatingSystemConfigFilePathPromtailConfig is a constant for a path to a file in the operating system config that contains the kubelet configuration.
+	OperatingSystemConfigFilePathPromtailConfig = "/var/lib/promtail/config/config"
+	// OperatingSystemConfigFilePathBinaries is a constant for a path to a directory in the operating system config that contains the binaries.
+	OperatingSystemConfigFilePathBinaries = "/opt/bin"
 
 	// FluentBitConfigMapKubernetesFilter is a constant for the Fluent Bit ConfigMap's section regarding Kubernetes filters
 	FluentBitConfigMapKubernetesFilter = "filter-kubernetes.conf"

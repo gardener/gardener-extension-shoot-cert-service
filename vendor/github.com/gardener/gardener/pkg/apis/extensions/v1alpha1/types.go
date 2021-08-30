@@ -85,9 +85,16 @@ var ExtensionKinds = sets.NewString(
 	ContainerRuntimeResource,
 	ControlPlaneResource,
 	dnsv1alpha1.DNSProviderKind,
+	DNSRecordResource,
 	ExtensionResource,
 	InfrastructureResource,
 	NetworkResource,
 	OperatingSystemConfigResource,
 	WorkerResource,
 )
+
+// ShootAlphaCSIMigrationKubernetesVersion is a constant for an annotation on the Shoot resource stating the Kubernetes
+// version for which the CSI migration shall be enabled.
+// Note that this annotation is alpha and can be removed anytime without further notice. Only use it if you know
+// what you do.
+const ShootAlphaCSIMigrationKubernetesVersion = "alpha.csimigration.shoot.extensions.gardener.cloud/kubernetes-version"

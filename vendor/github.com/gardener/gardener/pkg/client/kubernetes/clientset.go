@@ -20,6 +20,7 @@ import (
 
 	"github.com/gardener/gardener/pkg/chartrenderer"
 	gardencoreclientset "github.com/gardener/gardener/pkg/client/core/clientset/versioned"
+	gardenoperationsclientset "github.com/gardener/gardener/pkg/client/operations/clientset/versioned"
 	gardenseedmanagementclientset "github.com/gardener/gardener/pkg/client/seedmanagement/clientset/versioned"
 	"github.com/gardener/gardener/pkg/logger"
 
@@ -49,9 +50,9 @@ type clientSet struct {
 
 	// client is the default controller-runtime client which uses SharedIndexInformers to keep its cache in sync
 	client client.Client
-	// directClient is a client which can be used to make requests directly to the API server instead of reading from
-	// the client's cache
-	directClient client.Client
+	// apiReader is a reader that can be used to read directly from the API server instead of reading from
+	// the client's cache.
+	apiReader client.Reader
 	// cache is the client's cache
 	cache cache.Cache
 
@@ -61,6 +62,7 @@ type clientSet struct {
 	kubernetes           kubernetes.Interface
 	gardenCore           gardencoreclientset.Interface
 	gardenSeedManagement gardenseedmanagementclientset.Interface
+	gardenOperations     gardenoperationsclientset.Interface
 	apiextension         apiextensionclientset.Interface
 	apiregistration      apiregistrationclientset.Interface
 
@@ -94,14 +96,7 @@ func (c *clientSet) Client() client.Client {
 
 // APIReader returns a client.Reader that directly reads from the API server.
 func (c *clientSet) APIReader() client.Reader {
-	return c.directClient
-}
-
-// DirectClient returns a controller-runtime client, which can be used to talk to the API server directly
-// (without using a cache).
-// Deprecated: used APIReader instead, if the controller can't tolerate stale reads.
-func (c *clientSet) DirectClient() client.Client {
-	return c.directClient
+	return c.apiReader
 }
 
 // Cache returns the ClientSet's controller-runtime cache. It can be used to get Informers for arbitrary objects.
@@ -122,6 +117,11 @@ func (c *clientSet) GardenCore() gardencoreclientset.Interface {
 // GardenSeedManagement will return the gardenSeedManagement attribute of the Client object.
 func (c *clientSet) GardenSeedManagement() gardenseedmanagementclientset.Interface {
 	return c.gardenSeedManagement
+}
+
+// GardenOperations will return the gardenOperations attribute of the Client object.
+func (c *clientSet) GardenOperations() gardenoperationsclientset.Interface {
+	return c.gardenOperations
 }
 
 // APIExtension will return the apiextensions attribute of the Client object.
