@@ -82,6 +82,7 @@ spec:
         - --allow-target-issuers
         {{- end }}
         - --lease-name=shoot-cert-service
+        - --lease-resource-lock=leases
         {{- range $idx, $flag := .Values.additionalConfiguration }}
         - {{ $flag }}
         {{- end }}
