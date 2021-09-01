@@ -36,4 +36,4 @@ spec:
       lastOperation:
         state: Succeeded
       observedGeneration: 1
-
+      clusterIdentity: identity-shoot--foo--bar

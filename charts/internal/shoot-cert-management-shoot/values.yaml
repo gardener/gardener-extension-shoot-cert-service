@@ -5,3 +5,5 @@ shootIssuers:
 
 dnsChallengeOnShoot:
   enabled: false
+
+kubernetesVersion: "1.19.1"
