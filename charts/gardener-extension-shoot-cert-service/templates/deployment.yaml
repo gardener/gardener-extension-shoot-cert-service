@@ -40,6 +40,7 @@ spec:
         - --disable-controllers={{ .Values.disableControllers | join "," }}
         - --ignore-operation-annotation={{ .Values.controllers.ignoreOperationAnnotation }}
         - --leader-election-id={{ include "leaderelectionid" . }}
+        - --leader-election-resource-lock={{ .Values.leaderElection.resourceLock }}
         env:
         - name: LEADER_ELECTION_NAMESPACE
           valueFrom:

@@ -3,6 +3,9 @@ image:
   tag: latest
   pullPolicy: IfNotPresent
 
+leaderElection:
+  resourceLock: leases
+
 resources:
   requests:
    cpu: "50m"
