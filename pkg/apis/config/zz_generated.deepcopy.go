@@ -49,6 +49,11 @@ func (in *ACME) DeepCopyInto(out *ACME) {
 		*out = new(string)
 		**out = **in
 	}
+	if in.NoDeactivateAuthorizations != nil {
+		in, out := &in.NoDeactivateAuthorizations, &out.NoDeactivateAuthorizations
+		*out = new(bool)
+		**out = **in
+	}
 	return
 }
 

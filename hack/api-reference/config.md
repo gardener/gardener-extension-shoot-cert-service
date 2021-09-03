@@ -210,6 +210,18 @@ string
 <p>CACertificates are custom root certificates to be made available for the cert-controller-manager</p>
 </td>
 </tr>
+<tr>
+<td>
+<code>noDeactivateAuthorizations</code></br>
+<em>
+bool
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>NoDeactivateAuthorizations if true disables deactivation of authorizations after successful certificate request</p>
+</td>
+</tr>
 </tbody>
 </table>
 <h3 id="shoot-cert-service.extensions.config.gardener.cloud/v1alpha1.ShootIssuers">ShootIssuers

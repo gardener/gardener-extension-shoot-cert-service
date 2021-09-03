@@ -57,6 +57,8 @@ certificateConfig:
   shootIssuers:
     enabled: false # if true, allows to specify issuers in the shoot clusters
 
+  deactivateAuthorizations: true # if true, enables flag --acme-deactivate-authorizations in cert-controller-manager
+
 disableControllers: []
 
 # imageVectorOverwrite: |

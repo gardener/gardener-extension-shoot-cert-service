@@ -75,6 +75,7 @@ configuration:
 #   -----BEGIN CERTIFICATE-----
 #   ...
 #   -----END CERTIFICATE-----
+  deactivateAuthorizations: true
 
 additionalConfiguration:
 - --kubeconfig.disable-deploy-crds
