@@ -333,6 +333,7 @@ func (a *actuator) createShootResources(ctx context.Context, certConfig *service
 		"shootUserName":       v1alpha1.CertManagementUserName,
 		"dnsChallengeOnShoot": dnsChallengeOnShoot,
 		"shootIssuers":        shootIssuers,
+		"kubernetesVersion":   cluster.Shoot.Spec.Kubernetes.Version,
 	}
 
 	renderer, err := util.NewChartRendererForShoot(cluster.Shoot.Spec.Kubernetes.Version)

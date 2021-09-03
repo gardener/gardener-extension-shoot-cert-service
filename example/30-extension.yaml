@@ -2,7 +2,7 @@
 apiVersion: extensions.gardener.cloud/v1alpha1
 kind: Extension
 metadata:
-  name: certificate-service
+  name: shoot-cert-service
   namespace: shoot--foo--bar
 spec:
   type: shoot-cert-service
