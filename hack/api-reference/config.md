@@ -212,14 +212,14 @@ string
 </tr>
 <tr>
 <td>
-<code>noDeactivateAuthorizations</code></br>
+<code>deactivateAuthorizations</code></br>
 <em>
 bool
 </em>
 </td>
 <td>
 <em>(Optional)</em>
-<p>NoDeactivateAuthorizations if true disables deactivation of authorizations after successful certificate request</p>
+<p>DeactivateAuthorizations enables deactivation of authorizations after successful certificate request</p>
 </td>
 </tr>
 </tbody>

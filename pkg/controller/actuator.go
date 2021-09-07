@@ -305,8 +305,8 @@ func (a *actuator) createSeedResources(ctx context.Context, certConfig *service.
 	if a.serviceConfig.ACME.CACertificates != nil {
 		cfg["caCertificates"] = *a.serviceConfig.ACME.CACertificates
 	}
-	if a.serviceConfig.ACME.NoDeactivateAuthorizations != nil {
-		cfg["deactivateAuthorizations"] = !*a.serviceConfig.ACME.NoDeactivateAuthorizations
+	if a.serviceConfig.ACME.DeactivateAuthorizations != nil {
+		cfg["deactivateAuthorizations"] = *a.serviceConfig.ACME.DeactivateAuthorizations
 	}
 
 	certManagementConfig, err = chart.InjectImages(certManagementConfig, imagevector.ImageVector(), []string{v1alpha1.CertManagementImageName})
