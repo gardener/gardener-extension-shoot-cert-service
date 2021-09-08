@@ -60,4 +60,6 @@ type ACME struct {
 	PrecheckNameservers *string
 	// CACertificates are custom root certificates to be made available for the cert-controller-manager
 	CACertificates *string
+	// DeactivateAuthorizations enables deactivation of authorizations after successful certificate request
+	DeactivateAuthorizations *bool
 }

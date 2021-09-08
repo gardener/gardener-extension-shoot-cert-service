@@ -31,6 +31,9 @@ acme:
   {{- if .Values.certificateConfig.caCertificates }}
   caCertificates: {{- toYaml .Values.certificateConfig.caCertificates | indent 2 }}
   {{- end }}
+  {{- if .Values.certificateConfig.deactivateAuthorizations }}
+  deactivateAuthorizations: true
+  {{- end }}
 {{- end }}
 
 {{-  define "image" -}}

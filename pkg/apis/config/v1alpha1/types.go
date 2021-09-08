@@ -69,4 +69,7 @@ type ACME struct {
 	// CACertificates are custom root certificates to be made available for the cert-controller-manager
 	// +optional
 	CACertificates *string `json:"caCertificates,omitempty"`
+	// DeactivateAuthorizations enables deactivation of authorizations after successful certificate request
+	// +optional
+	DeactivateAuthorizations *bool `json:"deactivateAuthorizations,omitempty"`
 }

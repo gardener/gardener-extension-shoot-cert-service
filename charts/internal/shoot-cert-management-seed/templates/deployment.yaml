@@ -81,6 +81,9 @@ spec:
         {{- if .Values.shootIssuers.enabled }}
         - --allow-target-issuers
         {{- end }}
+        {{- if .Values.configuration.deactivateAuthorizations }}
+        - --acme-deactivate-authorizations
+        {{- end }}
         - --lease-name=shoot-cert-service
         - --lease-resource-lock=leases
         {{- range $idx, $flag := .Values.additionalConfiguration }}

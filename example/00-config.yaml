@@ -4,6 +4,7 @@ kind: Configuration
 issuerName: gardener
 restrictIssuer: true
 acme:
+# deactivateAuthorizations: true
   email: john.doe@example.com
   server: https://acme-v02.api.letsencrypt.org/directory
   propagationTimeout: 60s # TTL for DNS01 challenges
