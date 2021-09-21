@@ -6,7 +6,7 @@ require (
 	github.com/ahmetb/gen-crd-api-reference-docs v0.2.0
 	github.com/frankban/quicktest v1.11.3 // indirect
 	github.com/gardener/cert-management v0.6.0
-	github.com/gardener/gardener v1.30.0
+	github.com/gardener/gardener v1.32.0
 	github.com/go-logr/logr v0.4.0
 	github.com/golang/mock v1.6.0
 	github.com/nwaples/rardecode v1.1.0 // indirect
