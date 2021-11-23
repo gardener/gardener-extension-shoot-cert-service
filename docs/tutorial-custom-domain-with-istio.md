@@ -16,14 +16,14 @@ As we ramp up more and more friends of Gardener, I thought it worthwile to explo
 
 
 Here are some pre-pointers that you will need to go deeper:
-* [CRUD Gardener Shoot](https://gardener.cloud/docs/guides/administer_shoots/create-delete-shoot/)
-* [DNS Management](https://gardener.cloud/docs/guides/administer_shoots/create-delete-shoot/)
-* [Certificate Management](https://gardener.cloud/docs/concepts/networking/cert-managment/)
-* [Tutorial Domain Names](https://gardener.cloud/docs/guides/administer_shoots/dns_names/)
-* [Tutorial Certificates](https://gardener.cloud/docs/guides/administer_shoots/request_cert/)
+* [CRUD Gardener Shoot](https://github.com/gardener/documentation/blob/master/website/documentation/guides/administer_shoots/create-delete-shoot/_index.md)
+* [DNS Management](https://github.com/gardener/external-dns-management/blob/master/README.md)
+* [Certificate Management](https://github.com/gardener/cert-management/blob/master/README.md)
+* [Tutorial Domain Names](https://github.com/gardener/gardener-extension-shoot-dns-service/blob/master/docs/usage/dns_names.md)
+* [Tutorial Certificates](../usage/request_cert.md)
 
 {{% alert title="Tip" color="primary" %}}
-<p>If you try my instructions and fail, then read the alternative title of this tutorial as "Shoot yourself in foot with Gardener, custom Domains, Istio and Certificates".</p>
+<p>If you try my instructions and fail, then read the alternative title of this tutorial as "Shoot yourself in the foot with Gardener, custom Domains, Istio and Certificates".</p>
 {{% /alert %}}
 
 ## First Things First
