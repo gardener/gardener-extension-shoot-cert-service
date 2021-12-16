@@ -67,12 +67,8 @@ rules:
 - apiGroups:
   - ""
   resources:
-  - "configmaps"
   - "secrets"
   - "events"
-  - "services"
-  - "pods"
-  - "serviceaccounts"
   verbs:
   - "*"
 - apiGroups:
