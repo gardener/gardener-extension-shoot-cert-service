@@ -20,8 +20,26 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/config"
+	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/service"
+	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/service/v1alpha1"
+	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/service/validation"
+	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/imagevector"
+
+	"github.com/gardener/gardener/extensions/pkg/controller"
+	"github.com/gardener/gardener/extensions/pkg/controller/extension"
+	"github.com/gardener/gardener/extensions/pkg/util"
+	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
+	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
+	"github.com/gardener/gardener/pkg/chartrenderer"
+	"github.com/gardener/gardener/pkg/controllerutils"
 	"github.com/gardener/gardener/pkg/utils"
+	"github.com/gardener/gardener/pkg/utils/chart"
+	gutil "github.com/gardener/gardener/pkg/utils/gardener"
+	kutil "github.com/gardener/gardener/pkg/utils/kubernetes"
+	managedresources "github.com/gardener/gardener/pkg/utils/managedresources"
+	"github.com/gardener/gardener/pkg/utils/secrets"
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	autoscalingv1 "k8s.io/api/autoscaling/v1"
@@ -33,32 +51,18 @@ import (
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-
-	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/config"
-	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/service"
-	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/service/v1alpha1"
-	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/service/validation"
-	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/imagevector"
-
-	"github.com/gardener/gardener/extensions/pkg/controller"
-	"github.com/gardener/gardener/extensions/pkg/controller/extension"
-	"github.com/gardener/gardener/extensions/pkg/util"
-	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
-	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
-	"github.com/gardener/gardener/pkg/chartrenderer"
-	"github.com/gardener/gardener/pkg/utils/chart"
-	managedresources "github.com/gardener/gardener/pkg/utils/managedresources"
-	"github.com/gardener/gardener/pkg/utils/secrets"
 )
 
 // ActuatorName is the name of the Certificate Service actuator.
 const ActuatorName = "shoot-cert-service-actuator"
 
 // NewActuator returns an actuator responsible for Extension resources.
-func NewActuator(config config.Configuration) extension.Actuator {
+func NewActuator(config config.Configuration, useTokenRequestor bool, useProjectedTokenMount bool) extension.Actuator {
 	return &actuator{
-		logger:        log.Log.WithName(ActuatorName),
-		serviceConfig: config,
+		logger:                 log.Log.WithName(ActuatorName),
+		serviceConfig:          config,
+		useTokenRequestor:      useTokenRequestor,
+		useProjectedTokenMount: useProjectedTokenMount,
 	}
 }
 
@@ -67,7 +71,9 @@ type actuator struct {
 	config  *rest.Config
 	decoder runtime.Decoder
 
-	serviceConfig config.Configuration
+	serviceConfig          config.Configuration
+	useTokenRequestor      bool
+	useProjectedTokenMount bool
 
 	logger logr.Logger
 }
@@ -263,35 +269,53 @@ func (a *actuator) createSeedResources(ctx context.Context, certConfig *service.
 		return nil
 	}
 
-	shootKubeconfig, err := a.createKubeconfigForCertManagement(ctx, namespace)
-	if err != nil {
-		return err
-	}
-
 	var propagationTimeout string
 	if a.serviceConfig.ACME.PropagationTimeout != nil {
 		propagationTimeout = a.serviceConfig.ACME.PropagationTimeout.Duration.String()
 	}
 
-	shootIssuers := a.createShootIssuersValues(certConfig)
+	var (
+		shootIssuers         = a.createShootIssuersValues(certConfig)
+		certManagementConfig = map[string]interface{}{
+			"replicaCount": controller.GetReplicas(cluster, 1),
+			"defaultIssuer": map[string]interface{}{
+				"name":       a.serviceConfig.IssuerName,
+				"restricted": *a.serviceConfig.RestrictIssuer,
+				"domains":    cluster.Shoot.Spec.DNS.Domain,
+			},
+			"issuers": issuers,
+			"configuration": map[string]interface{}{
+				"propagationTimeout": propagationTimeout,
+			},
+			"dnsChallengeOnShoot":    dnsChallengeOnShoot,
+			"shootIssuers":           shootIssuers,
+			"useProjectedTokenMount": a.useProjectedTokenMount,
+		}
+		secretNameToDelete string
+	)
 
-	certManagementConfig := map[string]interface{}{
-		"replicaCount": controller.GetReplicas(cluster, 1),
-		"defaultIssuer": map[string]interface{}{
-			"name":       a.serviceConfig.IssuerName,
-			"restricted": *a.serviceConfig.RestrictIssuer,
-			"domains":    cluster.Shoot.Spec.DNS.Domain,
-		},
-		"issuers": issuers,
-		"configuration": map[string]interface{}{
-			"propagationTimeout": propagationTimeout,
-		},
-		"dnsChallengeOnShoot": dnsChallengeOnShoot,
-		"shootClusterSecret":  v1alpha1.CertManagementKubecfg,
-		"shootIssuers":        shootIssuers,
-		"podAnnotations": map[string]interface{}{
-			"checksum/secret-kubeconfig": utils.ComputeChecksum(shootKubeconfig.Data),
-		},
+	if a.useTokenRequestor {
+		if err := gutil.NewShootAccessSecret(v1alpha1.ShootAccessSecretName, namespace).Reconcile(ctx, a.client); err != nil {
+			return err
+		}
+
+		certManagementConfig["shootClusterSecret"] = gutil.SecretNamePrefixShootAccess + v1alpha1.ShootAccessSecretName
+		certManagementConfig["useTokenRequestor"] = true
+		secretNameToDelete = v1alpha1.CertManagementKubecfg
+	} else {
+		shootKubeconfig, err := a.createKubeconfigForCertManagement(ctx, namespace)
+		if err != nil {
+			return err
+		}
+
+		certManagementConfig["shootClusterSecret"] = v1alpha1.CertManagementKubecfg
+		certManagementConfig["podAnnotations"] = map[string]interface{}{"checksum/secret-kubeconfig": utils.ComputeChecksum(shootKubeconfig.Data)}
+		secretNameToDelete = gutil.SecretNamePrefixShootAccess + v1alpha1.ShootAccessSecretName
+	}
+
+	// TODO(rfranzke): Remove in a future release.
+	if err := kutil.DeleteObject(ctx, a.client, &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: secretNameToDelete, Namespace: namespace}}); err != nil {
+		return err
 	}
 
 	cfg := certManagementConfig["configuration"].(map[string]interface{})
@@ -333,10 +357,16 @@ func (a *actuator) createShootResources(ctx context.Context, certConfig *service
 	shootIssuers := a.createShootIssuersValues(certConfig)
 
 	values := map[string]interface{}{
-		"shootUserName":       v1alpha1.CertManagementUserName,
 		"dnsChallengeOnShoot": dnsChallengeOnShoot,
 		"shootIssuers":        shootIssuers,
 		"kubernetesVersion":   cluster.Shoot.Spec.Kubernetes.Version,
+	}
+
+	if a.useTokenRequestor {
+		values["useTokenRequestor"] = true
+		values["shootAccessServiceAccountName"] = v1alpha1.ShootAccessServiceAccountName
+	} else {
+		values["shootUserName"] = v1alpha1.CertManagementUserName
 	}
 
 	renderer, err := util.NewChartRendererForShoot(cluster.Shoot.Spec.Kubernetes.Version)
@@ -350,12 +380,13 @@ func (a *actuator) createShootResources(ctx context.Context, certConfig *service
 func (a *actuator) deleteSeedResources(ctx context.Context, namespace string) error {
 	a.logger.Info("Deleting managed resource for seed", "namespace", namespace)
 
-	secret := &corev1.Secret{}
-	secret.SetName(v1alpha1.CertManagementKubecfg)
-	secret.SetNamespace(namespace)
-	if err := a.client.Delete(ctx, secret); client.IgnoreNotFound(err) != nil {
+	if err := kutil.DeleteObjects(ctx, a.client,
+		&corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: v1alpha1.CertManagementKubecfg, Namespace: namespace}},
+		&corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: gutil.SecretNamePrefixShootAccess + v1alpha1.ShootAccessSecretName, Namespace: namespace}},
+	); err != nil {
 		return err
 	}
+
 	if err := managedresources.Delete(ctx, a.client, namespace, v1alpha1.CertManagementResourceNameSeed, false); err != nil {
 		return err
 	}
@@ -412,7 +443,7 @@ func (a *actuator) updateStatus(ctx context.Context, ex *extensionsv1alpha1.Exte
 		})
 	}
 
-	return controller.TryUpdateStatus(ctx, retry.DefaultBackoff, a.client, ex, func() error {
+	return controllerutils.TryUpdateStatus(ctx, retry.DefaultBackoff, a.client, ex, func() error {
 		ex.Status.Resources = resources
 		return nil
 	})

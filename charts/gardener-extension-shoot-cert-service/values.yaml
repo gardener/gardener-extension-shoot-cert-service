@@ -67,3 +67,6 @@ disableControllers: []
 #     sourceRepository: github.com/gardener/cert-management
 #     repository: eu.gcr.io/gardener-project/cert-controller-manager
 #     tag: "0.2.9"
+
+gardener:
+  version: ""

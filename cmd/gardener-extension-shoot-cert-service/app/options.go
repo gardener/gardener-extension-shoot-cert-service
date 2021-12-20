@@ -18,9 +18,9 @@ import (
 	"os"
 
 	certificateservicecmd "github.com/gardener/gardener-extension-shoot-cert-service/pkg/cmd"
-	"k8s.io/client-go/tools/leaderelection/resourcelock"
 
 	controllercmd "github.com/gardener/gardener/extensions/pkg/controller/cmd"
+	"k8s.io/client-go/tools/leaderelection/resourcelock"
 )
 
 // ExtensionName is the name of the extension.
@@ -28,6 +28,7 @@ const ExtensionName = "extension-shoot-cert-service"
 
 // Options holds configuration passed to the Certificate Service controller.
 type Options struct {
+	generalOptions     *controllercmd.GeneralOptions
 	certOptions        *certificateservicecmd.CertificateServiceOptions
 	restOptions        *controllercmd.RESTOptions
 	managerOptions     *controllercmd.ManagerOptions
@@ -41,8 +42,9 @@ type Options struct {
 // NewOptions creates a new Options instance.
 func NewOptions() *Options {
 	options := &Options{
-		certOptions: &certificateservicecmd.CertificateServiceOptions{},
-		restOptions: &controllercmd.RESTOptions{},
+		generalOptions: &controllercmd.GeneralOptions{},
+		certOptions:    &certificateservicecmd.CertificateServiceOptions{},
+		restOptions:    &controllercmd.RESTOptions{},
 		managerOptions: &controllercmd.ManagerOptions{
 			// These are default values.
 			LeaderElection:             true,
@@ -63,6 +65,7 @@ func NewOptions() *Options {
 	}
 
 	options.optionAggregator = controllercmd.NewOptionAggregator(
+		options.generalOptions,
 		options.restOptions,
 		options.managerOptions,
 		options.controllerOptions,

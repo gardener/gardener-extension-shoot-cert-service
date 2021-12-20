@@ -44,19 +44,24 @@ type AddOptions struct {
 	ServiceConfig controllerconfig.Config
 	// IgnoreOperationAnnotation specifies whether to ignore the operation annotation or not.
 	IgnoreOperationAnnotation bool
+	// UseTokenRequestor specifies whether the token requestor shall be used for the cert-controller.
+	UseTokenRequestor bool
+	// UseProjectedTokenMount specifies whether the projected token mount shall be used for the
+	// cert-controller.
+	UseProjectedTokenMount bool
 }
 
 // AddToManager adds a controller with the default Options to the given Controller Manager.
 func AddToManager(mgr manager.Manager) error {
-	return AddToManagerWithOptions(mgr, DefaultAddOptions.ControllerOptions, DefaultAddOptions.ServiceConfig)
+	return AddToManagerWithOptions(mgr, DefaultAddOptions)
 }
 
 // AddToManagerWithOptions adds a controller with the given Options to the given manager.
 // The opts.Reconciler is being set with a newly instantiated actuator.
-func AddToManagerWithOptions(mgr manager.Manager, opts controller.Options, config controllerconfig.Config) error {
+func AddToManagerWithOptions(mgr manager.Manager, opts AddOptions) error {
 	return extension.Add(mgr, extension.AddArgs{
-		Actuator:          NewActuator(config.Configuration),
-		ControllerOptions: opts,
+		Actuator:          NewActuator(opts.ServiceConfig.Configuration, opts.UseTokenRequestor, opts.UseProjectedTokenMount),
+		ControllerOptions: opts.ControllerOptions,
 		Name:              ControllerName,
 		FinalizerSuffix:   FinalizerSuffix,
 		Resync:            0,

@@ -38,6 +38,12 @@ const CertManagementUserName = "gardener.cloud:system:cert-management"
 // ChartsPath is the path to the charts
 var ChartsPath = filepath.Join("charts", "internal")
 
+// ShootAccessSecretName is the name of the shoot access secret in the seed.
+const ShootAccessSecretName = "extension-shoot-cert-service"
+
+// ShootAccessServiceAccountName is the name of the service account used for accessing the shoot.
+const ShootAccessServiceAccountName = ShootAccessSecretName
+
 // CertManagementChartNameSeed is the name of the chart for Cert-Management in the seed.
 const CertManagementChartNameSeed = "shoot-cert-management-seed"
 

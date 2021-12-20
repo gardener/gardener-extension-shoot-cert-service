@@ -41,6 +41,9 @@ spec:
         - --ignore-operation-annotation={{ .Values.controllers.ignoreOperationAnnotation }}
         - --leader-election-id={{ include "leaderelectionid" . }}
         - --leader-election-resource-lock={{ .Values.leaderElection.resourceLock }}
+        {{- if .Values.gardener.version }}
+        - --gardener-version={{ .Values.gardener.version }}
+        {{- end }}
         env:
         - name: LEADER_ELECTION_NAMESPACE
           valueFrom:

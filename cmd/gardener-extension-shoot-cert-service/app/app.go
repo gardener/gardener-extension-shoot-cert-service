@@ -25,7 +25,6 @@ import (
 	certv1alpha1 "github.com/gardener/cert-management/pkg/apis/cert/v1alpha1"
 	extensionscontroller "github.com/gardener/gardener/extensions/pkg/controller"
 	"github.com/gardener/gardener/extensions/pkg/util"
-
 	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
 	componentbaseconfig "k8s.io/component-base/config"
@@ -86,6 +85,18 @@ func (o *Options) run(ctx context.Context) error {
 	if err := certv1alpha1.AddToScheme(mgr.GetScheme()); err != nil {
 		return fmt.Errorf("could not update manager scheme: %s", err)
 	}
+
+	useTokenRequestor, err := extensionscontroller.UseTokenRequestor(o.generalOptions.Completed().GardenerVersion)
+	if err != nil {
+		return fmt.Errorf("could not determine whether token requestor should be used: %s", err)
+	}
+	controller.DefaultAddOptions.UseTokenRequestor = useTokenRequestor
+
+	useProjectedTokenMount, err := extensionscontroller.UseServiceAccountTokenVolumeProjection(o.generalOptions.Completed().GardenerVersion)
+	if err != nil {
+		return fmt.Errorf("could not determine whether service account token volume projection should be used: %s", err)
+	}
+	controller.DefaultAddOptions.UseProjectedTokenMount = useProjectedTokenMount
 
 	ctrlConfig := o.certOptions.Completed()
 	ctrlConfig.ApplyHealthCheckConfig(&healthcheck.DefaultAddOptions.HealthCheckConfig)
