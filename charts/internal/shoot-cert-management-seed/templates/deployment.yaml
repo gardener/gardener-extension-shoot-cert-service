@@ -19,6 +19,10 @@ spec:
   template:
     metadata:
       annotations:
+        {{- if .Values.useProjectedTokenMount }}
+        # TODO(rfranzke): Remove in a future release.
+        security.gardener.cloud/trigger: rollout
+        {{- end }}
         checksum/issuers: {{ toYaml .Values.issuers | sha256sum }}
         {{- if .Values.podAnnotations }}
 {{ toYaml .Values.podAnnotations | indent 8 }}
@@ -38,9 +42,15 @@ spec:
         image: {{ index .Values.images "cert-management" }}
         imagePullPolicy: IfNotPresent
         volumeMounts:
+        {{- if .Values.useTokenRequestor }}
+        - mountPath: /var/run/secrets/gardener.cloud/shoot/generic-kubeconfig
+          name: kubeconfig
+          readOnly: true
+        {{- else }}
         - name: shoot-cluster
           mountPath: "/etc/shoot-cluster"
           readOnly: true
+        {{- end }}
         {{- if .Values.configuration.caCertificates }}
         - name: ca-certificates
           mountPath: "/etc/ssl/certs"
@@ -49,7 +59,11 @@ spec:
         args:
         - --name={{ include "cert-management.fullname" . }}
         - --namespace=kube-system
+        {{- if .Values.useTokenRequestor }}
+        - --source=/var/run/secrets/gardener.cloud/shoot/generic-kubeconfig/kubeconfig
+        {{- else }}
         - --source=/etc/shoot-cluster/kubeconfig
+        {{- end }}
         - --issuer.issuer-namespace={{ .Release.Namespace }}
         - --issuer.default-issuer={{ .Values.defaultIssuer.name }}
         {{- if .Values.configuration.defaultRequestsPerDayQuota }}
@@ -62,7 +76,11 @@ spec:
         - --issuer.precheck-nameservers={{ .Values.configuration.precheckNameservers }}
         {{- end }}
         {{- if .Values.dnsChallengeOnShoot.enabled }}
+        {{- if .Values.useTokenRequestor }}
+        - --dns=/var/run/secrets/gardener.cloud/shoot/generic-kubeconfig/kubeconfig
+        {{- else }}
         - --dns=/etc/shoot-cluster/kubeconfig
+        {{- end }}
         - --issuer.dns-namespace={{ .Values.dnsChallengeOnShoot.namespace }}
         {{- if .Values.dnsChallengeOnShoot.dnsClass }}
         - --issuer.dns-class={{ .Values.dnsChallengeOnShoot.dnsClass }}
@@ -102,9 +120,28 @@ spec:
         resources:
           {{- toYaml .Values.resources | nindent 10 }}
       volumes:
+      {{- if .Values.useTokenRequestor }}
+      - name: kubeconfig
+        projected:
+          defaultMode: 420
+          sources:
+          - secret:
+              items:
+              - key: kubeconfig
+                path: kubeconfig
+              name: generic-token-kubeconfig
+              optional: false
+          - secret:
+              items:
+              - key: token
+                path: token
+              name: {{ .Values.shootClusterSecret }}
+              optional: false
+      {{- else }}
       - name: shoot-cluster
         secret:
           secretName: {{ .Values.shootClusterSecret }}
+      {{- end }}
       {{- if .Values.configuration.caCertificates }}
       - name: ca-certificates
         configMap:

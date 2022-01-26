@@ -9,6 +9,9 @@ images:
   cert-management: any-repo:any-tag
 
 shootClusterSecret: cert-management-kubecfg
+podAnnotations: {}
+useTokenRequestor: false
+useProjectedTokenMount: false
 
 resources:
   requests:
@@ -22,8 +25,6 @@ nodeSelector: {}
 tolerations: []
 affinity: {}
 # priorityClassName: ""
-
-podAnnotations: {}
 
 defaultIssuer:
   retricted: true

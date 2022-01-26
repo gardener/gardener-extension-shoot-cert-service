@@ -97,5 +97,12 @@ roleRef:
   kind: ClusterRole
   name: extensions.gardener.cloud:extension-shoot-cert-service:shoot
 subjects:
-- kind: User
+{{- if .Values.useTokenRequestor }}
+- kind: ServiceAccount
+  name: {{ .Values.shootAccessServiceAccountName }}
+  namespace: kube-system
+{{- else }}
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
   name: {{ .Values.shootUserName }}
+{{- end }}
