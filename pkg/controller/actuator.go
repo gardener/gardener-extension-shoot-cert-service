@@ -33,7 +33,6 @@ import (
 	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
 	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
 	"github.com/gardener/gardener/pkg/chartrenderer"
-	"github.com/gardener/gardener/pkg/controllerutils"
 	"github.com/gardener/gardener/pkg/utils"
 	"github.com/gardener/gardener/pkg/utils/chart"
 	gutil "github.com/gardener/gardener/pkg/utils/gardener"
@@ -48,7 +47,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/client-go/rest"
-	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
@@ -443,10 +441,9 @@ func (a *actuator) updateStatus(ctx context.Context, ex *extensionsv1alpha1.Exte
 		})
 	}
 
-	return controllerutils.TryUpdateStatus(ctx, retry.DefaultBackoff, a.client, ex, func() error {
-		ex.Status.Resources = resources
-		return nil
-	})
+	patch := client.MergeFrom(ex.DeepCopy())
+	ex.Status.Resources = resources
+	return a.client.Status().Patch(ctx, ex, patch)
 }
 
 func (a *actuator) createShootIssuersValues(certConfig *service.CertConfig) map[string]interface{} {
