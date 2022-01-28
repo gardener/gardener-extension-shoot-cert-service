@@ -69,6 +69,11 @@ type CertConfig struct {
 	// If specified, it overwrites the ShootIssuers settings of the service configuration.
 	// +optional
 	ShootIssuers *ShootIssuers `json:"shootIssuers,omitempty"`
+
+	// PrecheckNameservers is used to specify a comma-separated list of DNS servers for checking availability for DNS
+	// challenge before calling ACME CA
+	// +optional
+	PrecheckNameservers *string `json:"precheckNameservers,omitempty"`
 }
 
 // IssuerConfig contains information for certificate issuers.

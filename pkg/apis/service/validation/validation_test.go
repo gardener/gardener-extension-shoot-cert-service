@@ -37,6 +37,9 @@ var _ = Describe("Validation", func() {
 		tru          = true
 		testref      = "testref"
 		wrongtestref = "not-existing-ref"
+		empty        = ""
+		nameservers  = "10.0.0.53,1.1.1.1"
+		invalid_ns   = "dns.server.test"
 		cluster      = &controller.Cluster{
 			Shoot: &gardencorev1beta1.Shoot{
 				Spec: gardencorev1beta1.ShootSpec{
@@ -234,5 +237,27 @@ var _ = Describe("Validation", func() {
 				Namespace: "kube-system",
 			},
 		}, BeEmpty()),
+		Entry("Valid PrecheckNameservers", service.CertConfig{
+			PrecheckNameservers: &nameservers,
+		}, BeEmpty()),
+		Entry("Invalid PrecheckNameservers", service.CertConfig{
+			PrecheckNameservers: &invalid_ns,
+		}, ConsistOf(
+			PointTo(MatchFields(IgnoreExtras, Fields{
+				"Type":     Equal(field.ErrorTypeInvalid),
+				"Field":    Equal("precheckNameservers"),
+				"BadValue": Equal(invalid_ns),
+				"Detail":   Equal("invalid IP for 1. DNS server"),
+			})),
+		)),
+		Entry("Empty PrecheckNameservers", service.CertConfig{
+			PrecheckNameservers: &empty,
+		}, ConsistOf(
+			PointTo(MatchFields(IgnoreExtras, Fields{
+				"Type":   Equal(field.ErrorTypeInvalid),
+				"Field":  Equal("precheckNameservers"),
+				"Detail": Equal("must contain at least one DNS server IP"),
+			})),
+		)),
 	)
 })

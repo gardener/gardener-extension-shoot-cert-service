@@ -33,3 +33,5 @@ spec:
       # dnsClass: foo
     #shootIssuers: # optionally overwrite global service configuration for issuers on shoot cluster
     #  enabled: false
+
+    #precheckNameservers: "10.0.0.53,10.123.56.53,8.8.8.8" # optional comma separated list of DNS server IP addresses if public DNS servers are not sufficient for prechecking DNS challenges

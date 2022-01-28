@@ -85,6 +85,19 @@ ShootIssuers
 If specified, it overwrites the ShootIssuers settings of the service configuration.</p>
 </td>
 </tr>
+<tr>
+<td>
+<code>precheckNameservers</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>PrecheckNameservers is used to specify a comma-separated list of DNS servers for checking availability for DNS
+challenge before calling ACME CA</p>
+</td>
+</tr>
 </tbody>
 </table>
 <h3 id="service.cert.extensions.gardener.cloud/v1alpha1.ACMEExternalAccountBinding">ACMEExternalAccountBinding

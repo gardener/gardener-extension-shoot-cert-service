@@ -155,6 +155,9 @@ data:
 ### Issuer
 Another prerequisite to request certificates for custom domains is a dedicated issuer.
 
+Note: This is only needed if the default issuer provided by Gardener is restricted to shoot related domains or you are using
+domain names not visible to public DNS servers. You may therefore try first without defining an own issuer.
+
 The custom issuers are specified normally in the shoot manifest.
 
 If the `shootIssuers` feature is enabled, it can alternatively be defined in the shoot cluster.
@@ -179,6 +182,9 @@ spec:
           privateKeySecretName: my-privatekey # referenced resource, the private key must be stored in the secret at `data.privateKey`
       #shootIssuers:
       #  enabled: true # if true, allows to specify issuers in the shoot cluster
+
+      #precheckNameservers: "10.0.0.53,10.123.56.53,8.8.8.8" # optional comma separated list of DNS server IP addresses if public DNS servers are not sufficient for prechecking DNS challenges
+
   resources:
   - name: my-privatekey
     resourceRef:
@@ -186,6 +192,11 @@ spec:
       kind: Secret
       name: custom-issuer-privatekey # name of secret in Gardener project
 ```
+
+If you are using an ACME provider for private domains, you may need to change the nameservers used for
+checking the availability of the DNS challenge's TXT record before the certificate is requested from the ACME provider.
+By default, only public DNS servers may be used for this purpose.
+At least one of the `precheckNameservers` must be able to resolve the private domain names. 
 
 ####
 
