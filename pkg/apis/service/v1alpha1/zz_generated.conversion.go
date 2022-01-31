@@ -125,6 +125,7 @@ func autoConvert_v1alpha1_CertConfig_To_service_CertConfig(in *CertConfig, out *
 	out.Issuers = *(*[]service.IssuerConfig)(unsafe.Pointer(&in.Issuers))
 	out.DNSChallengeOnShoot = (*service.DNSChallengeOnShoot)(unsafe.Pointer(in.DNSChallengeOnShoot))
 	out.ShootIssuers = (*service.ShootIssuers)(unsafe.Pointer(in.ShootIssuers))
+	out.PrecheckNameservers = (*string)(unsafe.Pointer(in.PrecheckNameservers))
 	return nil
 }
 
@@ -137,6 +138,7 @@ func autoConvert_service_CertConfig_To_v1alpha1_CertConfig(in *service.CertConfi
 	out.Issuers = *(*[]IssuerConfig)(unsafe.Pointer(&in.Issuers))
 	out.DNSChallengeOnShoot = (*DNSChallengeOnShoot)(unsafe.Pointer(in.DNSChallengeOnShoot))
 	out.ShootIssuers = (*ShootIssuers)(unsafe.Pointer(in.ShootIssuers))
+	out.PrecheckNameservers = (*string)(unsafe.Pointer(in.PrecheckNameservers))
 	return nil
 }
 

@@ -15,7 +15,10 @@
 package validation
 
 import (
+	"fmt"
+	"net"
 	"net/url"
+	"strings"
 
 	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/service"
 
@@ -31,6 +34,8 @@ func ValidateCertConfig(config *service.CertConfig, cluster *controller.Cluster)
 	allErrs = append(allErrs, validateIssuers(cluster, config.Issuers, field.NewPath("issuers"))...)
 
 	allErrs = append(allErrs, validateDNSChallengeOnShoot(config.DNSChallengeOnShoot, field.NewPath("dnsChallengeOnShoot"))...)
+
+	allErrs = append(allErrs, validatePrecheckNameservers(config.PrecheckNameservers, field.NewPath("precheckNameservers"))...)
 
 	return allErrs
 }
@@ -111,5 +116,22 @@ func validateDNSChallengeOnShoot(dnsChallenge *service.DNSChallengeOnShoot, fldP
 		}
 	}
 
+	return allErrs
+}
+
+func validatePrecheckNameservers(precheckNameservers *string, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	if precheckNameservers != nil {
+		servers := strings.Split(*precheckNameservers, ",")
+		if len(servers) == 1 && len(servers[0]) == 0 {
+			allErrs = append(allErrs, field.Invalid(fldPath, *precheckNameservers, "must contain at least one DNS server IP"))
+		} else {
+			for i, server := range servers {
+				if net.ParseIP(server) == nil {
+					allErrs = append(allErrs, field.Invalid(fldPath, *precheckNameservers, fmt.Sprintf("invalid IP for %d. DNS server", i+1)))
+				}
+			}
+		}
+	}
 	return allErrs
 }

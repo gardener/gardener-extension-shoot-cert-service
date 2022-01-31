@@ -56,12 +56,13 @@ func validateACME(acme *config.ACME, fldPath *field.Path) field.ErrorList {
 
 	if acme.PrecheckNameservers != nil {
 		servers := strings.Split(*acme.PrecheckNameservers, ",")
-		if len(servers) == 0 {
+		if len(servers) == 1 && len(servers[0]) == 0 {
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("precheckNameservers"), *acme.PrecheckNameservers, "must contain at least one DNS server IP"))
-		}
-		for i, server := range servers {
-			if net.ParseIP(server) == nil {
-				allErrs = append(allErrs, field.Invalid(fldPath.Child("precheckNameservers"), *acme.PrecheckNameservers, fmt.Sprintf("invalid IP for %d. DNS server", i+1)))
+		} else {
+			for i, server := range servers {
+				if net.ParseIP(server) == nil {
+					allErrs = append(allErrs, field.Invalid(fldPath.Child("precheckNameservers"), *acme.PrecheckNameservers, fmt.Sprintf("invalid IP for %d. DNS server", i+1)))
+				}
 			}
 		}
 	}

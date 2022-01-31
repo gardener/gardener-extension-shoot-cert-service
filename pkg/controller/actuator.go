@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/config"
@@ -324,6 +325,13 @@ func (a *actuator) createSeedResources(ctx context.Context, certConfig *service.
 	if a.serviceConfig.ACME.PrecheckNameservers != nil {
 		cfg["precheckNameservers"] = *a.serviceConfig.ACME.PrecheckNameservers
 	}
+	if certConfig.PrecheckNameservers != nil {
+		servers := *certConfig.PrecheckNameservers
+		if a.serviceConfig.ACME.PrecheckNameservers != nil {
+			servers = mergeServers(servers, *a.serviceConfig.ACME.PrecheckNameservers)
+		}
+		cfg["precheckNameservers"] = servers
+	}
 	if a.serviceConfig.ACME.CACertificates != nil {
 		cfg["caCertificates"] = *a.serviceConfig.ACME.CACertificates
 	}
@@ -456,4 +464,18 @@ func (a *actuator) createShootIssuersValues(certConfig *service.CertConfig) map[
 	return map[string]interface{}{
 		"enabled": shootIssuersEnabled,
 	}
+}
+
+func mergeServers(serversList ...string) string {
+	existing := map[string]struct{}{}
+	merged := []string{}
+	for _, servers := range serversList {
+		for _, item := range strings.Split(servers, ",") {
+			if _, ok := existing[item]; !ok {
+				existing[item] = struct{}{}
+				merged = append(merged, item)
+			}
+		}
+	}
+	return strings.Join(merged, ",")
 }

@@ -62,6 +62,11 @@ func (in *CertConfig) DeepCopyInto(out *CertConfig) {
 		*out = new(ShootIssuers)
 		**out = **in
 	}
+	if in.PrecheckNameservers != nil {
+		in, out := &in.PrecheckNameservers, &out.PrecheckNameservers
+		*out = new(string)
+		**out = **in
+	}
 	return
 }
 

@@ -34,6 +34,10 @@ type CertConfig struct {
 	// ShootIssuers contains enablement for issuers on shoot cluster
 	// If specified, it overwrites the ShootIssuers settings of the service configuration.
 	ShootIssuers *ShootIssuers
+
+	// PrecheckNameservers is used to specify a comma-separated list of DNS servers for checking availability for DNS
+	// challenge before calling ACME CA
+	PrecheckNameservers *string
 }
 
 // IssuerConfig contains information for certificate issuers.
