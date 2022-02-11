@@ -20,7 +20,7 @@ Here are some pre-pointers that you will need to go deeper:
 * [DNS Management](https://github.com/gardener/external-dns-management/blob/master/README.md)
 * [Certificate Management](https://github.com/gardener/cert-management/blob/master/README.md)
 * [Tutorial Domain Names](https://github.com/gardener/gardener-extension-shoot-dns-service/blob/master/docs/usage/dns_names.md)
-* [Tutorial Certificates](../usage/request_cert.md)
+* [Tutorial Certificates](./usage/request_cert.md)
 
 {{% alert title="Tip" color="primary" %}}
 <p>If you try my instructions and fail, then read the alternative title of this tutorial as "Shoot yourself in the foot with Gardener, custom Domains, Istio and Certificates".</p>
@@ -223,7 +223,7 @@ I want to install Istio with a default profile and SDS enabled. Furthermore I pa
 ```
 With these annotations three things now happen automagically:
 1. The [External DNS Manager](https://github.com/gardener/external-dns-management/blob/master/README.md), provided to you as a service (`dns.gardener.cloud/class: garden`), picks up the request and creates the wildcard DNS entry `*.gsicdc.mydomain.io` with a time to live of 120sec at your DNS provider. My provider Cloud Flare is very very quick (as opposed to some other services). You should be able to verify the entry with `dig lovemygardener.gsicdc.mydomain.io` within seconds.
-2. The [Certificate Mangement](https://gardener.cloud/docs/concepts/networking/cert-managment/) picks up the request as well and initates a DNS01 protocol exchange with Let's Encrypt; using the staging environment referred to with the issuer behind `mydomain-staging`.
+2. The [Certificate Management](https://github.com/gardener/cert-management/blob/master/README.md) picks up the request as well and initates a DNS01 protocol exchange with Let's Encrypt; using the staging environment referred to with the issuer behind `mydomain-staging`.
 3. After aproximately 70sec (give and take) you will receive the wildcard certificate in the `wildcard-tls` secret in the namespace `istio-system`. 
 
 {{% alert color="info" %}}
