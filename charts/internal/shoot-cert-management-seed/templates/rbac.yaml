@@ -52,6 +52,13 @@ rules:
     - "secrets"
   verbs:
     - "*"
+- apiGroups:
+    - ""
+  resources:
+    - events
+  verbs:
+    - create
+    - patch
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
