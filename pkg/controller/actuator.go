@@ -34,12 +34,10 @@ import (
 	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
 	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
 	"github.com/gardener/gardener/pkg/chartrenderer"
-	"github.com/gardener/gardener/pkg/utils"
 	"github.com/gardener/gardener/pkg/utils/chart"
 	gutil "github.com/gardener/gardener/pkg/utils/gardener"
 	kutil "github.com/gardener/gardener/pkg/utils/kubernetes"
-	managedresources "github.com/gardener/gardener/pkg/utils/managedresources"
-	"github.com/gardener/gardener/pkg/utils/secrets"
+	"github.com/gardener/gardener/pkg/utils/managedresources"
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	autoscalingv1 "k8s.io/api/autoscaling/v1"
@@ -56,12 +54,10 @@ import (
 const ActuatorName = "shoot-cert-service-actuator"
 
 // NewActuator returns an actuator responsible for Extension resources.
-func NewActuator(config config.Configuration, useTokenRequestor bool, useProjectedTokenMount bool) extension.Actuator {
+func NewActuator(config config.Configuration) extension.Actuator {
 	return &actuator{
-		logger:                 log.Log.WithName(ActuatorName),
-		serviceConfig:          config,
-		useTokenRequestor:      useTokenRequestor,
-		useProjectedTokenMount: useProjectedTokenMount,
+		logger:        log.Log.WithName(ActuatorName),
+		serviceConfig: config,
 	}
 }
 
@@ -70,9 +66,7 @@ type actuator struct {
 	config  *rest.Config
 	decoder runtime.Decoder
 
-	serviceConfig          config.Configuration
-	useTokenRequestor      bool
-	useProjectedTokenMount bool
+	serviceConfig config.Configuration
 
 	logger logr.Logger
 }
@@ -286,36 +280,15 @@ func (a *actuator) createSeedResources(ctx context.Context, certConfig *service.
 			"configuration": map[string]interface{}{
 				"propagationTimeout": propagationTimeout,
 			},
-			"dnsChallengeOnShoot":    dnsChallengeOnShoot,
-			"shootIssuers":           shootIssuers,
-			"useProjectedTokenMount": a.useProjectedTokenMount,
+			"dnsChallengeOnShoot": dnsChallengeOnShoot,
+			"shootIssuers":        shootIssuers,
 		}
-		secretNameToDelete string
 	)
 
-	if a.useTokenRequestor {
-		if err := gutil.NewShootAccessSecret(v1alpha1.ShootAccessSecretName, namespace).Reconcile(ctx, a.client); err != nil {
-			return err
-		}
-
-		certManagementConfig["shootClusterSecret"] = gutil.SecretNamePrefixShootAccess + v1alpha1.ShootAccessSecretName
-		certManagementConfig["useTokenRequestor"] = true
-		secretNameToDelete = v1alpha1.CertManagementKubecfg
-	} else {
-		shootKubeconfig, err := a.createKubeconfigForCertManagement(ctx, namespace)
-		if err != nil {
-			return err
-		}
-
-		certManagementConfig["shootClusterSecret"] = v1alpha1.CertManagementKubecfg
-		certManagementConfig["podAnnotations"] = map[string]interface{}{"checksum/secret-kubeconfig": utils.ComputeChecksum(shootKubeconfig.Data)}
-		secretNameToDelete = gutil.SecretNamePrefixShootAccess + v1alpha1.ShootAccessSecretName
-	}
-
-	// TODO(rfranzke): Remove in a future release.
-	if err := kutil.DeleteObject(ctx, a.client, &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: secretNameToDelete, Namespace: namespace}}); err != nil {
+	if err := gutil.NewShootAccessSecret(v1alpha1.ShootAccessSecretName, namespace).Reconcile(ctx, a.client); err != nil {
 		return err
 	}
+	certManagementConfig["shootClusterSecret"] = gutil.SecretNamePrefixShootAccess + v1alpha1.ShootAccessSecretName
 
 	cfg := certManagementConfig["configuration"].(map[string]interface{})
 	if a.serviceConfig.DefaultRequestsPerDayQuota != nil {
@@ -363,16 +336,10 @@ func (a *actuator) createShootResources(ctx context.Context, certConfig *service
 	shootIssuers := a.createShootIssuersValues(certConfig)
 
 	values := map[string]interface{}{
-		"dnsChallengeOnShoot": dnsChallengeOnShoot,
-		"shootIssuers":        shootIssuers,
-		"kubernetesVersion":   cluster.Shoot.Spec.Kubernetes.Version,
-	}
-
-	if a.useTokenRequestor {
-		values["useTokenRequestor"] = true
-		values["shootAccessServiceAccountName"] = v1alpha1.ShootAccessServiceAccountName
-	} else {
-		values["shootUserName"] = v1alpha1.CertManagementUserName
+		"dnsChallengeOnShoot":           dnsChallengeOnShoot,
+		"shootIssuers":                  shootIssuers,
+		"kubernetesVersion":             cluster.Shoot.Spec.Kubernetes.Version,
+		"shootAccessServiceAccountName": v1alpha1.ShootAccessServiceAccountName,
 	}
 
 	renderer, err := util.NewChartRendererForShoot(cluster.Shoot.Spec.Kubernetes.Version)
@@ -386,10 +353,7 @@ func (a *actuator) createShootResources(ctx context.Context, certConfig *service
 func (a *actuator) deleteSeedResources(ctx context.Context, namespace string) error {
 	a.logger.Info("Deleting managed resource for seed", "namespace", namespace)
 
-	if err := kutil.DeleteObjects(ctx, a.client,
-		&corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: v1alpha1.CertManagementKubecfg, Namespace: namespace}},
-		&corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: gutil.SecretNamePrefixShootAccess + v1alpha1.ShootAccessSecretName, Namespace: namespace}},
-	); err != nil {
+	if err := kutil.DeleteObject(ctx, a.client, &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: gutil.SecretNamePrefixShootAccess + v1alpha1.ShootAccessSecretName, Namespace: namespace}}); err != nil {
 		return err
 	}
 
@@ -411,15 +375,6 @@ func (a *actuator) deleteShootResources(ctx context.Context, namespace string) e
 	timeoutCtx, cancel := context.WithTimeout(ctx, 2*time.Minute)
 	defer cancel()
 	return managedresources.WaitUntilDeleted(timeoutCtx, a.client, namespace, v1alpha1.CertManagementResourceNameShoot)
-}
-
-func (a *actuator) createKubeconfigForCertManagement(ctx context.Context, namespace string) (*corev1.Secret, error) {
-	certConfig := secrets.CertificateSecretConfig{
-		Name:       v1alpha1.CertManagementKubecfg,
-		CommonName: v1alpha1.CertManagementUserName,
-	}
-
-	return util.GetOrCreateShootKubeconfig(ctx, a.client, certConfig, namespace)
 }
 
 func (a *actuator) createManagedResource(ctx context.Context, namespace, name, class string, renderer chartrenderer.Interface, chartName, chartNamespace string, chartValues map[string]interface{}, injectedLabels map[string]string) error {

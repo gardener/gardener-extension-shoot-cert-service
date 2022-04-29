@@ -23,17 +23,11 @@ import (
 // CertManagementResourceNameSeed is the name for Cert-Management resources in the seed.
 const CertManagementResourceNameSeed = "extension-shoot-cert-service-seed"
 
-// CertManagementKubecfg is the name of the kubeconfig secret.
-const CertManagementKubecfg = "extension-shoot-cert-service.kubecfg"
-
 // CertManagementResourceNameShoot is the name for Cert-Management resources in the shoot.
 const CertManagementResourceNameShoot = "extension-shoot-cert-service-shoot"
 
 // CertManagementImageName is the name of the Cert-Management image in the image vector.
 const CertManagementImageName = "cert-management"
-
-// CertManagementUserName is the name of the user Cert-Broker uses to connect to the target cluster.
-const CertManagementUserName = "gardener.cloud:system:cert-management"
 
 // ChartsPath is the path to the charts
 var ChartsPath = filepath.Join("charts", "internal")

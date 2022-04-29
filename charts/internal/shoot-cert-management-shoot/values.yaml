@@ -7,6 +7,4 @@ dnsChallengeOnShoot:
 
 kubernetesVersion: "1.19.1"
 
-#shootUserName: cert.gardener.cloud:system:cert-management
-#shootAccessServiceAccountName: ""
-useTokenRequestor: false
+shootAccessServiceAccountName: ""
