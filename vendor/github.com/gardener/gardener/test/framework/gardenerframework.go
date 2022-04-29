@@ -19,7 +19,7 @@ import (
 	"flag"
 	"time"
 
-	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -61,7 +61,7 @@ func NewGardenerFramework(cfg *GardenerConfig) *GardenerFramework {
 	}
 	ginkgo.BeforeEach(f.BeforeEach)
 	CAfterEach(func(ctx context.Context) {
-		if !ginkgo.CurrentGinkgoTestDescription().Failed {
+		if !ginkgo.CurrentSpecReport().Failed() {
 			return
 		}
 		f.DumpState(ctx)
@@ -93,6 +93,7 @@ func (f *GardenerFramework) BeforeEach() {
 			Scheme: kubernetes.GardenScheme,
 		}),
 		kubernetes.WithAllowedUserFields([]string{kubernetes.AuthTokenFile}),
+		kubernetes.WithDisabledCachedClient(),
 	)
 	gomega.Expect(err).ToNot(gomega.HaveOccurred())
 	f.GardenClient = gardenClient

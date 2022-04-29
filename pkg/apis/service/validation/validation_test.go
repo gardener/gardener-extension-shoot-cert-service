@@ -21,8 +21,7 @@ import (
 	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/service"
 	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/service/validation"
 
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/ginkgo/extensions/table"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	. "github.com/onsi/gomega/gstruct"
 	gomegatypes "github.com/onsi/gomega/types"

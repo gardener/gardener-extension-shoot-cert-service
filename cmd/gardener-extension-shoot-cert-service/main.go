@@ -15,9 +15,10 @@
 package main
 
 import (
+	"os"
+
 	"github.com/gardener/gardener-extension-shoot-cert-service/cmd/gardener-extension-shoot-cert-service/app"
 
-	controllercmd "github.com/gardener/gardener/extensions/pkg/controller/cmd"
 	"github.com/gardener/gardener/pkg/logger"
 	runtimelog "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
@@ -28,6 +29,7 @@ func main() {
 
 	ctx := signals.SetupSignalHandler()
 	if err := app.NewServiceControllerCommand().ExecuteContext(ctx); err != nil {
-		controllercmd.LogErrAndExit(err, "error executing the main controller command")
+		runtimelog.Log.Error(err, "Error executing the main controller command")
+		os.Exit(1)
 	}
 }
