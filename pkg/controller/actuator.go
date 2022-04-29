@@ -34,6 +34,7 @@ import (
 	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
 	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
 	"github.com/gardener/gardener/pkg/chartrenderer"
+	"github.com/gardener/gardener/pkg/extensions"
 	"github.com/gardener/gardener/pkg/utils/chart"
 	gutil "github.com/gardener/gardener/pkg/utils/gardener"
 	kutil "github.com/gardener/gardener/pkg/utils/kubernetes"
@@ -280,8 +281,9 @@ func (a *actuator) createSeedResources(ctx context.Context, certConfig *service.
 			"configuration": map[string]interface{}{
 				"propagationTimeout": propagationTimeout,
 			},
-			"dnsChallengeOnShoot": dnsChallengeOnShoot,
-			"shootIssuers":        shootIssuers,
+			"dnsChallengeOnShoot":              dnsChallengeOnShoot,
+			"shootIssuers":                     shootIssuers,
+			"genericTokenKubeconfigSecretName": extensions.GenericTokenKubeconfigSecretNameFromCluster(cluster),
 		}
 	)
 

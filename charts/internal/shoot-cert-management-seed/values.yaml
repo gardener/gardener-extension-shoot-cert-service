@@ -11,6 +11,8 @@ images:
 shootClusterSecret: cert-management-kubecfg
 podAnnotations: {}
 
+genericTokenKubeconfigSecretName: generic-token-kubeconfig
+
 resources:
   requests:
    cpu: 100m
