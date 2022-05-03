@@ -86,18 +86,6 @@ func (o *Options) run(ctx context.Context) error {
 		return fmt.Errorf("could not update manager scheme: %s", err)
 	}
 
-	useTokenRequestor, err := extensionscontroller.UseTokenRequestor(o.generalOptions.Completed().GardenerVersion)
-	if err != nil {
-		return fmt.Errorf("could not determine whether token requestor should be used: %s", err)
-	}
-	controller.DefaultAddOptions.UseTokenRequestor = useTokenRequestor
-
-	useProjectedTokenMount, err := extensionscontroller.UseServiceAccountTokenVolumeProjection(o.generalOptions.Completed().GardenerVersion)
-	if err != nil {
-		return fmt.Errorf("could not determine whether service account token volume projection should be used: %s", err)
-	}
-	controller.DefaultAddOptions.UseProjectedTokenMount = useProjectedTokenMount
-
 	ctrlConfig := o.certOptions.Completed()
 	ctrlConfig.ApplyHealthCheckConfig(&healthcheck.DefaultAddOptions.HealthCheckConfig)
 	ctrlConfig.Apply(&controller.DefaultAddOptions.ServiceConfig)

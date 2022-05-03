@@ -10,8 +10,8 @@ images:
 
 shootClusterSecret: cert-management-kubecfg
 podAnnotations: {}
-useTokenRequestor: false
-useProjectedTokenMount: false
+
+genericTokenKubeconfigSecretName: generic-token-kubeconfig
 
 resources:
   requests:

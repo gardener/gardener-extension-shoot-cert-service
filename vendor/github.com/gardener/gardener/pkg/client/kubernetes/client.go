@@ -40,14 +40,6 @@ import (
 	versionutils "github.com/gardener/gardener/pkg/utils/version"
 )
 
-var (
-	// UseCachedRuntimeClients is a flag for enabling cached controller-runtime clients. The CachedRuntimeClients feature
-	// gate (enabled by default sinde v1.34) causes this flag to be set to true.
-	// If enabled, the client returned by Interface.Client() will be backed by Interface.Cache(), otherwise it will talk
-	// directly to the API server.
-	UseCachedRuntimeClients = false
-)
-
 const (
 	// KubeConfig is the key to the kubeconfig
 	KubeConfig = "kubeconfig"
@@ -141,8 +133,9 @@ func NewClientFromSecretObject(secret *corev1.Secret, fns ...ConfigFunc) (Interf
 	return nil, errors.New("the secret does not contain a field with name 'kubeconfig'")
 }
 
-// RESTConfigFromClientConnectionConfiguration creates a *rest.Config from a componentbaseconfig.ClientConnectionConfiguration & the configured kubeconfig
-func RESTConfigFromClientConnectionConfiguration(cfg *componentbaseconfig.ClientConnectionConfiguration, kubeconfig []byte) (*rest.Config, error) {
+// RESTConfigFromClientConnectionConfiguration creates a *rest.Config from a componentbaseconfig.ClientConnectionConfiguration and the configured kubeconfig.
+// Allowed fields are not considered unsupported if used in the kubeconfig.
+func RESTConfigFromClientConnectionConfiguration(cfg *componentbaseconfig.ClientConnectionConfiguration, kubeconfig []byte, allowedFields ...string) (*rest.Config, error) {
 	var (
 		restConfig *rest.Config
 		err        error
@@ -154,7 +147,7 @@ func RESTConfigFromClientConnectionConfiguration(cfg *componentbaseconfig.Client
 			&clientcmd.ConfigOverrides{ClusterInfo: clientcmdapi.Cluster{Server: ""}},
 		)
 
-		if err := validateClientConfig(clientConfig, nil); err != nil {
+		if err := validateClientConfig(clientConfig, allowedFields); err != nil {
 			return nil, err
 		}
 
@@ -163,7 +156,7 @@ func RESTConfigFromClientConnectionConfiguration(cfg *componentbaseconfig.Client
 			return nil, err
 		}
 	} else {
-		restConfig, err = RESTConfigFromKubeconfig(kubeconfig)
+		restConfig, err = RESTConfigFromKubeconfig(kubeconfig, allowedFields...)
 		if err != nil {
 			return restConfig, err
 		}
@@ -179,14 +172,15 @@ func RESTConfigFromClientConnectionConfiguration(cfg *componentbaseconfig.Client
 	return restConfig, nil
 }
 
-// RESTConfigFromKubeconfig returns a rest.Config from the bytes of a kubeconfig
-func RESTConfigFromKubeconfig(kubeconfig []byte) (*rest.Config, error) {
+// RESTConfigFromKubeconfig returns a rest.Config from the bytes of a kubeconfig.
+// Allowed fields are not considered unsupported if used in the kubeconfig.
+func RESTConfigFromKubeconfig(kubeconfig []byte, allowedFields ...string) (*rest.Config, error) {
 	clientConfig, err := clientcmd.NewClientConfigFromBytes(kubeconfig)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := validateClientConfig(clientConfig, nil); err != nil {
+	if err := validateClientConfig(clientConfig, allowedFields); err != nil {
 		return nil, err
 	}
 
@@ -239,8 +233,6 @@ func ValidateConfigWithAllowList(config clientcmdapi.Config, allowedFields []str
 }
 
 var supportedKubernetesVersions = []string{
-	"1.15",
-	"1.16",
 	"1.17",
 	"1.18",
 	"1.19",
@@ -301,7 +293,7 @@ func newClientSet(conf *Config) (Interface, error) {
 	}
 
 	var runtimeClient client.Client
-	if UseCachedRuntimeClients && !conf.disableCache {
+	if !conf.disableCache {
 		delegatingClient, err := client.NewDelegatingClient(client.NewDelegatingClientInput{
 			CacheReader:     runtimeCache,
 			Client:          c,

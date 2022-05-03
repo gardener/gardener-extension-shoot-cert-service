@@ -24,7 +24,8 @@ import (
 
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 
-	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
+	"github.com/onsi/gomega"
 )
 
 var shootCreationCfg *ShootCreationConfig
@@ -73,7 +74,8 @@ type ShootCreationFramework struct {
 
 	Shoot *gardencorev1beta1.Shoot
 
-	shootFramework *ShootFramework
+	// ShootFramework is initialized once the shoot has been created successfully
+	ShootFramework *ShootFramework
 }
 
 // NewShootCreationFramework creates a new simple Shoot creation framework
@@ -100,14 +102,16 @@ func NewShootCreationFramework(cfg *ShootCreationConfig) *ShootCreationFramework
 // BeforeEach should be called in ginkgo's BeforeEach.
 // It sets up the shoot creation framework.
 func (f *ShootCreationFramework) BeforeEach() {
-	f.Config = mergeShootCreationConfig(f.Config, shootCreationCfg)
-	validateShootCreationConfig(f.Config)
+	if f.Shoot == nil {
+		f.Config = mergeShootCreationConfig(f.Config, shootCreationCfg)
+		validateShootCreationConfig(f.Config)
+	}
 }
 
 // AfterEach should be called in ginkgo's AfterEach.
 // Cleans up resources and dumps the shoot state if the test failed
 func (f *ShootCreationFramework) AfterEach(ctx context.Context) {
-	if ginkgo.CurrentGinkgoTestDescription().Failed {
+	if ginkgo.CurrentSpecReport().Failed() {
 		f.DumpState(ctx)
 	}
 }
@@ -356,57 +360,73 @@ func RegisterShootCreationFrameworkFlags() *ShootCreationConfig {
 	return shootCreationCfg
 }
 
-// CreateShoot creates a shoot using this framework's configuration.
-func (f *ShootCreationFramework) CreateShoot(ctx context.Context, initializeShootWithFlags, waitUntilShootIsReconciled bool) (*gardencorev1beta1.Shoot, error) {
+// CreateShootAndWaitForCreation creates a shoot using this framework's configuration and waits for successful creation.
+func (f *ShootCreationFramework) CreateShootAndWaitForCreation(ctx context.Context, initializeShootWithFlags bool) error {
 	if initializeShootWithFlags {
 		if err := f.InitializeShootWithFlags(ctx); err != nil {
-			return nil, err
+			return err
 		}
 	}
 
 	f.Logger.Infof("Creating shoot %s in namespace %s", f.Shoot.GetName(), f.ProjectNamespace)
 	if err := PrettyPrintObject(f.Shoot); err != nil {
-		f.Logger.Fatalf("Cannot decode shoot %s: %s", f.Shoot.GetName(), err)
-		return nil, err
-	}
-
-	if !waitUntilShootIsReconciled {
-		return f.GardenerFramework.createShootResource(ctx, f.Shoot)
+		f.Logger.Errorf("Cannot decode shoot %s: %s", f.Shoot.GetName(), err)
+		return err
 	}
 
 	if err := f.GardenerFramework.CreateShoot(ctx, f.Shoot); err != nil {
-		f.Logger.Fatalf("Cannot create shoot %s: %s", f.Shoot.GetName(), err.Error())
-		shootFramework, err2 := f.newShootFramework(ctx)
+		f.Logger.Errorf("Cannot create shoot %s: %s", f.Shoot.GetName(), err.Error())
+		shootFramework, err2 := f.NewShootFramework(ctx, f.Shoot)
 		if err2 != nil {
-			f.Logger.Fatalf("Cannot dump shoot state %s: %s", f.Shoot.GetName(), err.Error())
+			f.Logger.Errorf("Cannot dump shoot state %s: %s", f.Shoot.GetName(), err.Error())
 		} else {
 			shootFramework.DumpState(ctx)
 		}
-		return nil, err
+		return err
 	}
 
 	f.Logger.Infof("Successfully created shoot %s", f.Shoot.GetName())
-	shootFramework, err := f.newShootFramework(ctx)
+	shootFramework, err := f.NewShootFramework(ctx, f.Shoot)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	f.shootFramework = shootFramework
+	f.ShootFramework = shootFramework
+	f.Shoot = shootFramework.Shoot
 
 	if err := DownloadKubeconfig(ctx, shootFramework.GardenClient, f.ProjectNamespace, shootFramework.ShootKubeconfigSecretName(), f.Config.shootKubeconfigPath); err != nil {
-		f.Logger.Fatalf("Cannot download shoot kubeconfig: %s", err.Error())
-		return nil, err
+		f.Logger.Errorf("Cannot download shoot kubeconfig: %s", err.Error())
+		return err
 	}
 
 	if seedSecretRef := shootFramework.Seed.Spec.SecretRef; seedSecretRef == nil {
 		f.Logger.Info("seed does not have secretRef set, skip constructing seed client")
 	} else if err := DownloadKubeconfig(ctx, shootFramework.GardenClient, shootFramework.Seed.Spec.SecretRef.Namespace, shootFramework.Seed.Spec.SecretRef.Name, f.Config.seedKubeconfigPath); err != nil {
-		f.Logger.Fatalf("Cannot download seed kubeconfig: %s", err.Error())
-		return nil, err
+		f.Logger.Errorf("Cannot download seed kubeconfig: %s", err.Error())
+		return err
 	}
 
 	f.Logger.Infof("Finished creating shoot %s", f.Shoot.GetName())
 
-	return f.Shoot, nil
+	return nil
+}
+
+// Verify asserts that the shoot creation was successful.
+func (f *ShootCreationFramework) Verify() {
+	var (
+		expectedTechnicalID           = fmt.Sprintf("shoot--%s--%s", f.ShootFramework.Project.Name, f.Shoot.Name)
+		expectedClusterIdentityPrefix = fmt.Sprintf("%s-%s", f.Shoot.Status.TechnicalID, f.Shoot.Status.UID)
+	)
+
+	gomega.Expect(f.Shoot.Status.Gardener.ID).NotTo(gomega.BeEmpty())
+	gomega.Expect(f.Shoot.Status.Gardener.Name).NotTo(gomega.BeEmpty())
+	gomega.Expect(f.Shoot.Status.Gardener.Version).NotTo(gomega.BeEmpty())
+	gomega.Expect(f.Shoot.Status.LastErrors).To(gomega.BeEmpty())
+	gomega.Expect(f.Shoot.Status.SeedName).NotTo(gomega.BeNil())
+	gomega.Expect(*f.Shoot.Status.SeedName).NotTo(gomega.BeEmpty())
+	gomega.Expect(f.Shoot.Status.TechnicalID).To(gomega.Equal(expectedTechnicalID))
+	gomega.Expect(f.Shoot.Status.UID).NotTo(gomega.BeEmpty())
+	gomega.Expect(f.Shoot.Status.ClusterIdentity).NotTo(gomega.BeNil())
+	gomega.Expect(*f.Shoot.Status.ClusterIdentity).To(gomega.HavePrefix(expectedClusterIdentityPrefix))
 }
 
 // InitializeShootWithFlags initializes a shoot to be created by this framework.
@@ -444,19 +464,4 @@ func (f *ShootCreationFramework) InitializeShootWithFlags(ctx context.Context) e
 	}
 
 	return setShootWorkerSettings(shootObject, f.Config, cloudProfile)
-}
-
-// newShootFramework creates a new ShootFramework with the Shoot created by the ShootCreationFramework
-func (f *ShootCreationFramework) newShootFramework(ctx context.Context) (*ShootFramework, error) {
-	shootFramework, err := f.GardenerFramework.NewShootFramework(ctx, f.Shoot)
-	if err != nil {
-		return nil, err
-	}
-
-	return shootFramework, nil
-}
-
-// GetShootFramework returns a ShootFramework for the Shoot created by the ShootCreationFramework
-func (f *ShootCreationFramework) GetShootFramework() *ShootFramework {
-	return f.shootFramework
 }
