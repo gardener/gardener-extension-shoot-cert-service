@@ -1,5 +1,5 @@
 ############# builder
-FROM eu.gcr.io/gardener-project/3rd/golang:1.17.9 AS builder
+FROM golang:1.17.9 AS builder
 
 WORKDIR /go/src/github.com/gardener/gardener-extension-shoot-cert-service
 COPY . .
