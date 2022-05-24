@@ -57,6 +57,9 @@ const (
 	// SecretNameObservabilityIngress is a constant for the name of a Kubernetes secret object that contains the ingress
 	// credentials for observability components.
 	SecretNameObservabilityIngress = "observability-ingress"
+	// SecretNameObservabilityIngressUsers is a constant for the name of a Kubernetes secret object that contains the user's ingress
+	// credentials for observability components.
+	SecretNameObservabilityIngressUsers = "observability-ingress-users"
 
 	// SecretNameGardener is a constant for the name of a Kubernetes secret object that contains the client
 	// certificate and a kubeconfig for a shoot cluster. It is used by Gardener and can be used by extension
@@ -300,6 +303,10 @@ const (
 	// ShootOperationRotateCAComplete is a constant for an annotation on a Shoot indicating that the rotation of the
 	// certificate authorities shall be completed.
 	ShootOperationRotateCAComplete = "rotate-ca-complete"
+	// ShootOperationRotateObservabilityCredentials is a constant for an annotation on a Shoot indicating that the credentials
+	// for the observability stack secret shall be rotated. Note that this only affects the user credentials
+	// since the operator credentials are rotated automatically each `30d`.
+	ShootOperationRotateObservabilityCredentials = "rotate-observability-credentials"
 
 	// SeedResourceManagerClass is the resource-class managed by the Gardener-Resource-Manager
 	// instance in the garden namespace on the seeds.
@@ -323,6 +330,9 @@ const (
 	LabelLogging = "logging"
 	// LabelMonitoring is a constant for a label for monitoring stack configurations
 	LabelMonitoring = "monitoring"
+
+	// LabelSecretBindingReference is used to identify secrets which are referred by a SecretBinding (not necessarily in the same namespace).
+	LabelSecretBindingReference = "reference.gardener.cloud/secretbinding"
 
 	// LabelExtensionExtensionTypePrefix is used to prefix extension label for extension types.
 	LabelExtensionExtensionTypePrefix = "extensions.extensions.gardener.cloud/"
