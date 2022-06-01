@@ -202,6 +202,7 @@ func autoConvert_v1alpha1_IssuerConfig_To_service_IssuerConfig(in *IssuerConfig,
 	out.ExternalAccountBinding = (*service.ACMEExternalAccountBinding)(unsafe.Pointer(in.ExternalAccountBinding))
 	out.SkipDNSChallengeValidation = (*bool)(unsafe.Pointer(in.SkipDNSChallengeValidation))
 	out.Domains = (*service.DNSSelection)(unsafe.Pointer(in.Domains))
+	out.PrecheckNameservers = *(*[]string)(unsafe.Pointer(&in.PrecheckNameservers))
 	return nil
 }
 
@@ -219,6 +220,7 @@ func autoConvert_service_IssuerConfig_To_v1alpha1_IssuerConfig(in *service.Issue
 	out.ExternalAccountBinding = (*ACMEExternalAccountBinding)(unsafe.Pointer(in.ExternalAccountBinding))
 	out.SkipDNSChallengeValidation = (*bool)(unsafe.Pointer(in.SkipDNSChallengeValidation))
 	out.Domains = (*DNSSelection)(unsafe.Pointer(in.Domains))
+	out.PrecheckNameservers = *(*[]string)(unsafe.Pointer(&in.PrecheckNameservers))
 	return nil
 }
 

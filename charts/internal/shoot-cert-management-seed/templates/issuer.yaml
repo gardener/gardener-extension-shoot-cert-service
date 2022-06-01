@@ -51,6 +51,12 @@ spec:
 {{ toYaml .acme.domains.exclude | indent 6 }}
 {{- end }}
 {{- end }}
+{{- if .precheckNameservers }}
+    precheckNameservers:
+  {{- range .precheckNameservers }}
+    - {{ . }}
+  {{- end }}
+{{- end }}
 {{- if .requestsPerDayQuota }}
   requestsPerDayQuota: {{ .requestsPerDayQuota }}
 {{- end }}

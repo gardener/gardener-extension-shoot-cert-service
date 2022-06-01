@@ -202,6 +202,9 @@ func (a *actuator) createIssuerValues(cluster *controller.Cluster, issuers ...se
 		if issuer.RequestsPerDayQuota != nil {
 			issuerValues["requestsPerDayQuota"] = *issuer.RequestsPerDayQuota
 		}
+		if len(issuer.PrecheckNameservers) > 0 {
+			issuerValues["precheckNameservers"] = issuer.PrecheckNameservers
+		}
 		issuerList = append(issuerList, issuerValues)
 	}
 

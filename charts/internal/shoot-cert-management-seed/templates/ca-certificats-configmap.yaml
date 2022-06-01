@@ -11,5 +11,5 @@ metadata:
     app.kubernetes.io/instance: {{ .Release.Name }}
     app.kubernetes.io/managed-by: {{ .Release.Service }}
 data:
-  ca-certificates.crt: {{- toYaml .Values.configuration.caCertificates | indent 2 }}
+  certs.pem: {{- toYaml .Values.configuration.caCertificates | indent 2 }}
 {{- end}}
