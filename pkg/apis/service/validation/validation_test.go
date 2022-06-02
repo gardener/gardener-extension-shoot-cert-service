@@ -37,8 +37,8 @@ var _ = Describe("Validation", func() {
 		testref      = "testref"
 		wrongtestref = "not-existing-ref"
 		empty        = ""
-		nameservers  = "10.0.0.53,1.1.1.1"
-		invalid_ns   = "dns.server.test"
+		nameservers  = "10.0.0.53:53,1.1.1.1,[2001:0db8:85a3:08d3::0370:7344]:8080,dns.server.test,dns.server.test.:53"
+		invalid_ns   = "dns.server.te%st,dns.server.test:123456"
 		cluster      = &controller.Cluster{
 			Shoot: &gardencorev1beta1.Shoot{
 				Spec: gardencorev1beta1.ShootSpec{
@@ -219,6 +219,43 @@ var _ = Describe("Validation", func() {
 				"Field": Equal("issuers[0].skipDNSChallengeValidation"),
 			})),
 		)),
+		Entry("Valid configuration with precheck nameservers", service.CertConfig{
+			Issuers: []service.IssuerConfig{
+				{
+					Name:                "issuer",
+					Server:              "https://acme-v02.api.letsencrypt.org/directory",
+					Email:               "john@example.com",
+					PrecheckNameservers: []string{"8.8.8.8", "8.8.4.4:53", "some.special.dns.server.:53", "2001:db8::1428:57ab", "[2001:db8::1428:57ab]:53"},
+				},
+			},
+		}, BeEmpty()),
+		Entry("Invalid configuration with invalid precheck nameservers", service.CertConfig{
+			Issuers: []service.IssuerConfig{
+				{
+					Name:                "issuer",
+					Server:              "https://acme-v02.api.letsencrypt.org/directory",
+					Email:               "john@example.com",
+					PrecheckNameservers: []string{"8.8.8", "8.8.4.4:100053", "some.special!.dns.server.:53", "2001:db8:1428:57ab"},
+				},
+			},
+		}, ConsistOf(
+			PointTo(MatchFields(IgnoreExtras, Fields{
+				"Type":  Equal(field.ErrorTypeInvalid),
+				"Field": Equal("issuers[0].precheckNameservers[0]"),
+			})),
+			PointTo(MatchFields(IgnoreExtras, Fields{
+				"Type":  Equal(field.ErrorTypeInvalid),
+				"Field": Equal("issuers[0].precheckNameservers[1]"),
+			})),
+			PointTo(MatchFields(IgnoreExtras, Fields{
+				"Type":  Equal(field.ErrorTypeInvalid),
+				"Field": Equal("issuers[0].precheckNameservers[2]"),
+			})),
+			PointTo(MatchFields(IgnoreExtras, Fields{
+				"Type":  Equal(field.ErrorTypeInvalid),
+				"Field": Equal("issuers[0].precheckNameservers[3]"),
+			})),
+		)),
 		Entry("DNSChallengeOnShoot", service.CertConfig{
 			DNSChallengeOnShoot: &service.DNSChallengeOnShoot{
 				Enabled:   true,
@@ -246,7 +283,13 @@ var _ = Describe("Validation", func() {
 				"Type":     Equal(field.ErrorTypeInvalid),
 				"Field":    Equal("precheckNameservers"),
 				"BadValue": Equal(invalid_ns),
-				"Detail":   Equal("invalid IP for 1. DNS server"),
+				"Detail":   Equal("invalid value for 1. DNS server dns.server.te%st: 'dns.server.te%st' is no valid IP address or domain name"),
+			})),
+			PointTo(MatchFields(IgnoreExtras, Fields{
+				"Type":     Equal(field.ErrorTypeInvalid),
+				"Field":    Equal("precheckNameservers"),
+				"BadValue": Equal(invalid_ns),
+				"Detail":   Equal("invalid value for 2. DNS server dns.server.test:123456: '123456' is no valid port number"),
 			})),
 		)),
 		Entry("Empty PrecheckNameservers", service.CertConfig{

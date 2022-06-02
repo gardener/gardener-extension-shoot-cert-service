@@ -18,9 +18,11 @@ import (
 	"fmt"
 	"net"
 	"net/url"
+	"strconv"
 	"strings"
 
 	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/service"
+	"k8s.io/apimachinery/pkg/util/validation"
 
 	"github.com/gardener/gardener/extensions/pkg/controller"
 	"github.com/gardener/gardener/pkg/utils"
@@ -86,10 +88,37 @@ func validateIssuers(cluster *controller.Cluster, issuers []service.IssuerConfig
 		if issuer.RequestsPerDayQuota != nil && *issuer.RequestsPerDayQuota < 1 {
 			allErrs = append(allErrs, field.Invalid(indexFldPath.Child("requestsPerDayQuota"), *issuer.RequestsPerDayQuota, "must be >= 1"))
 		}
+		if len(issuer.PrecheckNameservers) > 0 {
+			for j, server := range issuer.PrecheckNameservers {
+				if err := validateNameserver(server); err != nil {
+					allErrs = append(allErrs, field.Invalid(indexFldPath.Child("precheckNameservers").Index(j), server, err.Error()))
+				}
+			}
+		}
 		names.Insert(issuer.Name)
 	}
 
 	return allErrs
+}
+
+func validateNameserver(server string) error {
+	host, port, err := net.SplitHostPort(server)
+	if err != nil {
+		host = server
+		port = "53"
+	}
+	if net.ParseIP(host) == nil && (len(validation.IsDNS1123Subdomain(strings.TrimSuffix(host, "."))) > 0 || len(strings.Trim(host, "0123456789.")) == 0) {
+		return fmt.Errorf("'%s' is no valid IP address or domain name", host)
+	}
+
+	n, err := strconv.Atoi(port)
+	if err != nil {
+		return fmt.Errorf("'%s' is no valid port", port)
+	}
+	if n < 1 || n > 65535 {
+		return fmt.Errorf("'%s' is no valid port number", port)
+	}
+	return nil
 }
 
 func checkReferencedResource(cluster *controller.Cluster, refname string) string {
@@ -127,8 +156,8 @@ func validatePrecheckNameservers(precheckNameservers *string, fldPath *field.Pat
 			allErrs = append(allErrs, field.Invalid(fldPath, *precheckNameservers, "must contain at least one DNS server IP"))
 		} else {
 			for i, server := range servers {
-				if net.ParseIP(server) == nil {
-					allErrs = append(allErrs, field.Invalid(fldPath, *precheckNameservers, fmt.Sprintf("invalid IP for %d. DNS server", i+1)))
+				if err := validateNameserver(server); err != nil {
+					allErrs = append(allErrs, field.Invalid(fldPath, *precheckNameservers, fmt.Sprintf("invalid value for %d. DNS server %s: %s", i+1, server, err.Error())))
 				}
 			}
 		}
