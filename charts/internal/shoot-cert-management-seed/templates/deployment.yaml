@@ -44,7 +44,7 @@ spec:
           readOnly: true
         {{- if .Values.configuration.caCertificates }}
         - name: ca-certificates
-          mountPath: "/etc/ssl/certs"
+          mountPath: /var/run/cert-manager/certs
           readOnly: true
         {{- end }}
         args:
@@ -88,6 +88,13 @@ spec:
         - --lease-resource-lock=leases
         {{- range $idx, $flag := .Values.additionalConfiguration }}
         - {{ $flag }}
+        {{- end }}
+        {{- if .Values.configuration.caCertificates }}
+        env:
+        - name: LEGO_CA_SYSTEM_CERT_POOL
+          value: "true"
+        - name: LEGO_CA_CERTIFICATES
+          value: /var/run/cert-manager/certs/certs.pem
         {{- end }}
         ports:
         - name: metrics

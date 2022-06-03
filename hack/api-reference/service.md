@@ -95,7 +95,7 @@ string
 <td>
 <em>(Optional)</em>
 <p>PrecheckNameservers is used to specify a comma-separated list of DNS servers for checking availability for DNS
-challenge before calling ACME CA</p>
+challenge before calling ACME CA. Please consider to specify nameservers per issuer instead.</p>
 </td>
 </tr>
 </tbody>
@@ -347,6 +347,19 @@ DNSSelection
 <td>
 <em>(Optional)</em>
 <p>Domains optionally specifies domains allowed or forbidden for certificate requests</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>precheckNameservers</code></br>
+<em>
+[]string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>PrecheckNameservers overwrites the default precheck nameservers used for checking DNS propagation.
+Format <code>host</code> or <code>host:port</code>, e.g. &ldquo;8.8.8.8&rdquo; same as &ldquo;8.8.8.8:53&rdquo; or &ldquo;google-public-dns-a.google.com:53&rdquo;.</p>
 </td>
 </tr>
 </tbody>

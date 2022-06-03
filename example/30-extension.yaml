@@ -14,6 +14,10 @@ spec:
       server: https://acme-v02.api.letsencrypt.org/directory
       email: john.doe@example.com
       privateKeySecretName: custom-privatekey # referenced resource, the private key must be stored in the secret at `data.privateKey`
+    - name: custom-on-private-network
+      server: https://acme.private.company-net/directory
+      email: john.doe@example.com
+      precheckNameservers: "dns1.private.company-net:53,dns2.private.company-net:53" # to provide special set of nameservers to be used for prechecking DNSChallenges for an issuer
     - name: custom-eab
       server: https://acme.my-eab-ca-provider.com/v2/acme/directory/
       email: john.doe@example.com

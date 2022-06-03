@@ -179,10 +179,15 @@ spec:
         - email: your-email@example.com
           name: custom-issuer # issuer name must be specified in every custom issuer request, must not be "garden"
           server: 'https://acme-v02.api.letsencrypt.org/directory'
-          privateKeySecretName: my-privatekey # referenced resource, the private key must be stored in the secret at `data.privateKey`
+          privateKeySecretName: my-privatekey # referenced resource, the private key must be stored in the secret at `data.privateKey` (optionally, only needed as alternative to auto registration) 
+          #precheckNameservers: # to provide special set of nameservers to be used for prechecking DNSChallenges for an issuer
+          #- dns1.private.company-net:53
+          #- dns2.private.company-net:53" 
+
       #shootIssuers:
       #  enabled: true # if true, allows to specify issuers in the shoot cluster
 
+      # optionally overwrite default precheck nameservers (obsolete, please use issuer specific precheckNameservers if needed)
       #precheckNameservers: "10.0.0.53,10.123.56.53,8.8.8.8" # optional comma separated list of DNS server IP addresses if public DNS servers are not sufficient for prechecking DNS challenges
 
   resources:

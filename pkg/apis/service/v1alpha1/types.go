@@ -65,7 +65,7 @@ type CertConfig struct {
 	ShootIssuers *ShootIssuers `json:"shootIssuers,omitempty"`
 
 	// PrecheckNameservers is used to specify a comma-separated list of DNS servers for checking availability for DNS
-	// challenge before calling ACME CA
+	// challenge before calling ACME CA. Please consider to specify nameservers per issuer instead.
 	// +optional
 	PrecheckNameservers *string `json:"precheckNameservers,omitempty"`
 }
@@ -97,6 +97,11 @@ type IssuerConfig struct {
 	// Domains optionally specifies domains allowed or forbidden for certificate requests
 	// +optional
 	Domains *DNSSelection `json:"domains,omitempty"`
+
+	// PrecheckNameservers overwrites the default precheck nameservers used for checking DNS propagation.
+	// Format `host` or `host:port`, e.g. "8.8.8.8" same as "8.8.8.8:53" or "google-public-dns-a.google.com:53".
+	// +optional
+	PrecheckNameservers []string `json:"precheckNameservers,omitempty"`
 }
 
 // DNSChallengeOnShoot is used to create DNS01 challenges on shoot and not on seed.
