@@ -156,14 +156,14 @@
           "refId": "A"
         },
         {
-          "expr": "sum(kube_pod_container_resource_limits_cpu_cores{pod=~\"cert-controller-manager-(.+)\"}) by (pod)",
+          "expr": "sum(kube_pod_container_resource_limits{resource=\"cpu\", unit=\"core\", pod=~\"cert-controller-manager-(.+)\"}) by (pod)",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{pod}}-limits",
           "refId": "C"
         },
         {
-          "expr": "sum(kube_pod_container_resource_requests_cpu_cores{pod=~\"cert-controller-manager-(.+)\"}) by (pod)",
+          "expr": "sum(kube_pod_container_resource_requests{resource=\"cpu\", unit=\"core\", pod=~\"cert-controller-manager-(.+)\"}) by (pod)",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{pod}}-requests",
@@ -270,14 +270,14 @@
           "refId": "A"
         },
         {
-          "expr": "sum(kube_pod_container_resource_limits_memory_bytes{pod=~\"cert-controller-manager-(.+)\"}) by (pod)",
+          "expr": "sum(kube_pod_container_resource_limits{resource=\"memory\", unit=\"byte\", pod=~\"cert-controller-manager-(.+)\"}) by (pod)",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{pod}}-limits",
           "refId": "B"
         },
         {
-          "expr": "sum(kube_pod_container_resource_requests_memory_bytes{pod=~\"cert-controller-manager-(.+)\"}) by (pod)",
+          "expr": "sum(kube_pod_container_resource_requests{resource=\"memory\", unit=\"byte\", pod=~\"cert-controller-manager-(.+)\"}) by (pod)",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{pod}}-requests",
