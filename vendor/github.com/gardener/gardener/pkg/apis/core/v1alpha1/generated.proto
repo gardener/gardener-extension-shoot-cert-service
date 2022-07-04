@@ -1457,6 +1457,22 @@ message NginxIngress {
   optional string externalTrafficPolicy = 3;
 }
 
+// NodeLocalDNS contains the settings of the node local DNS components running in the data plane of the Shoot cluster.
+message NodeLocalDNS {
+  // Enabled indicates whether node local DNS is enabled or not.
+  optional bool enabled = 1;
+
+  // ForceTCPToClusterDNS indicates whether the connection from the node local DNS to the cluster DNS (Core DNS) will be forced to TCP or not.
+  // Default, if unspecified, is to enforce TCP.
+  // +optional
+  optional bool forceTCPToClusterDNS = 2;
+
+  // ForceTCPToUpstreamDNS indicates whether the connection from the node local DNS to the upstream DNS (infrastructure DNS) will be forced to TCP or not.
+  // Default, if unspecified, is to enforce TCP.
+  // +optional
+  optional bool forceTCPToUpstreamDNS = 3;
+}
+
 // OIDCConfig contains configuration settings for the OIDC provider.
 // Note: Descriptions were taken from the Kubernetes documentation.
 message OIDCConfig {
@@ -2020,6 +2036,7 @@ message SeedSettings {
   optional SeedSettingScheduling scheduling = 2;
 
   // ShootDNS controls the shoot DNS settings for the seed.
+  // Deprecated: This field is deprecated and will be removed in a future version of Gardener. Do not use it.
   // +optional
   optional SeedSettingShootDNS shootDNS = 3;
 
@@ -2158,6 +2175,7 @@ message ServiceAccountConfig {
   // SigningKeySecret is a reference to a secret that contains an optional private key of the
   // service account token issuer. The issuer will sign issued ID tokens with this private key.
   // Only useful if service account tokens are also issued by another external system.
+  // Deprecated: This field is deprecated and will be removed in a future version of Gardener. Do not use it.
   // +optional
   optional k8s.io.api.core.v1.LocalObjectReference signingKeySecretName = 2;
 
@@ -2248,6 +2266,29 @@ message ShootCredentialsRotation {
   // Observability contains information about the observability credential rotation.
   // +optional
   optional ShootObservabilityRotation observability = 4;
+
+  // ServiceAccountKey contains information about the service account key credential rotation.
+  // +optional
+  optional ShootServiceAccountKeyRotation serviceAccountKey = 5;
+
+  // ETCDEncryptionKey contains information about the ETCD encryption key credential rotation.
+  // +optional
+  optional ShootETCDEncryptionKeyRotation etcdEncryptionKey = 6;
+}
+
+// ShootETCDEncryptionKeyRotation contains information about the ETCD encryption key credential rotation.
+message ShootETCDEncryptionKeyRotation {
+  // Phase describes the phase of the ETCD encryption key credential rotation.
+  optional string phase = 1;
+
+  // LastInitiationTime is the most recent time when the ETCD encryption key credential rotation was initiated.
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.Time lastInitiationTime = 3;
+
+  // LastCompletionTime is the most recent time when the ETCD encryption key credential rotation was successfully
+  // completed.
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.Time lastCompletionTime = 2;
 }
 
 // ShootKubeconfigRotation contains information about the kubeconfig credential rotation.
@@ -2316,6 +2357,21 @@ message ShootSSHKeypairRotation {
   optional k8s.io.apimachinery.pkg.apis.meta.v1.Time lastInitiationTime = 1;
 
   // LastCompletionTime is the most recent time when the ssh-keypair credential rotation was successfully completed.
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.Time lastCompletionTime = 2;
+}
+
+// ShootServiceAccountKeyRotation contains information about the service account key credential rotation.
+message ShootServiceAccountKeyRotation {
+  // Phase describes the phase of the service account key credential rotation.
+  optional string phase = 1;
+
+  // LastInitiationTime is the most recent time when the service account key credential rotation was initiated.
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.Time lastInitiationTime = 3;
+
+  // LastCompletionTime is the most recent time when the service account key credential rotation was successfully
+  // completed.
   // +optional
   optional k8s.io.apimachinery.pkg.apis.meta.v1.Time lastCompletionTime = 2;
 }
@@ -2510,6 +2566,11 @@ message ShootStatus {
   // Credentials contains information about the shoot credentials.
   // +optional
   optional ShootCredentials credentials = 16;
+
+  // LastHibernationTriggerTime indicates the last time when the hibernation controller
+  // managed to change the hibernation settings of the cluster
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.Time lastHibernationTriggerTime = 17;
 }
 
 // SystemComponents contains the settings of system components in the control or data plane of the Shoot cluster.
@@ -2517,6 +2578,10 @@ message SystemComponents {
   // CoreDNS contains the settings of the Core DNS components running in the data plane of the Shoot cluster.
   // +optional
   optional CoreDNS coreDNS = 1;
+
+  // NodeLocalDNS contains the settings of the node local DNS components running in the data plane of the Shoot cluster.
+  // +optional
+  optional NodeLocalDNS nodeLocalDNS = 2;
 }
 
 // Toleration is a toleration for a seed taint.

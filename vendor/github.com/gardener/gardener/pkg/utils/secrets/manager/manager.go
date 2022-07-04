@@ -27,7 +27,7 @@ import (
 	"github.com/mitchellh/hashstructure/v2"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/clock"
+	"k8s.io/utils/clock"
 	"k8s.io/utils/pointer"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -284,7 +284,6 @@ func ObjectMeta(
 	config secretutils.ConfigInterface,
 	ignoreConfigChecksumForCASecretName bool,
 	lastRotationInitiationTime string,
-	validUntilTime *string,
 	signingCAChecksum *string,
 	persist *bool,
 	bundleFor *string,
@@ -307,10 +306,6 @@ func ObjectMeta(
 
 	if signingCAChecksum != nil {
 		labels[LabelKeyChecksumSigningCA] = *signingCAChecksum
-	}
-
-	if validUntilTime != nil {
-		labels[LabelKeyValidUntilTime] = *validUntilTime
 	}
 
 	if persist != nil && *persist {

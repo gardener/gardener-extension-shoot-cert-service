@@ -122,6 +122,9 @@ type ShootStatus struct {
 	Gardener Gardener
 	// IsHibernated indicates whether the Shoot is currently hibernated.
 	IsHibernated bool
+	// LastHibernationTriggerTime indicates the last time when the hibernation controller
+	// managed to change the hibernation settings of the cluster
+	LastHibernationTriggerTime *metav1.Time
 	// LastOperation holds information about the last operation on the Shoot.
 	LastOperation *LastOperation
 	// LastErrors holds information about the last occurred error(s) during an operation.
@@ -167,6 +170,10 @@ type ShootCredentialsRotation struct {
 	SSHKeypair *ShootSSHKeypairRotation
 	// Observability contains information about the observability credential rotation.
 	Observability *ShootObservabilityRotation
+	// ServiceAccountKey contains information about the service account key credential rotation.
+	ServiceAccountKey *ShootServiceAccountKeyRotation
+	// ETCDEncryptionKey contains information about the ETCD encryption key credential rotation.
+	ETCDEncryptionKey *ShootETCDEncryptionKeyRotation
 }
 
 // ShootCARotation contains information about the certificate authority credential rotation.
@@ -201,6 +208,28 @@ type ShootObservabilityRotation struct {
 	// LastInitiationTime is the most recent time when the observability credential rotation was initiated.
 	LastInitiationTime *metav1.Time
 	// LastCompletionTime is the most recent time when the observability credential rotation was successfully completed.
+	LastCompletionTime *metav1.Time
+}
+
+// ShootServiceAccountKeyRotation contains information about the service account key credential rotation.
+type ShootServiceAccountKeyRotation struct {
+	// Phase describes the phase of the service account key credential rotation.
+	Phase ShootCredentialsRotationPhase
+	// LastInitiationTime is the most recent time when the service account key credential rotation was initiated.
+	LastInitiationTime *metav1.Time
+	// LastCompletionTime is the most recent time when the service account key credential rotation was successfully
+	// completed.
+	LastCompletionTime *metav1.Time
+}
+
+// ShootETCDEncryptionKeyRotation contains information about the ETCD encryption key credential rotation.
+type ShootETCDEncryptionKeyRotation struct {
+	// Phase describes the phase of the ETCD encryption key credential rotation.
+	Phase ShootCredentialsRotationPhase
+	// LastInitiationTime is the most recent time when the ETCD encryption key credential rotation was initiated.
+	LastInitiationTime *metav1.Time
+	// LastCompletionTime is the most recent time when the ETCD encryption key credential rotation was successfully
+	// completed.
 	LastCompletionTime *metav1.Time
 }
 
@@ -528,6 +557,7 @@ type ServiceAccountConfig struct {
 	// SigningKeySecret is a reference to a secret that contains an optional private key of the
 	// service account token issuer. The issuer will sign issued ID tokens with this private key.
 	// Only useful if service account tokens are also issued by another external system.
+	// Deprecated: This field is deprecated and will be removed in a future version of Gardener. Do not use it.
 	SigningKeySecret *corev1.LocalObjectReference
 	// ExtendTokenExpiration turns on projected service account expiration extension during token generation, which
 	// helps safe transition from legacy token to bound service account token feature. If this flag is enabled,
@@ -1074,6 +1104,8 @@ var (
 type SystemComponents struct {
 	// CoreDNS contains the settings of the Core DNS components running in the data plane of the Shoot cluster.
 	CoreDNS *CoreDNS
+	// NodeLocalDNS contains the settings of the node local DNS components running in the data plane of the Shoot cluster.
+	NodeLocalDNS *NodeLocalDNS
 }
 
 // CoreDNS contains the settings of the Core DNS components running in the data plane of the Shoot cluster.
@@ -1098,6 +1130,18 @@ const (
 	// CoreDNSAutoscalingModeClusterProportional is a constant for cluster-proportional Core DNS autoscaling mode.
 	CoreDNSAutoscalingModeClusterProportional CoreDNSAutoscalingMode = "cluster-proportional"
 )
+
+// NodeLocalDNS contains the settings of the node local DNS components running in the data plane of the Shoot cluster.
+type NodeLocalDNS struct {
+	// Enabled indicates whether node local DNS is enabled or not.
+	Enabled bool
+	// ForceTCPToClusterDNS indicates whether the connection from the node local DNS to the cluster DNS (Core DNS) will be forced to TCP or not.
+	// Default, if unspecified, is to enforce TCP.
+	ForceTCPToClusterDNS *bool
+	// ForceTCPToUpstreamDNS indicates whether the connection from the node local DNS to the upstream DNS (infrastructure DNS) will be forced to TCP or not.
+	// Default, if unspecified, is to enforce TCP.
+	ForceTCPToUpstreamDNS *bool
+}
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 // Other/miscellaneous constants and types                                                      //

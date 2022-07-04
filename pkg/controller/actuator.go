@@ -40,7 +40,6 @@ import (
 	kutil "github.com/gardener/gardener/pkg/utils/kubernetes"
 	"github.com/gardener/gardener/pkg/utils/managedresources"
 	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
 	autoscalingv1 "k8s.io/api/autoscaling/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -324,7 +323,7 @@ func (a *actuator) createSeedResources(ctx context.Context, certConfig *service.
 
 	renderer, err := chartrenderer.NewForConfig(a.config)
 	if err != nil {
-		return errors.Wrap(err, "could not create chart renderer")
+		return fmt.Errorf("could not create chart renderer: %w", err)
 	}
 
 	a.logger.Info("Component is being applied", "component", "cert-management", "namespace", namespace)
@@ -349,7 +348,7 @@ func (a *actuator) createShootResources(ctx context.Context, certConfig *service
 
 	renderer, err := util.NewChartRendererForShoot(cluster.Shoot.Spec.Kubernetes.Version)
 	if err != nil {
-		return errors.Wrap(err, "could not create chart renderer")
+		return fmt.Errorf("could not create chart renderer: %w", err)
 	}
 
 	return a.createManagedResource(ctx, namespace, v1alpha1.CertManagementResourceNameShoot, "", renderer, v1alpha1.CertManagementChartNameShoot, metav1.NamespaceSystem, values, nil)

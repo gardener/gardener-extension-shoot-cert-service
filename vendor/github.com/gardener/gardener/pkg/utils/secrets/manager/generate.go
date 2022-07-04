@@ -17,6 +17,7 @@ package manager
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -48,18 +49,12 @@ func (m *manager) Generate(ctx context.Context, config secretutils.ConfigInterfa
 		bundleFor = pointer.String(strings.TrimSuffix(config.GetName(), nameSuffixBundle))
 	}
 
-	var validUntilTime *string
-	if options.Validity > 0 {
-		validUntilTime = pointer.String(unixTime(m.clock.Now().Add(options.Validity)))
-	}
-
 	objectMeta, err := ObjectMeta(
 		m.namespace,
 		m.identity,
 		config,
 		options.IgnoreConfigChecksumForCASecretName,
 		m.lastRotationInitiationTimes[config.GetName()],
-		validUntilTime,
 		options.signingCAChecksum,
 		&options.Persist,
 		bundleFor,
@@ -81,12 +76,18 @@ func (m *manager) Generate(ctx context.Context, config secretutils.ConfigInterfa
 		}
 	}
 
+	if err := m.maintainLifetimeLabels(config, secret, desiredLabels, options.Validity); err != nil {
+		return nil, err
+	}
+
 	if !options.isBundleSecret {
 		if err := m.addToStore(config.GetName(), secret, current); err != nil {
 			return nil, err
 		}
 
-		if !options.IgnoreOldSecrets && options.RotationStrategy == KeepOld {
+		if ignore, err := m.shouldIgnoreOldSecrets(desiredLabels[LabelKeyIssuedAtTime], options); err != nil {
+			return nil, err
+		} else if !ignore {
 			if err := m.storeOldSecrets(ctx, config.GetName(), secret.Name); err != nil {
 				return nil, err
 			}
@@ -95,10 +96,6 @@ func (m *manager) Generate(ctx context.Context, config secretutils.ConfigInterfa
 		if err := m.generateBundleSecret(ctx, config); err != nil {
 			return nil, err
 		}
-	}
-
-	if err := m.maintainLifetimeLabels(config, secret, desiredLabels); err != nil {
-		return nil, err
 	}
 
 	if err := m.reconcileSecret(ctx, secret, desiredLabels); err != nil {
@@ -319,6 +316,33 @@ func (m *manager) keepExistingSecretsIfNeeded(ctx context.Context, configName st
 	return newData, nil
 }
 
+func (m *manager) shouldIgnoreOldSecrets(issuedAt string, options *GenerateOptions) (bool, error) {
+	// unconditionally ignore old secrets
+	if options.RotationStrategy != KeepOld || options.IgnoreOldSecrets {
+		return true, nil
+	}
+
+	// ignore old secrets if current secret is older than IgnoreOldSecretsAfter
+	if options.IgnoreOldSecretsAfter != nil {
+		if issuedAt == "" {
+			// should never happen
+			return false, nil
+		}
+
+		issuedAtUnix, err := strconv.ParseInt(issuedAt, 10, 64)
+		if err != nil {
+			return false, err
+		}
+
+		age := m.clock.Now().UTC().Sub(time.Unix(issuedAtUnix, 0).UTC())
+		if age >= *options.IgnoreOldSecretsAfter {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
 func (m *manager) storeOldSecrets(ctx context.Context, name, currentSecretName string) error {
 	secretList := &corev1.SecretList{}
 	if err := m.client.List(ctx, secretList, client.InNamespace(m.namespace), client.MatchingLabels{
@@ -369,6 +393,19 @@ func (m *manager) generateBundleSecret(ctx context.Context, config secretutils.C
 				CertificatePEMs: certs,
 			}
 		}
+
+	case *secretutils.RSASecretConfig:
+		if !c.UsedForSSH {
+			keys := [][]byte{secrets.current.obj.Data[secretutils.DataKeyRSAPrivateKey]}
+			if secrets.old != nil {
+				keys = append(keys, secrets.old.obj.Data[secretutils.DataKeyRSAPrivateKey])
+			}
+
+			bundleConfig = &secretutils.RSAPrivateKeyBundleSecretConfig{
+				Name:           config.GetName() + nameSuffixBundle,
+				PrivateKeyPEMs: keys,
+			}
+		}
 	}
 
 	if bundleConfig == nil {
@@ -383,12 +420,41 @@ func (m *manager) generateBundleSecret(ctx context.Context, config secretutils.C
 	return m.addToStore(config.GetName(), secret, bundle)
 }
 
-func (m *manager) maintainLifetimeLabels(config secretutils.ConfigInterface, secret *corev1.Secret, desiredLabels map[string]string) error {
+func (m *manager) maintainLifetimeLabels(
+	config secretutils.ConfigInterface,
+	secret *corev1.Secret,
+	desiredLabels map[string]string,
+	validity time.Duration,
+) error {
 	issuedAt := secret.Labels[LabelKeyIssuedAtTime]
 	if issuedAt == "" {
 		issuedAt = unixTime(m.clock.Now())
 	}
 	desiredLabels[LabelKeyIssuedAtTime] = issuedAt
+
+	if validity > 0 {
+		desiredLabels[LabelKeyValidUntilTime] = unixTime(m.clock.Now().Add(validity))
+
+		// Handle changed validity values in case there already is a valid-until-time label from previous Generate
+		// invocations.
+		if secret.Labels[LabelKeyValidUntilTime] != "" {
+			issuedAtTime, err := strconv.ParseInt(issuedAt, 10, 64)
+			if err != nil {
+				return err
+			}
+
+			existingValidUntilTime, err := strconv.ParseInt(secret.Labels[LabelKeyValidUntilTime], 10, 64)
+			if err != nil {
+				return err
+			}
+
+			if oldValidity := time.Duration(existingValidUntilTime - issuedAtTime); oldValidity != validity {
+				desiredLabels[LabelKeyValidUntilTime] = unixTime(time.Unix(issuedAtTime, 0).UTC().Add(validity))
+				// If this has yielded a valid-until-time which is in the past then the next instantiation of the
+				// secrets manager will regenerate the secret since it has expired.
+			}
+		}
+	}
 
 	var dataKeyCertificate string
 	switch cfg := config.(type) {
@@ -426,9 +492,18 @@ func (m *manager) reconcileSecret(ctx context.Context, secret *corev1.Secret, la
 		mustPatch = true
 	}
 
+	// Check if desired labels must be added or changed.
 	for k, desired := range labels {
 		if current, ok := secret.Labels[k]; !ok || current != desired {
 			metav1.SetMetaDataLabel(&secret.ObjectMeta, k, desired)
+			mustPatch = true
+		}
+	}
+
+	// Check if existing labels must be removed
+	for k := range secret.Labels {
+		if _, ok := labels[k]; !ok {
+			delete(secret.Labels, k)
 			mustPatch = true
 		}
 	}
@@ -449,8 +524,10 @@ type GenerateOptions struct {
 	Persist bool
 	// RotationStrategy specifies how the secret should be rotated in case it needs to get rotated.
 	RotationStrategy rotationStrategy
-	// IgnoreOldSecrets specifies whether old secrets should be loaded to the internal store.
+	// IgnoreOldSecrets specifies whether old secrets should be dropped.
 	IgnoreOldSecrets bool
+	// IgnoreOldSecretsAfter specifies that old secrets should be dropped once a given duration after rotation has passed.
+	IgnoreOldSecretsAfter *time.Duration
 	// Validity specifies for how long the secret should be valid.
 	Validity time.Duration
 	// IgnoreConfigChecksumForCASecretName specifies whether the secret config checksum should be ignored when
@@ -587,6 +664,14 @@ func Rotate(strategy rotationStrategy) GenerateOption {
 func IgnoreOldSecrets() GenerateOption {
 	return func(_ Interface, _ secretutils.ConfigInterface, options *GenerateOptions) error {
 		options.IgnoreOldSecrets = true
+		return nil
+	}
+}
+
+// IgnoreOldSecretsAfter returns a function which sets the 'IgnoreOldSecretsAfter' field to the given duration.
+func IgnoreOldSecretsAfter(d time.Duration) GenerateOption {
+	return func(_ Interface, _ secretutils.ConfigInterface, options *GenerateOptions) error {
+		options.IgnoreOldSecretsAfter = &d
 		return nil
 	}
 }
