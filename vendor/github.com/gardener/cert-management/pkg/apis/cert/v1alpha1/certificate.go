@@ -54,10 +54,13 @@ type CertificateSpec struct {
 	// +optional
 	CSR []byte `json:"csr,omitempty"`
 	// IssuerRef is the reference of the issuer to use.
+	// +optional
 	IssuerRef *IssuerRef `json:"issuerRef,omitempty"`
 	// SecretName is the name of the secret object to use for storing the certificate.
+	// +optional
 	SecretName *string `json:"secretName,omitempty"`
 	// SecretRef is the reference of the secret object to use for storing the certificate.
+	// +optional
 	SecretRef *corev1.SecretReference `json:"secretRef,omitempty"`
 	// Renew triggers a renewal if set to true
 	// +optional
@@ -65,12 +68,18 @@ type CertificateSpec struct {
 	// EnsureRenewedAfter specifies a time stamp in the past. Renewing is only triggered if certificate notBefore date is before this date.
 	// +optional
 	EnsureRenewedAfter *metav1.Time `json:"ensureRenewedAfter,omitempty"`
+	// FollowCNAME if true delegated domain for DNS01 challenge is used if CNAME record for DNS01 challange domain `_acme-challenge.<domain>` is set.
+	// +optional
+	FollowCNAME *bool `json:"followCNAME,omitempty"`
 }
 
 // IssuerRef is the reference of the issuer by name.
 type IssuerRef struct {
-	// Name is the name of the issuer CR (in the configured issuer namespace).
+	// Name is the name of the issuer (in the configured issuer namespace on default cluster or namespace on target cluster as given).
 	Name string `json:"name"`
+	// Namespace is the namespace of the issuer, only needed if issuer is defined on target cluster
+	// +optional
+	Namespace string `json:"namespace,omitempty"`
 }
 
 // BackOffState stores the status for exponential back off on repeated cert request failure
@@ -103,19 +112,42 @@ type CertificateStatus struct {
 	DNSNames []string `json:"dnsNames,omitempty"`
 	// IssuerRef is the used issuer.
 	// +optional
-	IssuerRef *IssuerRefWithNamespace `json:"issuerRef,omitempty"`
+	IssuerRef *QualifiedIssuerRef `json:"issuerRef,omitempty"`
 	// ExpirationDate shows the notAfter validity date.
 	// +optional
 	ExpirationDate *string `json:"expirationDate,omitempty"`
 	// BackOff contains the state to back off failed certificate requests
 	// +optional
 	BackOff *BackOffState `json:"backoff,omitempty"`
+	// List of status conditions to indicate the status of certificates.
+	// Known condition types are `Ready`.
+	// +optional
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
-// IssuerRefWithNamespace is the full qualified issuer reference.
-type IssuerRefWithNamespace struct {
-	// Name is the name of the issuer CR.
+const (
+	// CertificateConditionReady indicates that a certificate is ready for use.
+	// This is defined as:
+	// - The target secret exists
+	// - The target secret contains a certificate that has not expired
+	// - The target secret contains a private key valid for the certificate
+	// - The commonName and dnsNames attributes match those specified on the Certificate
+	CertificateConditionReady string = "Ready"
+)
+
+// QualifiedIssuerRef is the full qualified issuer reference.
+type QualifiedIssuerRef struct {
+	// Cluster is the cluster name of the issuer ('default' or 'target').
+	// optional because of backwards compatibility
+	// +optional
+	Cluster string `json:"cluster,omitempty"`
+	// Name is the name of the issuer.
 	Name string `json:"name"`
-	// Namespace is the namespace of the issuer CR.
+	// Namespace is the namespace of the issuer.
 	Namespace string `json:"namespace"`
+}
+
+// IsDefaultCluster returns true if the reference is on the default cluster
+func (r QualifiedIssuerRef) IsDefaultCluster() bool {
+	return r.Cluster == "default"
 }

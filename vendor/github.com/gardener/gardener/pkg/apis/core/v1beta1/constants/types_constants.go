@@ -29,6 +29,9 @@ const (
 	// SecretNameCAETCD is a constant for the name of a Kubernetes secret object that contains the CA
 	// certificate of the etcd of a shoot cluster.
 	SecretNameCAETCD = "ca-etcd"
+	// SecretNameCAETCDPeer is a constant for the name of a Kubernetes secret object that contains the CA
+	// certificate of the etcd peer network of a shoot cluster.
+	SecretNameCAETCDPeer = "ca-etcd-peer"
 	// SecretNameCAFrontProxy is a constant for the name of a Kubernetes secret object that contains the CA
 	// certificate of the kube-aggregator a shoot cluster.
 	SecretNameCAFrontProxy = "ca-front-proxy"
@@ -57,9 +60,15 @@ const (
 	// SecretNameObservabilityIngress is a constant for the name of a Kubernetes secret object that contains the ingress
 	// credentials for observability components.
 	SecretNameObservabilityIngress = "observability-ingress"
-	// SecretNameObservabilityIngressUsers is a constant for the name of a Kubernetes secret object that contains the user's ingress
-	// credentials for observability components.
+	// SecretNameObservabilityIngressUsers is a constant for the name of a Kubernetes secret object that contains the
+	// user's ingress credentials for observability components.
 	SecretNameObservabilityIngressUsers = "observability-ingress-users"
+	// SecretNameETCDEncryptionKey is a constant for the name of a Kubernetes secret object that contains the key
+	// for encryption data in ETCD.
+	SecretNameETCDEncryptionKey = "kube-apiserver-etcd-encryption-key"
+	// SecretNamePrefixETCDEncryptionConfiguration is a constant for the name prefix of a Kubernetes secret object that
+	// contains the configuration for encryption data in ETCD.
+	SecretNamePrefixETCDEncryptionConfiguration = "kube-apiserver-etcd-encryption-configuration"
 
 	// SecretNameGardener is a constant for the name of a Kubernetes secret object that contains the client
 	// certificate and a kubeconfig for a shoot cluster. It is used by Gardener and can be used by extension
@@ -160,6 +169,9 @@ const (
 	GardenCreatedBy = "gardener.cloud/created-by"
 	// GardenerOperation is a constant for an annotation on a resource that describes a desired operation.
 	GardenerOperation = "gardener.cloud/operation"
+	// GardenerMaintenanceOperation is a constant for an annotation on a Shoot that describes a desired operation which
+	// will be performed during maintenance.
+	GardenerMaintenanceOperation = "maintenance.gardener.cloud/operation"
 	// GardenerOperationReconcile is a constant for the value of the operation annotation describing a reconcile
 	// operation.
 	GardenerOperationReconcile = "reconcile"
@@ -178,6 +190,8 @@ const (
 	// GardenerOperationKeepalive is a constant for the value of the operation annotation describing an
 	// operation that extends the lifetime of the object having the operation annotation.
 	GardenerOperationKeepalive = "keepalive"
+	// GardenerOperationRenewKubeconfig is a constant for the value of the operation annotation to renew the gardenlet's kubeconfig secret.
+	GardenerOperationRenewKubeconfig = "renew-kubeconfig"
 
 	// DeprecatedGardenRole is the key for an annotation on a Kubernetes object indicating what it is used for.
 	//
@@ -230,6 +244,8 @@ const (
 	// GardenRoleControlPlaneWildcardCert is the value of the GardenRole key indicating type 'controlplane-cert'.
 	// It refers to a wildcard tls certificate which can be used for services exposed under the corresponding domain.
 	GardenRoleControlPlaneWildcardCert = "controlplane-cert"
+	// GardenRoleExposureClassHandler is the value of the GardenRole key indicating type 'exposureclass-handler'.
+	GardenRoleExposureClassHandler = "exposureclass-handler"
 
 	// ShootUID is an annotation key for the shoot namespace in the seed cluster,
 	// which value will be the value of `shoot.status.uid`
@@ -259,6 +275,24 @@ const (
 	// Note that this annotation is alpha and can be removed anytime without further notice. Only use it if you know
 	// what you do.
 	ShootAlphaControlPlaneScaleDownDisabled = "alpha.control-plane.scaling.shoot.gardener.cloud/scale-down-disabled"
+	// ShootAlphaControlPlaneHighAvailability is a constant for an annotation on the Shoot resource stating that the
+	// high availability setup for the control plane should be enabled.
+	// Note that this annotation is alpha and can be removed anytime without further notice. Only use it if you know
+	// what you do.
+	ShootAlphaControlPlaneHighAvailability = "alpha.control-plane.shoot.gardener.cloud/high-availability"
+	// ShootAlphaControlPlaneHighAvailabilitySingleZone is a specific value that can be set for the shoot control
+	// plane high availability annotation, that allows gardener to spread the shoot control plane across
+	// multiple nodes within a single availability zone if it is possible.
+	// This enables shoot clusters having a control plane with a higher failure tolerance as well as zero downtime maintenance,
+	// especially for infrastructure providers that provide less than three zones in a region and thus a multi-zone setup
+	// is not possible there.
+	ShootAlphaControlPlaneHighAvailabilitySingleZone = "single-zone"
+	// ShootAlphaControlPlaneHighAvailabilityMultiZone is a specific value that can be set for the shoot control
+	// plane high availability annotation, that allows gardener to spread the shoot control plane across
+	// multiple availability zones if it is possible.
+	ShootAlphaControlPlaneHighAvailabilityMultiZone = "multi-zone"
+	// LabelSeedMultiZonal is used to identify whether the seed supports multi-zonal control planes for shoots.
+	LabelSeedMultiZonal = "seed.gardener.cloud/multi-zonal"
 	// ShootExpirationTimestamp is an annotation on a Shoot resource whose value represents the time when the Shoot lifetime
 	// is expired. The lifetime can be extended, but at most by the minimal value of the 'clusterLifetimeDays' property
 	// of referenced quotas.
@@ -291,6 +325,13 @@ const (
 	// ShootOperationRetry is a constant for an annotation on a Shoot indicating that a failed Shoot reconciliation shall be
 	// retried.
 	ShootOperationRetry = "retry"
+	// ShootOperationRotateCredentialsStart is a constant for an annotation on a Shoot indicating that the rotation of
+	// all credentials shall be started. This includes CAs, certificates, kubeconfigs, SSH keypairs, observability
+	// credentials, and ServiceAccount signing key.
+	ShootOperationRotateCredentialsStart = "rotate-credentials-start"
+	// ShootOperationRotateCredentialsComplete is a constant for an annotation on a Shoot indicating that the rotation
+	// of the credentials shall be completed.
+	ShootOperationRotateCredentialsComplete = "rotate-credentials-complete"
 	// ShootOperationRotateKubeconfigCredentials is a constant for an annotation on a Shoot indicating that the credentials
 	// contained in the kubeconfig that is handed out to the user shall be rotated.
 	ShootOperationRotateKubeconfigCredentials = "rotate-kubeconfig-credentials"
@@ -307,6 +348,18 @@ const (
 	// for the observability stack secret shall be rotated. Note that this only affects the user credentials
 	// since the operator credentials are rotated automatically each `30d`.
 	ShootOperationRotateObservabilityCredentials = "rotate-observability-credentials"
+	// ShootOperationRotateServiceAccountKeyStart is a constant for an annotation on a Shoot indicating that the
+	// rotation of the service account signing key shall be started.
+	ShootOperationRotateServiceAccountKeyStart = "rotate-serviceaccount-key-start"
+	// ShootOperationRotateServiceAccountKeyComplete is a constant for an annotation on a Shoot indicating that the
+	// rotation of the service account signing key shall be completed.
+	ShootOperationRotateServiceAccountKeyComplete = "rotate-serviceaccount-key-complete"
+	// ShootOperationRotateETCDEncryptionKeyStart is a constant for an annotation on a Shoot indicating that the
+	// rotation of the ETCD encryption key shall be started.
+	ShootOperationRotateETCDEncryptionKeyStart = "rotate-etcd-encryption-key-start"
+	// ShootOperationRotateETCDEncryptionKeyComplete is a constant for an annotation on a Shoot indicating that the
+	// rotation of the ETCD encryption key shall be completed.
+	ShootOperationRotateETCDEncryptionKeyComplete = "rotate-etcd-encryption-key-complete"
 
 	// SeedResourceManagerClass is the resource-class managed by the Gardener-Resource-Manager
 	// instance in the garden namespace on the seeds.
@@ -418,6 +471,12 @@ const (
 	// LabelAPIServerExposureGardenerManaged is a constant for label value which gardener sets on the label key
 	// "core.gardener.cloud/apiserver-exposure" to indicate that it's responsible for apiserver exposure (via SNI).
 	LabelAPIServerExposureGardenerManaged = "gardener-managed"
+	// LabelExposureClassHandlerName is the label key for exposure class handler names.
+	LabelExposureClassHandlerName = "handler.exposureclass.gardener.cloud/name"
+
+	// LabelNodeLocalDNS is a constant for a label key, which the provider extensions set on the nodes.
+	// The value can be true or false.
+	LabelNodeLocalDNS = "networking.gardener.cloud/node-local-dns-enabled"
 
 	// GardenNamespace is the namespace in which the configuration and secrets for
 	// the Gardener controller manager will be stored (e.g., secrets for the Seed clusters).
