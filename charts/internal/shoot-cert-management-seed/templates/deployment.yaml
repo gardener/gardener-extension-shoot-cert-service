@@ -34,6 +34,7 @@ spec:
         networking.gardener.cloud/to-seed-apiserver: allowed
         networking.gardener.cloud/from-prometheus: allowed
     spec:
+      priorityClassName: gardener-system-200
       containers:
       - name: {{ .Chart.Name }}
         image: {{ index .Values.images "cert-management" }}
