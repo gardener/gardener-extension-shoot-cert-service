@@ -14,7 +14,7 @@ Dealing with applications on Kubernetes which offer a secure service endpoints (
 secured communication via SSL/TLS. With the [certificate extension](https://github.com/gardener/gardener-extension-shoot-cert-service) enabled, Gardener can manage commonly trusted X.509 certificate for your application 
 endpoint. From initially requesting certificate, it also handeles their renewal in time using the free Let's Encrypt API.
 
-**There are DNS 2 senarios with which you can use the certificate extension**
+**There are two senarios with which you can use the certificate extension**
 - You want to use a certificate for a subdomain the shoot's default DNS (see `.spec.dns.domain` of your shoot resource, e.g. `short.ingress.shoot.project.default-domain.gardener.cloud`). If this is your case, please see [Manage certificates with Gardener for default domain](./request_default_domain_cert.md)
 - You want to use a certificate for a custom domain. If this is your case, please keep reading this article.
 ## Prerequisites
@@ -67,7 +67,7 @@ spec:
     # Must not exceed 64 characters.
     - amazing.example.com
     # Certificate and private key reside in this secret.
-    secretName: testsecret-tls
+    secretName: tls-secret
   rules:
   - host: amazing.example.com
     http:
@@ -89,11 +89,11 @@ apiVersion: v1
 kind: Service
 metadata:
   annotations:
-    cert.gardener.cloud/secretname: test-service-secret
+    cert.gardener.cloud/secretname: tls-secret
     dns.gardener.cloud/dnsnames: example.example.com
-    dns.gardener.cloud/ttl: "600"
     dns.gardener.cloud/class: garden
     # Optional
+    dns.gardener.cloud/ttl: "600"
     cert.gardener.cloud/commonname: "*.example.example.com"
     cert.gardener.cloud/dnsnames: ""
   name: test-service
@@ -117,7 +117,7 @@ metadata:
 spec:
   commonName: amazing.example.com
   secretRef:
-    name: cert-wildcard
+    name: tls-secret
     namespace: default
   # Optionnal if using the default issuer
   issuerRef:
@@ -140,19 +140,32 @@ Here is a list of all supported annotations regarding the certificate extension:
 In order to avoid the creation of multiples certificates for every single endpoints, you may want to create a wildcard certificate for your shoot's default cluster.
 
 ```yaml
-apiVersion: cert.gardener.cloud/v1alpha1
-kind: Certificate
+apiVersion: networking.k8s.io/v1
+kind: Ingress
 metadata:
-  name: cert-example
-  namespace: default
+  name: amazing-ingress
+  annotations:
+    cert.gardener.cloud/purpose: managed
+    cert.gardener.cloud/commonName: "*.example.com"
 spec:
-  commonName: *.amazing.example.com
-  secretRef:
-    name: cert-wildcard
-    namespace: default
+  tls:
+  - hosts:
+    - amazing.example.com
+    secretName: tls-secret
+  rules:
+  - host: amazing.example.com
+    http:
+      paths:
+      - pathType: Prefix
+        path: "/"
+        backend:
+          service:
+            name: amazing-svc
+            port:
+              number: 8080
 ```
 
-Please note that this can also be achived by directly adding an annotation to an Ingress or a Service type LoadBalancer.
+Please note that this can also be achived by directly adding an annotation to a Service type LoadBalancer. You could also create a Certificate object with a wildcard domain.
 
 ## Using a custom Issuer
 Most Gardener deployment with the certification extension enabled have a preconfigured `garden` issuer. It is also usually configured to use Let's Encrypt as the certificate provider.
