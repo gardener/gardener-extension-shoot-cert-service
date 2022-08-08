@@ -27,7 +27,7 @@ Before you start this guide there are a few requirements you need to fulfill:
 
 Since you are using the default DNS name, all DNS configuration should already be done and ready.
 
-## Issue a certificatey
+## Issue a certificate
 Every X.509 certificate is represented by a Kubernetes custom resource `certificate.cert.gardener.cloud` in your cluster. A `Certificate` resource may be used to initiate a new certificate request as well as to manage its lifecycle. Gardener's certificate service regularly checks the expiration timestamp of Certificates, triggers a renewal process if necessary and replaces the existing X.509 certificate with a new one.
 
 > Your application should be able to reload replaced certificates in a timely manner to avoid service disruptions.
