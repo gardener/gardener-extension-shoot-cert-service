@@ -65,10 +65,6 @@ docker-images:
 # Rules for verification, formatting, linting, testing and cleaning #
 #####################################################################
 
-.PHONY: install-requirements
-install-requirements:
-	@$(REPO_ROOT)/vendor/github.com/gardener/gardener/hack/install-requirements.sh
-
 .PHONY: revendor
 revendor:
 	@GO111MODULE=on go mod tidy
@@ -88,7 +84,7 @@ check-generate:
 	@$(REPO_ROOT)/vendor/github.com/gardener/gardener/hack/check-generate.sh $(REPO_ROOT)
 
 .PHONY: check
-check: $(GOIMPORTS) $(GOLANGCI_LINT)
+check: $(GOIMPORTS) $(GOLANGCI_LINT) $(HELM)
 	@$(REPO_ROOT)/vendor/github.com/gardener/gardener/hack/check.sh --golangci-lint-config=./.golangci.yaml ./cmd/... ./pkg/... ./test/...
 	@$(REPO_ROOT)/vendor/github.com/gardener/gardener/hack/check-charts.sh ./charts
 
