@@ -27,6 +27,7 @@ IGNORE_OPERATION_ANNOTATION := true
 # Tools                                 #
 #########################################
 
+TOOLS_DIR := hack/tools
 include $(REPO_ROOT)/vendor/github.com/gardener/gardener/hack/tools.mk
 
 #########################################

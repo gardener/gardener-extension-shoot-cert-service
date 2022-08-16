@@ -25,8 +25,8 @@ import (
 	unsafe "unsafe"
 
 	config "github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/config"
-	healthcheckconfig "github.com/gardener/gardener/extensions/pkg/controller/healthcheck/config"
-	configv1alpha1 "github.com/gardener/gardener/extensions/pkg/controller/healthcheck/config/v1alpha1"
+	apisconfig "github.com/gardener/gardener/extensions/pkg/apis/config"
+	configv1alpha1 "github.com/gardener/gardener/extensions/pkg/apis/config/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	conversion "k8s.io/apimachinery/pkg/conversion"
 	runtime "k8s.io/apimachinery/pkg/runtime"
@@ -112,7 +112,7 @@ func autoConvert_v1alpha1_Configuration_To_config_Configuration(in *Configuratio
 	if err := Convert_v1alpha1_ACME_To_config_ACME(&in.ACME, &out.ACME, s); err != nil {
 		return err
 	}
-	out.HealthCheckConfig = (*healthcheckconfig.HealthCheckConfig)(unsafe.Pointer(in.HealthCheckConfig))
+	out.HealthCheckConfig = (*apisconfig.HealthCheckConfig)(unsafe.Pointer(in.HealthCheckConfig))
 	return nil
 }
 

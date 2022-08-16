@@ -37,9 +37,9 @@ import (
 
 	certv1alpha1 "github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/service/v1alpha1"
 
-	healthcheckoperation "github.com/gardener/gardener/extensions/test/testmachinery/healthcheck"
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"github.com/gardener/gardener/test/framework"
+	"github.com/gardener/gardener/test/testmachinery/extensions/healthcheck"
 	"github.com/onsi/ginkgo/v2"
 )
 
@@ -53,14 +53,14 @@ var _ = ginkgo.Describe("Extension-shoot-cert-service integration test: health c
 	ginkgo.Context("Extension", func() {
 		ginkgo.Context("Condition type: ShootControlPlaneHealthy", func() {
 			f.Serial().Release().CIt(fmt.Sprintf("Extension CRD should contain unhealthy condition due to ManagedResource '%s' is unhealthy", certv1alpha1.CertManagementResourceNameSeed), func(ctx context.Context) {
-				err := healthcheckoperation.ExtensionHealthCheckWithManagedResource(ctx, timeout, f, "shoot-cert-service", certv1alpha1.CertManagementResourceNameSeed, gardencorev1beta1.ShootControlPlaneHealthy)
+				err := healthcheck.ExtensionHealthCheckWithManagedResource(ctx, timeout, f, "shoot-cert-service", certv1alpha1.CertManagementResourceNameSeed, gardencorev1beta1.ShootControlPlaneHealthy)
 				framework.ExpectNoError(err)
 			}, timeout)
 		})
 
 		ginkgo.Context("Condition type: ShootSystemComponentsHealthy", func() {
 			f.Serial().Release().CIt(fmt.Sprintf("Extension CRD should contain unhealthy condition due to ManagedResource '%s' is unhealthy", certv1alpha1.CertManagementResourceNameShoot), func(ctx context.Context) {
-				err := healthcheckoperation.ExtensionHealthCheckWithManagedResource(ctx, timeout, f, "shoot-cert-service", certv1alpha1.CertManagementResourceNameShoot, gardencorev1beta1.ShootSystemComponentsHealthy)
+				err := healthcheck.ExtensionHealthCheckWithManagedResource(ctx, timeout, f, "shoot-cert-service", certv1alpha1.CertManagementResourceNameShoot, gardencorev1beta1.ShootSystemComponentsHealthy)
 				framework.ExpectNoError(err)
 			}, timeout)
 		})

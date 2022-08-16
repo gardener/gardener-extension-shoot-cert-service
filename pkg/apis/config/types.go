@@ -15,7 +15,7 @@
 package config
 
 import (
-	healthcheckconfig "github.com/gardener/gardener/extensions/pkg/controller/healthcheck/config"
+	apisconfig "github.com/gardener/gardener/extensions/pkg/apis/config"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -37,7 +37,7 @@ type Configuration struct {
 	// ACME contains ACME related configuration.
 	ACME ACME
 	// HealthCheckConfig is the config for the health check controller.
-	HealthCheckConfig *healthcheckconfig.HealthCheckConfig
+	HealthCheckConfig *apisconfig.HealthCheckConfig
 }
 
 // ShootIssuers holds enablement for issuers on shoot cluster
