@@ -21,6 +21,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gardener/gardener-extension-shoot-cert-service/charts"
 	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/config"
 	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/service"
 	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/service/v1alpha1"
@@ -72,7 +73,7 @@ type actuator struct {
 }
 
 // Reconcile the Extension resource.
-func (a *actuator) Reconcile(ctx context.Context, ex *extensionsv1alpha1.Extension) error {
+func (a *actuator) Reconcile(ctx context.Context, log logr.Logger, ex *extensionsv1alpha1.Extension) error {
 	namespace := ex.GetNamespace()
 
 	cluster, err := controller.GetCluster(ctx, a.client, namespace)
@@ -104,7 +105,7 @@ func (a *actuator) Reconcile(ctx context.Context, ex *extensionsv1alpha1.Extensi
 }
 
 // Delete the Extension resource.
-func (a *actuator) Delete(ctx context.Context, ex *extensionsv1alpha1.Extension) error {
+func (a *actuator) Delete(ctx context.Context, log logr.Logger, ex *extensionsv1alpha1.Extension) error {
 	namespace := ex.GetNamespace()
 	a.logger.Info("Component is being deleted", "component", "cert-management", "namespace", namespace)
 	if err := a.deleteShootResources(ctx, namespace); err != nil {
@@ -115,18 +116,18 @@ func (a *actuator) Delete(ctx context.Context, ex *extensionsv1alpha1.Extension)
 }
 
 // Restore the Extension resource.
-func (a *actuator) Restore(ctx context.Context, ex *extensionsv1alpha1.Extension) error {
-	return a.Reconcile(ctx, ex)
+func (a *actuator) Restore(ctx context.Context, log logr.Logger, ex *extensionsv1alpha1.Extension) error {
+	return a.Reconcile(ctx, log, ex)
 }
 
 // Migrate the Extension resource.
-func (a *actuator) Migrate(ctx context.Context, ex *extensionsv1alpha1.Extension) error {
+func (a *actuator) Migrate(ctx context.Context, log logr.Logger, ex *extensionsv1alpha1.Extension) error {
 	// Keep objects for shoot managed resources so that they are not deleted from the shoot during the migration
 	if err := managedresources.SetKeepObjects(ctx, a.client, ex.GetNamespace(), v1alpha1.CertManagementResourceNameShoot, true); err != nil {
 		return err
 	}
 
-	return a.Delete(ctx, ex)
+	return a.Delete(ctx, log, ex)
 }
 
 // InjectConfig injects the rest config to this actuator.
@@ -382,8 +383,8 @@ func (a *actuator) deleteShootResources(ctx context.Context, namespace string) e
 }
 
 func (a *actuator) createManagedResource(ctx context.Context, namespace, name, class string, renderer chartrenderer.Interface, chartName, chartNamespace string, chartValues map[string]interface{}, injectedLabels map[string]string) error {
-	chartPath := filepath.Join(v1alpha1.ChartsPath, chartName)
-	chart, err := renderer.Render(chartPath, chartName, chartNamespace, chartValues)
+	chartPath := filepath.Join(charts.ChartsPath, chartName)
+	chart, err := renderer.RenderEmbeddedFS(charts.Internal, chartPath, chartName, chartNamespace, chartValues)
 	if err != nil {
 		return err
 	}

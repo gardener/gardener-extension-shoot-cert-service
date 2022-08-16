@@ -14,8 +14,18 @@
 
 package charts
 
-import _ "embed"
+import (
+	"embed"
+	_ "embed"
+)
 
 // Images YAML contains the contents of the images.yaml file.
 //go:embed images.yaml
 var ImagesYAML string
+
+// Internal contains the internal charts
+//go:embed internal
+var Internal embed.FS
+
+// ChartsPath is the path to the charts
+const ChartsPath = "internal"

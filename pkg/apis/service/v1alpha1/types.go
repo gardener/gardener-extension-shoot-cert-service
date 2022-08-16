@@ -15,8 +15,6 @@
 package v1alpha1
 
 import (
-	"path/filepath"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -28,9 +26,6 @@ const CertManagementResourceNameShoot = "extension-shoot-cert-service-shoot"
 
 // CertManagementImageName is the name of the Cert-Management image in the image vector.
 const CertManagementImageName = "cert-management"
-
-// ChartsPath is the path to the charts
-var ChartsPath = filepath.Join("charts", "internal")
 
 // ShootAccessSecretName is the name of the shoot access secret in the seed.
 const ShootAccessSecretName = "extension-shoot-cert-service"
