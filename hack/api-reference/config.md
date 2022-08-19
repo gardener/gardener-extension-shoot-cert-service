@@ -108,9 +108,7 @@ ACME
 <td>
 <code>healthCheckConfig</code></br>
 <em>
-<a href="https://github.com/gardener/gardener/extensions/pkg/controller/healthcheck/config">
-github.com/gardener/gardener/extensions/pkg/controller/healthcheck/config/v1alpha1.HealthCheckConfig
-</a>
+github.com/gardener/gardener/extensions/pkg/apis/config/v1alpha1.HealthCheckConfig
 </em>
 </td>
 <td>

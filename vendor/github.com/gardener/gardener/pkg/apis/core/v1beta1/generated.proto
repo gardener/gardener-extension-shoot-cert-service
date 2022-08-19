@@ -30,7 +30,7 @@ import "k8s.io/apimachinery/pkg/runtime/schema/generated.proto";
 import "k8s.io/apimachinery/pkg/util/intstr/generated.proto";
 
 // Package-wide variables from generator "generated".
-option go_package = "v1beta1";
+option go_package = "github.com/gardener/gardener/pkg/apis/core/v1beta1";
 
 // Addon allows enabling or disabling a specific addon and is used to derive from.
 message Addon {
@@ -57,6 +57,10 @@ message AdmissionPlugin {
   // Config is the configuration of the plugin.
   // +optional
   optional k8s.io.apimachinery.pkg.runtime.RawExtension config = 2;
+
+  // Disabled specifies whether this plugin should be disabled.
+  // +optional
+  optional bool disabled = 3;
 }
 
 // Alerting contains information about how alerting will be done (i.e. who will receive alerts and how).
@@ -551,6 +555,7 @@ message ControllerResource {
 // CoreDNS contains the settings of the Core DNS components running in the data plane of the Shoot cluster.
 message CoreDNS {
   // Autoscaling contains the settings related to autoscaling of the Core DNS components running in the data plane of the Shoot cluster.
+  // +optional
   optional CoreDNSAutoscaling autoscaling = 1;
 }
 
@@ -801,7 +806,7 @@ message KubeAPIServerConfig {
 
   // WatchCacheSizes contains configuration of the API server's watch cache sizes.
   // Configuring these flags might be useful for large-scale Shoot clusters with a lot of parallel update requests
-  // and a lot of watching controllers (e.g. large shooted Seed clusters). When the API server's watch cache's
+  // and a lot of watching controllers (e.g. large ManagedSeed clusters). When the API server's watch cache's
   // capacity is too small to cope with the amount of update requests and watchers for a particular resource, it
   // might happen that controller watches are permanently stopped with `too old resource version` errors.
   // Starting from kubernetes v1.19, the API server's watch cache size is adapted dynamically and setting the watch
@@ -885,6 +890,11 @@ message KubeSchedulerConfig {
   // of all the side-effects and consequences when changing it.
   // +optional
   optional string kubeMaxPDVols = 2;
+
+  // Profile configures the scheduling profile for the cluster.
+  // If not specified, the used profile is "balanced" (provides the default kube-scheduler behavior).
+  // +optional
+  optional string profile = 3;
 }
 
 // KubeletConfig contains configuration settings for the kubelet.
@@ -1197,6 +1207,10 @@ message Machine {
   // latest version of the first image stated in the referenced CloudProfile if no value has been provided.
   // +optional
   optional ShootMachineImage image = 2;
+
+  // Architecture is CPU architecture of machines in this worker pool.
+  // +optional
+  optional string architecture = 3;
 }
 
 // MachineControllerManagerSettings contains configurations for different worker-pools. Eg. MachineDrainTimeout, MachineHealthTimeout.
@@ -1240,6 +1254,10 @@ message MachineImageVersion {
   // CRI list of supported container runtime and interfaces supported by this version
   // +optional
   repeated CRI cri = 2;
+
+  // Architectures is the list of CPU architectures of the machine image in this version.
+  // +optional
+  repeated string architectures = 3;
 }
 
 // MachineType contains certain properties of a machine type.
@@ -1263,6 +1281,10 @@ message MachineType {
   // Usable defines if the machine type can be used for shoot clusters.
   // +optional
   optional bool usable = 6;
+
+  // Architecture is the CPU architecture of this machine type.
+  // +optional
+  optional string architecture = 7;
 }
 
 // MachineTypeStorage is the amount of storage associated with the root volume of this machine type.
@@ -2122,8 +2144,7 @@ message ServiceAccountConfig {
   // MaxTokenExpiration is the maximum validity duration of a token created by the service account token issuer. If an
   // otherwise valid TokenRequest with a validity duration larger than this value is requested, a token will be issued
   // with a validity duration of this value.
-  // This field must be within [30d,90d] when the ShootMaxTokenExpirationValidation feature gate is enabled.
-  // This field will be overwritten to be within [30d,90d] when the ShootMaxTokenExpirationOverwrite feature gate is enabled.
+  // This field must be within [30d,90d].
   // +optional
   optional k8s.io.apimachinery.pkg.apis.meta.v1.Duration maxTokenExpiration = 4;
 

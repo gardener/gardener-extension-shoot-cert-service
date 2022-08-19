@@ -25,9 +25,9 @@ import (
 	controllerconfig "github.com/gardener/gardener-extension-shoot-cert-service/pkg/controller/config"
 	healthcheckcontroller "github.com/gardener/gardener-extension-shoot-cert-service/pkg/controller/healthcheck"
 
+	extensionsapisconfig "github.com/gardener/gardener/extensions/pkg/apis/config"
 	"github.com/gardener/gardener/extensions/pkg/controller/cmd"
 	extensionshealthcheckcontroller "github.com/gardener/gardener/extensions/pkg/controller/healthcheck"
-	healthcheckconfig "github.com/gardener/gardener/extensions/pkg/controller/healthcheck/config"
 	"github.com/spf13/pflag"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
@@ -108,7 +108,7 @@ func ControllerSwitches() *cmd.SwitchOptions {
 	)
 }
 
-func (c *CertificateServiceConfig) ApplyHealthCheckConfig(config *healthcheckconfig.HealthCheckConfig) {
+func (c *CertificateServiceConfig) ApplyHealthCheckConfig(config *extensionsapisconfig.HealthCheckConfig) {
 	if c.config.HealthCheckConfig != nil {
 		*config = *c.config.HealthCheckConfig
 	}
