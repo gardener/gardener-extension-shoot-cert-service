@@ -82,6 +82,10 @@ func SetDefaults_GardenletConfiguration(obj *GardenletConfiguration) {
 		obj.SNI = &SNI{}
 	}
 
+	if obj.Monitoring == nil {
+		obj.Monitoring = &MonitoringConfig{}
+	}
+
 	if obj.ETCDConfig == nil {
 		obj.ETCDConfig = &ETCDConfig{}
 	}
@@ -107,6 +111,23 @@ func SetDefaults_GardenletConfiguration(obj *GardenletConfiguration) {
 				v1beta1constants.GardenRole: v1beta1constants.GardenRoleExposureClassHandler,
 			}
 		}
+	}
+}
+
+// SetDefaults_GardenClientConnection sets defaults for the controller objects.
+func SetDefaults_GardenClientConnection(obj *GardenClientConnection) {
+	if obj.KubeconfigValidity == nil {
+		obj.KubeconfigValidity = &KubeconfigValidity{}
+	}
+}
+
+// SetDefaults_KubeconfigValidity sets defaults for the controller objects.
+func SetDefaults_KubeconfigValidity(obj *KubeconfigValidity) {
+	if obj.AutoRotationJitterPercentageMin == nil {
+		obj.AutoRotationJitterPercentageMin = pointer.Int32(70)
+	}
+	if obj.AutoRotationJitterPercentageMax == nil {
+		obj.AutoRotationJitterPercentageMax = pointer.Int32(90)
 	}
 }
 
@@ -208,6 +229,21 @@ func SetDefaults_BackupEntryControllerConfiguration(obj *BackupEntryControllerCo
 	if obj.DeletionGracePeriodHours == nil || *obj.DeletionGracePeriodHours < 0 {
 		v := DefaultBackupEntryDeletionGracePeriodHours
 		obj.DeletionGracePeriodHours = &v
+	}
+}
+
+// SetDefaults_MonitoringConfig sets the defaults for the monitoring stack.
+func SetDefaults_MonitoringConfig(obj *MonitoringConfig) {
+	if obj.Shoot == nil {
+		obj.Shoot = &ShootMonitoringConfig{}
+	}
+}
+
+// SetDefaults_ShootMonitoringConfig sets the defaults for the shoot monitoring.
+func SetDefaults_ShootMonitoringConfig(obj *ShootMonitoringConfig) {
+	if obj.Enabled == nil {
+		v := true
+		obj.Enabled = &v
 	}
 }
 
@@ -474,7 +510,7 @@ func SetDefaults_SNIIngress(obj *SNIIngress) {
 // SetDefaults_Logging sets defaults for the Logging stack.
 func SetDefaults_Logging(obj *Logging) {
 	if obj.Enabled == nil {
-		obj.Enabled = pointer.BoolPtr(false)
+		obj.Enabled = pointer.Bool(false)
 	}
 	if obj.Loki == nil {
 		obj.Loki = &Loki{}
@@ -487,6 +523,12 @@ func SetDefaults_Logging(obj *Logging) {
 	}
 	if obj.Loki.Garden.Storage == nil {
 		obj.Loki.Garden.Storage = &DefaultCentralLokiStorage
+	}
+	if obj.ShootEventLogging == nil {
+		obj.ShootEventLogging = &ShootEventLogging{}
+	}
+	if obj.ShootEventLogging.Enabled == nil {
+		obj.ShootEventLogging.Enabled = obj.Enabled
 	}
 }
 
