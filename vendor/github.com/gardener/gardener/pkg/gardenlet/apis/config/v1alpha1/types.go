@@ -114,6 +114,32 @@ type GardenClientConnection struct {
 	// will be considered.
 	// +optional
 	KubeconfigSecret *corev1.SecretReference `json:"kubeconfigSecret,omitempty"`
+	// KubeconfigValidity allows configuring certain settings related to the validity and rotation of kubeconfig
+	// secrets.
+	// +optional
+	KubeconfigValidity *KubeconfigValidity `json:"kubeconfigValidity,omitempty"`
+}
+
+// KubeconfigValidity allows configuring certain settings related to the validity and rotation of kubeconfig secrets.
+type KubeconfigValidity struct {
+	// Validity specifies the validity time for the client certificate issued by gardenlet. It will be set as
+	// .spec.expirationSeconds in the created CertificateSigningRequest resource.
+	// This value is not defaulted, meaning that the value configured via `--cluster-signing-duration` on
+	// kube-controller-manager is used.
+	// Note that using this value will only have effect for garden clusters >= Kubernetes 1.22.
+	// Note that changing this value will only have effect after the next rotation of the gardenlet's kubeconfig secret.
+	// +optional
+	Validity *metav1.Duration `json:"validity,omitempty"`
+	// AutoRotationJitterPercentageMin is the minimum percentage when it comes to compute a random jitter value for the
+	// automatic rotation deadline of expiring certificates. Defaults to 70. This means that gardenlet will renew its
+	// client certificate when 70% of its lifetime is reached the earliest.
+	// +optional
+	AutoRotationJitterPercentageMin *int32 `json:"autoRotationJitterPercentageMin,omitempty"`
+	// AutoRotationJitterPercentageMax is the maximum percentage when it comes to compute a random jitter value for the
+	// automatic rotation deadline of expiring certificates. Defaults to 90. This means that gardenlet will renew its
+	// client certificate when 90% of its lifetime is reached at the latest.
+	// +optional
+	AutoRotationJitterPercentageMax *int32 `json:"autoRotationJitterPercentageMax,omitempty"`
 }
 
 // SeedClientConnection specifies the client connection settings
@@ -497,9 +523,6 @@ type Loki struct {
 
 // GardenLoki contains configuration for the Loki in garden namespace.
 type GardenLoki struct {
-	// Priority is the priority value for the Loki
-	// +optional
-	Priority *int `json:"priority,omitempty" yaml:"priority,omitempty"`
 	// Storage is the disk storage capacity of the central Loki.
 	// Defaults to 100Gi.
 	// +optional
@@ -511,6 +534,13 @@ type ShootNodeLogging struct {
 	// ShootPurposes determines which shoots can have node logging by their purpose
 	// +optional
 	ShootPurposes []gardencorev1beta1.ShootPurpose `json:"shootPurposes,omitempty" yaml:"shootPurposes,omitempty"`
+}
+
+// ShootEventLogging contains configurations for the shoot event logger.
+type ShootEventLogging struct {
+	// Enabled is used to enable or disable shoot event logger.
+	// +optional
+	Enabled *bool `json:"enabled,omitempty" yaml:"enabled,omitempty"`
 }
 
 // Logging contains configuration for the logging stack.
@@ -527,6 +557,9 @@ type Logging struct {
 	// ShootNodeLogging contains configurations for the shoot node logging
 	// +optional
 	ShootNodeLogging *ShootNodeLogging `json:"shootNodeLogging,omitempty" yaml:"shootNodeLogging,omitempty"`
+	// ShootEventLogging contains configurations for the shoot event logger.
+	// +optional
+	ShootEventLogging *ShootEventLogging `json:"shootEventLogging,omitempty" yaml:"shootEventLogging,omitempty"`
 }
 
 // ServerConfiguration contains details for the HTTP(S) servers.
@@ -681,6 +714,10 @@ type MonitoringConfig struct {
 
 // ShootMonitoringConfig contains settings for the shoot monitoring stack.
 type ShootMonitoringConfig struct {
+	// Enabled is used to enable or disable the shoot monitoring stack.
+	// Defaults to true.
+	// +optional
+	Enabled *bool `json:"enabled,omitempty"`
 	// RemoteWrite is optional and contains remote write setting.
 	// +optional
 	RemoteWrite *RemoteWriteMonitoringConfig `json:"remoteWrite,omitempty"`
