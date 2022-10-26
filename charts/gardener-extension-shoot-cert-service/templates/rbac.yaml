@@ -87,16 +87,18 @@ rules:
   - leases
   verbs:
   - create
+  - list 
+  - watch 
 - apiGroups:
   - coordination.k8s.io
   resources:
   - leases
   resourceNames:
   - {{ include "leaderelectionid" . }}
+  - gardener-extension-heartbeat
   verbs:
   - update
   - get
-  - watch
 - apiGroups:
   - "cert.gardener.cloud"
   resources:
