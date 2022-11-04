@@ -392,7 +392,7 @@ func (a *actuator) createManagedResource(ctx context.Context, namespace, name, c
 	data := map[string][]byte{chartName: chart.Manifest()}
 	keepObjects := false
 	forceOverwriteAnnotations := false
-	return managedresources.Create(ctx, a.client, namespace, name, false, class, data, &keepObjects, injectedLabels, &forceOverwriteAnnotations)
+	return managedresources.Create(ctx, a.client, namespace, name, nil, false, class, data, &keepObjects, injectedLabels, &forceOverwriteAnnotations)
 }
 
 func (a *actuator) updateStatus(ctx context.Context, ex *extensionsv1alpha1.Extension, certConfig *service.CertConfig) error {

@@ -18,6 +18,7 @@ import (
 	"os"
 
 	certificateservicecmd "github.com/gardener/gardener-extension-shoot-cert-service/pkg/cmd"
+	heartbeatcmd "github.com/gardener/gardener/extensions/pkg/controller/heartbeat/cmd"
 
 	controllercmd "github.com/gardener/gardener/extensions/pkg/controller/cmd"
 	"k8s.io/client-go/tools/leaderelection/resourcelock"
@@ -34,6 +35,7 @@ type Options struct {
 	managerOptions     *controllercmd.ManagerOptions
 	controllerOptions  *controllercmd.ControllerOptions
 	healthOptions      *controllercmd.ControllerOptions
+	heartbeatOptions   *heartbeatcmd.Options
 	controllerSwitches *controllercmd.SwitchOptions
 	reconcileOptions   *controllercmd.ReconcilerOptions
 	optionAggregator   controllercmd.OptionAggregator
@@ -60,6 +62,12 @@ func NewOptions() *Options {
 			// This is a default value.
 			MaxConcurrentReconciles: 5,
 		},
+		heartbeatOptions: &heartbeatcmd.Options{
+			// This is a default value.
+			ExtensionName:        ExtensionName,
+			RenewIntervalSeconds: 30,
+			Namespace:            os.Getenv("LEADER_ELECTION_NAMESPACE"),
+		},
 		controllerSwitches: certificateservicecmd.ControllerSwitches(),
 		reconcileOptions:   &controllercmd.ReconcilerOptions{},
 	}
@@ -71,6 +79,7 @@ func NewOptions() *Options {
 		options.controllerOptions,
 		options.certOptions,
 		controllercmd.PrefixOption("healthcheck-", options.healthOptions),
+		controllercmd.PrefixOption("heartbeat-", options.heartbeatOptions),
 		options.controllerSwitches,
 		options.reconcileOptions,
 	)
