@@ -1,4 +1,3 @@
-{{- if semverCompare ">= 1.16" .Values.kubernetesVersion }}
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
@@ -82,6 +81,11 @@ spec:
                     this date.
                   format: date-time
                   type: string
+                followCNAME:
+                  description: FollowCNAME if true delegated domain for DNS01 challenge
+                    is used if CNAME record for DNS01 challange domain `_acme-challenge.<domain>`
+                    is set.
+                  type: boolean
                 issuerRef:
                   description: IssuerRef is the reference of the issuer to use.
                   properties:
@@ -97,6 +101,73 @@ spec:
                   required:
                     - name
                   type: object
+                keystores:
+                  description: Keystores configures additional keystore output formats
+                    stored in the `secretName`/`secretRef` Secret resource.
+                  properties:
+                    jks:
+                      description: JKS configures options for storing a JKS keystore
+                        in the `spec.secretName`/`spec.secretRef` Secret resource.
+                      properties:
+                        create:
+                          description: Create enables JKS keystore creation for the
+                            Certificate. If true, a file named `keystore.jks` will be
+                            created in the target Secret resource, encrypted using the
+                            password stored in `passwordSecretRef`. The keystore file
+                            will only be updated upon re-issuance.
+                          type: boolean
+                        passwordSecretRef:
+                          description: PasswordSecretRef is a reference to a key in
+                            a Secret resource containing the password used to encrypt
+                            the JKS keystore.
+                          properties:
+                            key:
+                              description: Key of the entry in the Secret resource's
+                                `data` field to be used.
+                              type: string
+                            secretName:
+                              description: SecretName of the secret resource being referred
+                                to in the same namespace.
+                              type: string
+                          required:
+                            - secretName
+                          type: object
+                      required:
+                        - create
+                        - passwordSecretRef
+                      type: object
+                    pkcs12:
+                      description: PKCS12 configures options for storing a PKCS12 keystore
+                        in the `spec.secretName`/`spec.secretRef` Secret resource.
+                      properties:
+                        create:
+                          description: Create enables PKCS12 keystore creation for the
+                            Certificate. If true, a file named `keystore.p12` will be
+                            created in the target Secret resource, encrypted using the
+                            password stored in `passwordSecretRef`. The keystore file
+                            will only be updated upon re-issuance.
+                          type: boolean
+                        passwordSecretRef:
+                          description: PasswordSecretRef is a reference to a key in
+                            a Secret resource containing the password used to encrypt
+                            the PKCS12 keystore.
+                          properties:
+                            key:
+                              description: Key of the entry in the Secret resource's
+                                `data` field to be used.
+                              type: string
+                            secretName:
+                              description: SecretName of the secret resource being referred
+                                to in the same namespace.
+                              type: string
+                          required:
+                            - secretName
+                          type: object
+                      required:
+                        - create
+                        - passwordSecretRef
+                      type: object
+                  type: object
                 renew:
                   description: Renew triggers a renewal if set to true
                   type: boolean
@@ -109,11 +180,11 @@ spec:
                     for storing the certificate.
                   properties:
                     name:
-                      description: Name is unique within a namespace to reference a
+                      description: name is unique within a namespace to reference a
                         secret resource.
                       type: string
                     namespace:
-                      description: Namespace defines the space within which the secret
+                      description: namespace defines the space within which the secret
                         name must be unique.
                       type: string
                   type: object
@@ -152,13 +223,12 @@ spec:
                     description: "Condition contains details for one aspect of the current
                     state of this API Resource. --- This struct is intended for direct
                     use as an array at the field path .status.conditions.  For example,
-                    type FooStatus struct{     // Represents the observations of a
-                    foo's current state.     // Known .status.conditions.type are:
-                    \"Available\", \"Progressing\", and \"Degraded\"     // +patchMergeKey=type
-                    \    // +patchStrategy=merge     // +listType=map     // +listMapKey=type
-                    \    Conditions []metav1.Condition `json:\"conditions,omitempty\"
-                    patchStrategy:\"merge\" patchMergeKey:\"type\" protobuf:\"bytes,1,rep,name=conditions\"`
-                    \n     // other fields }"
+                    type FooStatus struct{ // Represents the observations of a foo's
+                    current state. // Known .status.conditions.type are: \"Available\",
+                    \"Progressing\", and \"Degraded\" // +patchMergeKey=type // +patchStrategy=merge
+                    // +listType=map // +listMapKey=type Conditions []metav1.Condition
+                    `json:\"conditions,omitempty\" patchStrategy:\"merge\" patchMergeKey:\"type\"
+                    protobuf:\"bytes,1,rep,name=conditions\"` \n // other fields }"
                     properties:
                       lastTransitionTime:
                         description: lastTransitionTime is the last time the condition
@@ -713,5 +783,4 @@ spec:
       storage: true
       subresources:
         status: {}
-{{- end}}
 {{- end}}
