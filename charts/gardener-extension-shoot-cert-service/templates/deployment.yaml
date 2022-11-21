@@ -8,8 +8,9 @@ metadata:
     app.kubernetes.io/name: gardener-extension-shoot-cert-service
     helm.sh/chart: gardener-extension-shoot-cert-service
     app.kubernetes.io/instance: {{ .Release.Name }}
+    high-availability-config.resources.gardener.cloud/type: controller
 spec:
-  revisionHistoryLimit: 0
+  revisionHistoryLimit: 2
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
