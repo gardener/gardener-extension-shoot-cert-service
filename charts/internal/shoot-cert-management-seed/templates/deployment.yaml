@@ -9,8 +9,9 @@ metadata:
     app.kubernetes.io/name: {{ include "cert-management.name" . }}
     app.kubernetes.io/instance: {{ .Release.Name }}
     app.kubernetes.io/managed-by: {{ .Release.Service }}
+    high-availability-config.resources.gardener.cloud/type: controller
 spec:
-  revisionHistoryLimit: 0
+  revisionHistoryLimit: 2
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
