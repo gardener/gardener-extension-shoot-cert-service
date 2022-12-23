@@ -139,7 +139,7 @@ spec:
   cloudProfileName: gcp
   kubernetes:
     allowPrivilegedContainers: true
-    version: 1.18.2
+    version: 1.24.8
   maintenance:
     autoUpdate:
       kubernetesVersion: true
@@ -164,7 +164,7 @@ spec:
     - machine:
         image:
           name: gardenlinux
-          version: 11.29.2
+          version: 576.9.0
         type: n1-standard-2
       maxSurge: 1
       maxUnavailable: 0
@@ -189,9 +189,9 @@ shoot.core.gardener.cloud/gsicdc created
 
 $ kgarden get shoot gsicdc --watch
 NAME     CLOUDPROFILE   VERSION   SEED   DOMAIN                                        HIBERNATION   OPERATION    PROGRESS   APISERVER     CONTROL       NODES     SYSTEM    AGE
-gsicdc   gcp            1.18.2    gcp    gsicdc.myproject.shoot.devgarden.cloud   Awake         Processing   38         Progressing   Progressing   Unknown   Unknown   83s
+gsicdc   gcp            1.24.8    gcp    gsicdc.myproject.shoot.devgarden.cloud   Awake         Processing   38         Progressing   Progressing   Unknown   Unknown   83s
 ...
-gsicdc   gcp            1.18.2    gcp    gsicdc.myproject.shoot.devgarden.cloud   Awake         Succeeded    100        True          True          True          False         6m7s
+gsicdc   gcp            1.24.8    gcp    gsicdc.myproject.shoot.devgarden.cloud   Awake         Succeeded    100        True          True          True          False         6m7s
 ```
 
 Get access to your freshly baked cluster and set your `KUBECONFIG`:

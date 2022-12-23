@@ -343,7 +343,6 @@ func (a *actuator) createShootResources(ctx context.Context, certConfig *service
 	values := map[string]interface{}{
 		"dnsChallengeOnShoot":           dnsChallengeOnShoot,
 		"shootIssuers":                  shootIssuers,
-		"kubernetesVersion":             cluster.Shoot.Spec.Kubernetes.Version,
 		"shootAccessServiceAccountName": v1alpha1.ShootAccessServiceAccountName,
 	}
 
