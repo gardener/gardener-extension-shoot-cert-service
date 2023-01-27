@@ -31,8 +31,8 @@ var _ = Describe("Defaults", func() {
 			Expect(config.RestrictIssuer).To(matcher)
 		},
 			Entry("should set restriction to true if nil", &Configuration{}, PointTo(BeTrue())),
-			Entry("should remain true", &Configuration{RestrictIssuer: pointer.BoolPtr(true)}, PointTo(BeTrue())),
-			Entry("should remain false", &Configuration{RestrictIssuer: pointer.BoolPtr(false)}, PointTo(BeFalse())),
+			Entry("should remain true", &Configuration{RestrictIssuer: pointer.Bool(true)}, PointTo(BeTrue())),
+			Entry("should remain false", &Configuration{RestrictIssuer: pointer.Bool(false)}, PointTo(BeFalse())),
 		)
 	})
 })

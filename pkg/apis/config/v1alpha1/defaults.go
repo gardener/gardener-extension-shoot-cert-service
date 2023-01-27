@@ -26,6 +26,6 @@ func addDefaultingFuncs(scheme *runtime.Scheme) error {
 // SetDefaults_Configuration sets default values for Configuration objects.
 func SetDefaults_Configuration(obj *Configuration) {
 	if obj.RestrictIssuer == nil {
-		obj.RestrictIssuer = pointer.BoolPtr(true)
+		obj.RestrictIssuer = pointer.Bool(true)
 	}
 }

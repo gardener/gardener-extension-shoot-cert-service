@@ -76,8 +76,8 @@ var _ = Describe("Validation", func() {
 			ACME: config.ACME{
 				Email:               validACME.Email,
 				Server:              validACME.Server,
-				PrecheckNameservers: pointer.StringPtr("8.8.8.8,foo.com"),
-				CACertificates:      pointer.StringPtr("blabla"),
+				PrecheckNameservers: pointer.String("8.8.8.8,foo.com"),
+				CACertificates:      pointer.String("blabla"),
 			},
 		}, ConsistOf(
 			PointTo(MatchFields(IgnoreExtras, Fields{
@@ -94,8 +94,8 @@ var _ = Describe("Validation", func() {
 			ACME: config.ACME{
 				Email:               validACME.Email,
 				Server:              validACME.Server,
-				PrecheckNameservers: pointer.StringPtr("8.8.8.8,172.11.22.253"),
-				CACertificates: pointer.StringPtr(`
+				PrecheckNameservers: pointer.String("8.8.8.8,172.11.22.253"),
+				CACertificates: pointer.String(`
 -----BEGIN CERTIFICATE-----
 AAABBBCCCDDD
 -----END CERTIFICATE-----
@@ -104,7 +104,7 @@ AAABBBCCCDDD
 		}, BeEmpty()),
 		Entry("Invalid DefaultRequestsPerDayQuota", config.Configuration{
 			IssuerName:                 "gardener",
-			DefaultRequestsPerDayQuota: pointer.Int32Ptr(0),
+			DefaultRequestsPerDayQuota: pointer.Int32(0),
 			ACME:                       validACME,
 		}, ConsistOf(
 			PointTo(MatchFields(IgnoreExtras, Fields{
@@ -114,7 +114,7 @@ AAABBBCCCDDD
 		)),
 		Entry("Valid configuration", config.Configuration{
 			IssuerName:                 "gardener",
-			DefaultRequestsPerDayQuota: pointer.Int32Ptr(50),
+			DefaultRequestsPerDayQuota: pointer.Int32(50),
 			ACME:                       validACME,
 		}, BeEmpty()),
 	)
