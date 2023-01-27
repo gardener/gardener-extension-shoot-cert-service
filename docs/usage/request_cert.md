@@ -61,6 +61,9 @@ metadata:
     # Optional but recommended, this is going to create the DNS entry at the same time
     dns.gardener.cloud/class: garden
     dns.gardener.cloud/ttl: "600"
+    #cert.gardener.cloud/commonname: "*.example.com" # optional, if not specified the first name from spec.tls[].hosts is used as common name
+    #cert.gardener.cloud/dnsnames: "" # optional, if not specified the names from spec.tls[].hosts are used
+    #cert.gardener.cloud/follow-cname: "true" # optional, same as spec.followCNAME in certificates    
 spec:
   tls:
   - hosts:
@@ -96,6 +99,7 @@ metadata:
     dns.gardener.cloud/ttl: "600"
     cert.gardener.cloud/commonname: "*.example.example.com"
     cert.gardener.cloud/dnsnames: ""
+    #cert.gardener.cloud/follow-cname: "true" # optional, same as spec.followCNAME in certificates    
   name: test-service
   namespace: default
 spec:
@@ -122,19 +126,27 @@ spec:
   # Optionnal if using the default issuer
   issuerRef:
     name: garden
+
+  # If delegated domain for DNS01 challenge should be used. This has only an effect if a CNAME record is set for
+  # '_acme-challenge.amazing.example.com'.
+  # For example: If a CNAME record exists '_acme-challenge.amazing.example.com' => '_acme-challenge.writable.domain.com',
+  # the DNS challenge will be written to '_acme-challenge.writable.domain.com'.
+  #followCNAME: true
+
 ```
 
 ## Supported attributes
 Here is a list of all supported annotations regarding the certificate extension:
 
-|  Path  | Annotation | Value | Required | Description  |
-|:----|:----|:----|:----|:----|
-| N/A | `cert.gardener.cloud/purpose:` | `managed` | Yes when using annotations | Flag for Gardener that this specific Ingress or Service requires a certificate |
-| `spec.commonName` | `cert.gardener.cloud/commonname:` | E.g. "*.demo.example.com" or <br> "special.example.com" | Certificate and Ingress : No <br/> Service: yes | Specifies for which domain the certificate request will be created. If not specified, the names from spec.tls[].hosts are used. This entry must comply with the [64 character](#Character-Restrictions) limit. |
-| `spec.dnsName` | `cert.gardener.cloud/dnsnames:` | E.g. "special.example.com" | Certificate and Ingress : No <br/> Service: yes | Additional domains the certificate should be valid for (Subject Alternative Name). If not specified, the names from spec.tls[].hosts are used. Entries in this list can be longer than 64 characters. |
-| `spec.secretRef.name` | `cert.gardener.cloud/secretname:` | `any-name` | Yes for certificate and Service | Specifies the secret which contains the certificate/key pair. If the secret is not available yet, it'll be created automatically as soon as the certificate has been issued. |
-| `spec.issuerRef.name` | `cert.gardener.cloud/issuer:` | E.g. `gardener` | No | Specifies the issuer you want to use. Only necessary if you request certificates for [custom domains](#Custom-Domains). |
-| N/A | `cert.gardener.cloud/revoked:` | `true` otherwise always false | No | Use only to revoke a certificate, see [reference](#references) for more details |
+| Path                  | Annotation                         | Value                                                   | Required                                        | Description                                                                                                                                                                                                    |
+|-----------------------|------------------------------------|---------------------------------------------------------|-------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| N/A                   | `cert.gardener.cloud/purpose:`     | `managed`                                               | Yes when using annotations                      | Flag for Gardener that this specific Ingress or Service requires a certificate                                                                                                                                 |
+| `spec.commonName`     | `cert.gardener.cloud/commonname:`  | E.g. "*.demo.example.com" or <br> "special.example.com" | Certificate and Ingress : No <br/> Service: yes | Specifies for which domain the certificate request will be created. If not specified, the names from spec.tls[].hosts are used. This entry must comply with the [64 character](#Character-Restrictions) limit. |
+| `spec.dnsName`        | `cert.gardener.cloud/dnsnames:`    | E.g. "special.example.com"                              | Certificate and Ingress : No <br/> Service: yes | Additional domains the certificate should be valid for (Subject Alternative Name). If not specified, the names from spec.tls[].hosts are used. Entries in this list can be longer than 64 characters.          |
+| `spec.secretRef.name` | `cert.gardener.cloud/secretname:`  | `any-name`                                              | Yes for certificate and Service                 | Specifies the secret which contains the certificate/key pair. If the secret is not available yet, it'll be created automatically as soon as the certificate has been issued.                                   |
+| `spec.issuerRef.name` | `cert.gardener.cloud/issuer:`      | E.g. `gardener`                                         | No                                              | Specifies the issuer you want to use. Only necessary if you request certificates for [custom domains](#Custom-Domains).                                                                                        |
+| N/A                   | `cert.gardener.cloud/revoked:`     | `true` otherwise always false                           | No                                              | Use only to revoke a certificate, see [reference](#references) for more details                                                                                                                                |
+| `spec.followCNAME`    | `cert.gardener.cloud/follow-cname` | E.g. `true`                                             | No                                              | Specifies that the usage of a delegated domain for DNS challenges is allowed. Details see [Follow CNAME](https://github.com/gardener/cert-management#follow-cname).                                            |
 
 ## Request a wildcard certificate
 In order to avoid the creation of multiples certificates for every single endpoints, you may want to create a wildcard certificate for your shoot's default cluster.
