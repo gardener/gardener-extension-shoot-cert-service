@@ -62,11 +62,6 @@ func RegisterHealthChecks(mgr manager.Manager, opts healthcheck.DefaultAddArgs) 
 					general.CheckManagedResource(certv1alpha1.CertManagementResourceNameSeed)),
 				PreCheckFunc: preCheckFunc,
 			},
-			{
-				ConditionType: string(gardencorev1beta1.ShootSystemComponentsHealthy),
-				HealthCheck:   general.CheckManagedResource(certv1alpha1.CertManagementResourceNameShoot),
-				PreCheckFunc:  preCheckFunc,
-			},
 		},
 	)
 }
