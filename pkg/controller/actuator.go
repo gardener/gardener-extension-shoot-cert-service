@@ -21,13 +21,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gardener/gardener-extension-shoot-cert-service/charts"
-	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/config"
-	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/service"
-	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/service/v1alpha1"
-	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/service/validation"
-	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/imagevector"
-
 	"github.com/gardener/gardener/extensions/pkg/controller"
 	"github.com/gardener/gardener/extensions/pkg/controller/extension"
 	"github.com/gardener/gardener/extensions/pkg/util"
@@ -49,6 +42,13 @@ import (
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+
+	"github.com/gardener/gardener-extension-shoot-cert-service/charts"
+	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/config"
+	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/service"
+	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/service/v1alpha1"
+	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/service/validation"
+	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/imagevector"
 )
 
 // ActuatorName is the name of the Certificate Service actuator.

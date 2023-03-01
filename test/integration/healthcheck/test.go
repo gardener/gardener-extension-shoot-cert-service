@@ -35,12 +35,12 @@ import (
 	"fmt"
 	"time"
 
-	certv1alpha1 "github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/service/v1alpha1"
-
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"github.com/gardener/gardener/test/framework"
 	"github.com/gardener/gardener/test/testmachinery/extensions/healthcheck"
 	"github.com/onsi/ginkgo/v2"
+
+	certv1alpha1 "github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/service/v1alpha1"
 )
 
 const (
