@@ -16,7 +16,6 @@ package config
 
 import (
 	apisconfig "github.com/gardener/gardener/extensions/pkg/apis/config"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 

@@ -21,13 +21,13 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/service"
-	"k8s.io/apimachinery/pkg/util/validation"
-
 	"github.com/gardener/gardener/extensions/pkg/controller"
 	"github.com/gardener/gardener/pkg/utils"
 	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+
+	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/service"
 )
 
 // ValidateCertConfig validates the passed configuration instance.

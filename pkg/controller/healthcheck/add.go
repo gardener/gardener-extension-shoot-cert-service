@@ -18,9 +18,6 @@ import (
 	"context"
 	"time"
 
-	certv1alpha1 "github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/service/v1alpha1"
-	certcontroller "github.com/gardener/gardener-extension-shoot-cert-service/pkg/controller"
-
 	apisconfig "github.com/gardener/gardener/extensions/pkg/apis/config"
 	extensionscontroller "github.com/gardener/gardener/extensions/pkg/controller"
 	"github.com/gardener/gardener/extensions/pkg/controller/healthcheck"
@@ -30,6 +27,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+
+	certv1alpha1 "github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/service/v1alpha1"
+	certcontroller "github.com/gardener/gardener-extension-shoot-cert-service/pkg/controller"
 )
 
 var (

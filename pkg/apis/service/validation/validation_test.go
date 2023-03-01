@@ -17,16 +17,15 @@ package validation_test
 import (
 	"github.com/gardener/gardener/extensions/pkg/controller"
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
-
-	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/service"
-	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/service/validation"
-
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	. "github.com/onsi/gomega/gstruct"
 	gomegatypes "github.com/onsi/gomega/types"
 	autoscalingv1 "k8s.io/api/autoscaling/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+
+	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/service"
+	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/service/validation"
 )
 
 var _ = Describe("Validation", func() {

@@ -15,13 +15,13 @@
 package v1alpha1_test
 
 import (
-	. "github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/config/v1alpha1"
-
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	. "github.com/onsi/gomega/gstruct"
 	gomegatypes "github.com/onsi/gomega/types"
 	"k8s.io/utils/pointer"
+
+	. "github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/config/v1alpha1"
 )
 
 var _ = Describe("Defaults", func() {

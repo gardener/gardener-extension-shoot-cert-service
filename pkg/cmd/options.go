@@ -18,13 +18,6 @@ import (
 	"errors"
 	"os"
 
-	apisconfig "github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/config"
-	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/config/v1alpha1"
-	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/config/validation"
-	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/controller"
-	controllerconfig "github.com/gardener/gardener-extension-shoot-cert-service/pkg/controller/config"
-	healthcheckcontroller "github.com/gardener/gardener-extension-shoot-cert-service/pkg/controller/healthcheck"
-
 	extensionsapisconfig "github.com/gardener/gardener/extensions/pkg/apis/config"
 	"github.com/gardener/gardener/extensions/pkg/controller/cmd"
 	extensionshealthcheckcontroller "github.com/gardener/gardener/extensions/pkg/controller/healthcheck"
@@ -33,6 +26,13 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+
+	apisconfig "github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/config"
+	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/config/v1alpha1"
+	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/config/validation"
+	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/controller"
+	controllerconfig "github.com/gardener/gardener-extension-shoot-cert-service/pkg/controller/config"
+	healthcheckcontroller "github.com/gardener/gardener-extension-shoot-cert-service/pkg/controller/healthcheck"
 )
 
 var (

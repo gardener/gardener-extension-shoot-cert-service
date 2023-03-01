@@ -17,11 +17,11 @@ package app
 import (
 	"os"
 
-	certificateservicecmd "github.com/gardener/gardener-extension-shoot-cert-service/pkg/cmd"
-	heartbeatcmd "github.com/gardener/gardener/extensions/pkg/controller/heartbeat/cmd"
-
 	controllercmd "github.com/gardener/gardener/extensions/pkg/controller/cmd"
+	heartbeatcmd "github.com/gardener/gardener/extensions/pkg/controller/heartbeat/cmd"
 	"k8s.io/client-go/tools/leaderelection/resourcelock"
+
+	certificateservicecmd "github.com/gardener/gardener-extension-shoot-cert-service/pkg/cmd"
 )
 
 // ExtensionName is the name of the extension.
