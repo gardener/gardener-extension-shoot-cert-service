@@ -23,11 +23,10 @@ spec:
         {{- if .Values.imageVectorOverwrite }}
         checksum/configmap-extension-imagevector-overwrite: {{ include (print $.Template.BasePath "/configmap-imagevector-overwrite.yaml") . | sha256sum }}
         {{- end }}
-        {{- if and .Values.metrics.enableScraping }}
-        prometheus.io/name: {{ .Release.Name }}
+        {{- if .Values.metrics.enableScraping }}
+        prometheus.io/name: "{{ .Release.Name }}"
         prometheus.io/scrape: "true"
-        # default metrics endpoint in controller-runtime
-        prometheus.io/port: {{ .Values.metrics.port }}
+        prometheus.io/port: "{{ .Values.metrics.port }}"
         {{- end }}   
       labels:
         app.kubernetes.io/name: gardener-extension-shoot-cert-service
