@@ -32,7 +32,7 @@ spec:
         networking.gardener.cloud/to-private-networks: allowed
         networking.gardener.cloud/to-public-networks: allowed
         networking.gardener.cloud/to-shoot-apiserver: allowed
-        networking.gardener.cloud/to-seed-apiserver: allowed
+        networking.gardener.cloud/to-runtime-apiserver: allowed
         networking.gardener.cloud/from-prometheus: allowed
     spec:
       priorityClassName: gardener-system-200
