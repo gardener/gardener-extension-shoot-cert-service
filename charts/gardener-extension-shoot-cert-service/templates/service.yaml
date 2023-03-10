@@ -1,0 +1,26 @@
+{{- if .Values.metrics.enableScraping }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: gardener-extension-shoot-cert-service
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    networking.resources.gardener.cloud/from-policy-pod-label-selector: all-seed-scrape-targets
+    networking.resources.gardener.cloud/from-policy-allowed-ports: '[{"port":{{ .Values.metrics.port }},"protocol":"TCP"}]'
+    networking.resources.gardener.cloud/namespace-selectors: '[{"matchLabels":{"kubernetes.io/metadata.name":"garden"}}]'
+    networking.resources.gardener.cloud/pod-label-selector-namespace-alias: extensions
+  labels:
+    app.kubernetes.io/name: gardener-extension-shoot-cert-service
+    helm.sh/chart: gardener-extension-shoot-cert-service
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+  - name: metrics
+    port: {{ .Values.metrics.port }}
+    protocol: TCP
+  selector:
+    app.kubernetes.io/name: gardener-extension-shoot-cert-service
+    app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}
