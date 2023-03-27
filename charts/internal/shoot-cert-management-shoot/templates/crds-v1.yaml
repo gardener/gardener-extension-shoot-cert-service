@@ -171,6 +171,11 @@ spec:
                 renew:
                   description: Renew triggers a renewal if set to true
                   type: boolean
+                secretLabels:
+                  additionalProperties:
+                    type: string
+                  description: SecretLabels are labels to add to the certificate secret.
+                  type: object
                 secretName:
                   description: SecretName is the name of the secret object to use for
                     storing the certificate.
@@ -188,6 +193,7 @@ spec:
                         name must be unique.
                       type: string
                   type: object
+                  x-kubernetes-map-type: atomic
               type: object
             status:
               description: CertificateStatus is the status of the certificate request.
@@ -223,8 +229,8 @@ spec:
                     description: "Condition contains details for one aspect of the current
                     state of this API Resource. --- This struct is intended for direct
                     use as an array at the field path .status.conditions.  For example,
-                    type FooStatus struct{ // Represents the observations of a foo's
-                    current state. // Known .status.conditions.type are: \"Available\",
+                    \n type FooStatus struct{ // Represents the observations of a
+                    foo's current state. // Known .status.conditions.type are: \"Available\",
                     \"Progressing\", and \"Degraded\" // +patchMergeKey=type // +patchStrategy=merge
                     // +listType=map // +listMapKey=type Conditions []metav1.Condition
                     `json:\"conditions,omitempty\" patchStrategy:\"merge\" patchMergeKey:\"type\"

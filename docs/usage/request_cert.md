@@ -63,7 +63,8 @@ metadata:
     dns.gardener.cloud/ttl: "600"
     #cert.gardener.cloud/commonname: "*.example.com" # optional, if not specified the first name from spec.tls[].hosts is used as common name
     #cert.gardener.cloud/dnsnames: "" # optional, if not specified the names from spec.tls[].hosts are used
-    #cert.gardener.cloud/follow-cname: "true" # optional, same as spec.followCNAME in certificates    
+    #cert.gardener.cloud/follow-cname: "true" # optional, same as spec.followCNAME in certificates
+    #cert.gardener.cloud/secret-labels: "key1=value1,key2=value2" # optional labels for the certificate secret
 spec:
   tls:
   - hosts:
@@ -99,7 +100,8 @@ metadata:
     dns.gardener.cloud/ttl: "600"
     cert.gardener.cloud/commonname: "*.example.example.com"
     cert.gardener.cloud/dnsnames: ""
-    #cert.gardener.cloud/follow-cname: "true" # optional, same as spec.followCNAME in certificates    
+    #cert.gardener.cloud/follow-cname: "true" # optional, same as spec.followCNAME in certificates
+    #cert.gardener.cloud/secret-labels: "key1=value1,key2=value2" # optional labels for the certificate secret
   name: test-service
   namespace: default
 spec:
@@ -133,6 +135,10 @@ spec:
   # the DNS challenge will be written to '_acme-challenge.writable.domain.com'.
   #followCNAME: true
 
+  # optionally set labels for the secret
+  #secretLabels:
+  #  key1: value1
+  #  key2: value2
 ```
 
 ## Supported attributes
@@ -147,6 +153,7 @@ Here is a list of all supported annotations regarding the certificate extension:
 | `spec.issuerRef.name` | `cert.gardener.cloud/issuer:`      | E.g. `gardener`                                         | No                                              | Specifies the issuer you want to use. Only necessary if you request certificates for [custom domains](#Custom-Domains).                                                                                        |
 | N/A                   | `cert.gardener.cloud/revoked:`     | `true` otherwise always false                           | No                                              | Use only to revoke a certificate, see [reference](#references) for more details                                                                                                                                |
 | `spec.followCNAME`    | `cert.gardener.cloud/follow-cname` | E.g. `true`                                             | No                                              | Specifies that the usage of a delegated domain for DNS challenges is allowed. Details see [Follow CNAME](https://github.com/gardener/cert-management#follow-cname).                                            |
+| `spec.secretLabels`   | `cert.gardener.cloud/secret-labels`| for annotation use e.g. `key1=value1,key2=value2`       | No                                              | Specifies labels for the certificate secret.                                                                                                                                                                   |
 
 ## Request a wildcard certificate
 In order to avoid the creation of multiples certificates for every single endpoints, you may want to create a wildcard certificate for your shoot's default cluster.

@@ -48,6 +48,8 @@ metadata:
   annotations:
     cert.gardener.cloud/purpose: managed
     #cert.gardener.cloud/issuer: custom-issuer
+    #cert.gardener.cloud/follow-cname: "true" # optional, same as spec.followCNAME in certificates
+    #cert.gardener.cloud/secret-labels: "key1=value1,key2=value2" # optional labels for the certificate secret
 spec:
   tls:
   - hosts:
@@ -81,6 +83,8 @@ metadata:
     dns.gardener.cloud/dnsnames: "service.shoot.project.default-domain.gardener.cloud" 
     dns.gardener.cloud/ttl: "600"
     #cert.gardener.cloud/issuer: custom-issuer
+    #cert.gardener.cloud/follow-cname: "true" # optional, same as spec.followCNAME in certificates
+    #cert.gardener.cloud/secret-labels: "key1=value1,key2=value2" # optional labels for the certificate secret
   name: test-service
   namespace: default
 spec:
