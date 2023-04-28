@@ -48,7 +48,7 @@ Certificates can be requested via 3 resources type
 - Service (type LoadBalancer)
 - Certificate (Gardener CRD)
 
-If either of the first 2 are used, a corresponding `Certificate` resource will created automatically.
+If either of the first 2 are used, a corresponding `Certificate` resource will be created automatically.
 
 ### Using an ingress Resource
 ```yaml
