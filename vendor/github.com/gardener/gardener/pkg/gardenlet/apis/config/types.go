@@ -1,4 +1,4 @@
-// Copyright (c) 2018 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file
+// Copyright 2018 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -71,6 +71,8 @@ type GardenletConfiguration struct {
 	ExposureClassHandlers []ExposureClassHandler
 	// MonitoringConfig is optional and adds additional settings for the monitoring stack.
 	Monitoring *MonitoringConfig
+	// NodeToleration contains optional settings for default tolerations.
+	NodeToleration *NodeToleration
 }
 
 // GardenClientConnection specifies the kubeconfig file and the client connection settings
@@ -133,8 +135,6 @@ type GardenletControllerConfiguration struct {
 	BackupBucket *BackupBucketControllerConfiguration
 	// BackupEntry defines the configuration of the BackupEntry controller.
 	BackupEntry *BackupEntryControllerConfiguration
-	// BackupEntryMigration defines the configuration of the BackupEntryMigration controller.
-	BackupEntryMigration *BackupEntryMigrationControllerConfiguration
 	// Bastion defines the configuration of the Bastion controller.
 	Bastion *BastionControllerConfiguration
 	// ControllerInstallation defines the configuration of the ControllerInstallation controller.
@@ -151,8 +151,6 @@ type GardenletControllerConfiguration struct {
 	Shoot *ShootControllerConfiguration
 	// ShootCare defines the configuration of the ShootCare controller.
 	ShootCare *ShootCareControllerConfiguration
-	// ShootMigration defines the configuration of the ShootMigration controller.
-	ShootMigration *ShootMigrationControllerConfiguration
 	// ShootStateSync defines the configuration of the ShootState controller.
 	ShootStateSync *ShootStateSyncControllerConfiguration
 	// NetworkPolicy defines the configuration of the NetworkPolicy controller.
@@ -181,21 +179,6 @@ type BackupEntryControllerConfiguration struct {
 	// DeletionGracePeriodShootPurposes is a list of shoot purposes for which the deletion grace period applies. All
 	// BackupEntries corresponding to Shoots with different purposes will be deleted immediately.
 	DeletionGracePeriodShootPurposes []gardencore.ShootPurpose
-}
-
-// BackupEntryMigrationControllerConfiguration defines the configuration of the BackupEntryMigration
-// controller.
-type BackupEntryMigrationControllerConfiguration struct {
-	// ConcurrentSyncs is the number of workers used for the controller to work on
-	// events.
-	ConcurrentSyncs *int
-	// SyncPeriod is the duration how often the existing resources are reconciled.
-	// It is only relevant for backup entries that are currently being migrated.
-	SyncPeriod *metav1.Duration
-	// GracePeriod is the period to wait before forcing the restoration after the migration has started.
-	GracePeriod *metav1.Duration
-	// LastOperationStaleDuration is the duration to consider the last operation stale after it was last updated.
-	LastOperationStaleDuration *metav1.Duration
 }
 
 // BastionControllerConfiguration defines the configuration of the Bastion
@@ -306,21 +289,6 @@ type SeedCareControllerConfiguration struct {
 	ConditionThresholds []ConditionThreshold
 }
 
-// ShootMigrationControllerConfiguration defines the configuration of the ShootMigration
-// controller.
-type ShootMigrationControllerConfiguration struct {
-	// ConcurrentSyncs is the number of workers used for the controller to work on
-	// events.
-	ConcurrentSyncs *int
-	// SyncPeriod is the duration how often the existing resources are reconciled.
-	// It is only relevant for shoots that are currently being migrated.
-	SyncPeriod *metav1.Duration
-	// GracePeriod is the period to wait before forcing the restoration after the migration has started.
-	GracePeriod *metav1.Duration
-	// LastOperationStaleDuration is the duration to consider the last operation stale after it was last updated.
-	LastOperationStaleDuration *metav1.Duration
-}
-
 // ShootSecretControllerConfiguration defines the configuration of the ShootSecret controller.
 type ShootSecretControllerConfiguration struct {
 	// ConcurrentSyncs is the number of workers used for the controller to work on events.
@@ -358,6 +326,9 @@ type ShootStateSyncControllerConfiguration struct {
 type NetworkPolicyControllerConfiguration struct {
 	// ConcurrentSyncs is the number of workers used for the controller to work on events.
 	ConcurrentSyncs *int
+	// AdditionalNamespaceSelectors is a list of label selectors for additional namespaces that should be considered by
+	// the controller.
+	AdditionalNamespaceSelectors []metav1.LabelSelector
 }
 
 // ManagedSeedControllerConfiguration defines the configuration of the ManagedSeed controller.
@@ -393,40 +364,19 @@ type SeedConfig struct {
 	gardencore.SeedTemplate
 }
 
-// FluentBit contains configuration for Fluent Bit.
-type FluentBit struct {
-	// ServiceSection defines [SERVICE] configuration for the fluent-bit.
-	// If it is nil, fluent-bit uses default service configuration.
-	ServiceSection *string
-	// InputSection defines [INPUT] configuration for the fluent-bit.
-	// If it is nil, fluent-bit uses default input configuration.
-	InputSection *string
-	// OutputSection defines [OUTPUT] configuration for the fluent-bit.
-	// If it is nil, fluent-bit uses default output configuration.
-	OutputSection *string
-	// NetworkPolicy defines settings for the fluent-bit NetworkPolicy.
-	NetworkPolicy *FluentBitNetworkPolicy
-}
-
-// FluentBitNetworkPolicy defines settings for the fluent-bit NetworkPolicy.
-type FluentBitNetworkPolicy struct {
-	// AdditionalEgressIPBlocks contains IP CIDRs for the egress network policy.
-	AdditionalEgressIPBlocks []string
-}
-
-// Loki contains configuration for the Loki.
-type Loki struct {
-	// Enabled is used to enable or disable the shoot and seed Loki.
-	// If FluentBit is used with a custom output the Loki can, Loki is maybe unused and can be disabled.
-	// If not set, by default Loki is enabled.
+// Vali contains configuration for the Vali.
+type Vali struct {
+	// Enabled is used to enable or disable the shoot and seed Vali.
+	// If FluentBit is used with a custom output the Vali can, Vali is maybe unused and can be disabled.
+	// If not set, by default Vali is enabled.
 	Enabled *bool
-	// Garden contains configuration for the Loki in garden namespace.
-	Garden *GardenLoki
+	// Garden contains configuration for the Vali in garden namespace.
+	Garden *GardenVali
 }
 
-// GardenLoki contains configuration for the Loki in garden namespace.
-type GardenLoki struct {
-	// Storage is the disk storage capacity of the central Loki.
+// GardenVali contains configuration for the Vali in garden namespace.
+type GardenVali struct {
+	// Storage is the disk storage capacity of the central Vali.
 	// Defaults to 100Gi.
 	Storage *resource.Quantity
 }
@@ -447,10 +397,8 @@ type ShootEventLogging struct {
 type Logging struct {
 	// Enabled is used to enable or disable logging stack for clusters.
 	Enabled *bool
-	// FluentBit contains configurations for the fluent-bit.
-	FluentBit *FluentBit
-	// Loki contains configuration for the Loki.
-	Loki *Loki
+	// Vali contains configuration for the Vali.
+	Vali *Vali
 	// ShootNodeLogging contains configurations for the shoot node logging.
 	ShootNodeLogging *ShootNodeLogging
 	// ShootEventLogging contains configurations for the shoot event logger.
@@ -591,4 +539,14 @@ type RemoteWriteMonitoringConfig struct {
 	Keep []string
 	// QueueConfig contains the queue_config for prometheus remote write.
 	QueueConfig *string
+}
+
+// NodeToleration contains information about node toleration options.
+type NodeToleration struct {
+	// DefaultNotReadyTolerationSeconds specifies the seconds for the `node.kubernetes.io/not-ready` toleration that
+	// should be added to pods not already tolerating this taint.
+	DefaultNotReadyTolerationSeconds *int64
+	// DefaultUnreachableTolerationSeconds specifies the seconds for the `node.kubernetes.io/unreachable` toleration that
+	// should be added to pods not already tolerating this taint.
+	DefaultUnreachableTolerationSeconds *int64
 }
