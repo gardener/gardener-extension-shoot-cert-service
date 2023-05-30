@@ -64,8 +64,7 @@ func RegisterHealthChecks(mgr manager.Manager, opts healthcheck.DefaultAddArgs) 
 				PreCheckFunc: preCheckFunc,
 			},
 		},
-		// TODO(shafeeqes): Remove this condition in a future release.
-		sets.New[gardencorev1beta1.ConditionType](gardencorev1beta1.ShootSystemComponentsHealthy),
+		sets.Set[gardencorev1beta1.ConditionType]{},
 	)
 }
 
