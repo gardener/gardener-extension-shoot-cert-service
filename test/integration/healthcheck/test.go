@@ -57,12 +57,5 @@ var _ = ginkgo.Describe("Extension-shoot-cert-service integration test: health c
 				framework.ExpectNoError(err)
 			}, timeout)
 		})
-
-		ginkgo.Context("Condition type: ShootSystemComponentsHealthy", func() {
-			f.Serial().Release().CIt(fmt.Sprintf("Extension CRD should contain unhealthy condition due to ManagedResource '%s' is unhealthy", certv1alpha1.CertManagementResourceNameShoot), func(ctx context.Context) {
-				err := healthcheck.ExtensionHealthCheckWithManagedResource(ctx, timeout, f, "shoot-cert-service", certv1alpha1.CertManagementResourceNameShoot, gardencorev1beta1.ShootSystemComponentsHealthy)
-				framework.ExpectNoError(err)
-			}, timeout)
-		})
 	})
 })

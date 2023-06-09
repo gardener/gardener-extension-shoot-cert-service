@@ -1,4 +1,4 @@
-// Copyright (c) 2018 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file
+// Copyright 2018 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -470,19 +470,6 @@ func ShootWantsAlertManager(shoot *gardencorev1beta1.Shoot) bool {
 	return !ShootIgnoresAlerts(shoot) && shoot.Spec.Monitoring != nil && shoot.Spec.Monitoring.Alerting != nil && len(shoot.Spec.Monitoring.Alerting.EmailReceivers) > 0
 }
 
-// ShootWantsBasicAuthentication returns true if basic authentication is not configured or
-// if it is set explicitly to 'true'.
-func ShootWantsBasicAuthentication(shoot *gardencorev1beta1.Shoot) bool {
-	kubeAPIServerConfig := shoot.Spec.Kubernetes.KubeAPIServer
-	if kubeAPIServerConfig == nil {
-		return true
-	}
-	if kubeAPIServerConfig.EnableBasicAuthentication == nil {
-		return true
-	}
-	return *kubeAPIServerConfig.EnableBasicAuthentication
-}
-
 // ShootUsesUnmanagedDNS returns true if the shoot's DNS section is marked as 'unmanaged'.
 func ShootUsesUnmanagedDNS(shoot *gardencorev1beta1.Shoot) bool {
 	return shoot.Spec.DNS != nil && len(shoot.Spec.DNS.Providers) > 0 && shoot.Spec.DNS.Providers[0].Type != nil && *shoot.Spec.DNS.Providers[0].Type == "unmanaged"
@@ -511,14 +498,19 @@ func SeedSettingOwnerChecksEnabled(settings *gardencorev1beta1.SeedSettings) boo
 	return settings == nil || settings.OwnerChecks == nil || settings.OwnerChecks.Enabled
 }
 
-// SeedSettingDependencyWatchdogEndpointEnabled returns true if the depedency-watchdog-endpoint is enabled.
-func SeedSettingDependencyWatchdogEndpointEnabled(settings *gardencorev1beta1.SeedSettings) bool {
-	return settings == nil || settings.DependencyWatchdog == nil || settings.DependencyWatchdog.Endpoint == nil || settings.DependencyWatchdog.Endpoint.Enabled
+// SeedSettingDependencyWatchdogWeederEnabled returns true if the dependency-watchdog-weeder is enabled.
+func SeedSettingDependencyWatchdogWeederEnabled(settings *gardencorev1beta1.SeedSettings) bool {
+	return settings == nil || settings.DependencyWatchdog == nil || settings.DependencyWatchdog.Weeder == nil || settings.DependencyWatchdog.Weeder.Enabled
 }
 
-// SeedSettingDependencyWatchdogProbeEnabled returns true if the depedency-watchdog-probe is enabled.
-func SeedSettingDependencyWatchdogProbeEnabled(settings *gardencorev1beta1.SeedSettings) bool {
-	return settings == nil || settings.DependencyWatchdog == nil || settings.DependencyWatchdog.Probe == nil || settings.DependencyWatchdog.Probe.Enabled
+// SeedSettingDependencyWatchdogProberEnabled returns true if the dependency-watchdog-prober is enabled.
+func SeedSettingDependencyWatchdogProberEnabled(settings *gardencorev1beta1.SeedSettings) bool {
+	return settings == nil || settings.DependencyWatchdog == nil || settings.DependencyWatchdog.Prober == nil || settings.DependencyWatchdog.Prober.Enabled
+}
+
+// SeedSettingTopologyAwareRoutingEnabled returns true if the topology-aware routing is enabled.
+func SeedSettingTopologyAwareRoutingEnabled(settings *gardencorev1beta1.SeedSettings) bool {
+	return settings != nil && settings.TopologyAwareRouting != nil && settings.TopologyAwareRouting.Enabled
 }
 
 // SeedUsesNginxIngressController returns true if the seed's specification requires an nginx ingress controller to be deployed.
@@ -540,18 +532,18 @@ func DetermineMachineImageForName(cloudProfile *gardencorev1beta1.CloudProfile, 
 
 // FindMachineImageVersion finds the machine image version in the <cloudProfile> for the given <name> and <version>.
 // In case no machine image version can be found with the given <name> or <version>, false is being returned.
-func FindMachineImageVersion(cloudProfile *gardencorev1beta1.CloudProfile, name, version string) (bool, gardencorev1beta1.MachineImageVersion) {
-	for _, image := range cloudProfile.Spec.MachineImages {
+func FindMachineImageVersion(machineImages []gardencorev1beta1.MachineImage, name, version string) (gardencorev1beta1.MachineImageVersion, bool) {
+	for _, image := range machineImages {
 		if image.Name == name {
 			for _, imageVersion := range image.Versions {
 				if imageVersion.Version == version {
-					return true, imageVersion
+					return imageVersion, true
 				}
 			}
 		}
 	}
 
-	return false, gardencorev1beta1.MachineImageVersion{}
+	return gardencorev1beta1.MachineImageVersion{}, false
 }
 
 // ShootMachineImageVersionExists checks if the shoot machine image (name, version) exists in the machine image constraint and returns true if yes and the index in the versions slice
@@ -1040,8 +1032,8 @@ func GetShootAuditPolicyConfigMapRef(apiServerConfig *gardencorev1beta1.KubeAPIS
 	return nil
 }
 
-// ShootWantsAnonymousAuthentication returns true if anonymous authentication is set explicitly to 'true' and false otherwise.
-func ShootWantsAnonymousAuthentication(kubeAPIServerConfig *gardencorev1beta1.KubeAPIServerConfig) bool {
+// AnonymousAuthenticationEnabled returns true if anonymous authentication is set explicitly to 'true' and false otherwise.
+func AnonymousAuthenticationEnabled(kubeAPIServerConfig *gardencorev1beta1.KubeAPIServerConfig) bool {
 	if kubeAPIServerConfig == nil {
 		return false
 	}
@@ -1098,7 +1090,7 @@ func SecretBindingHasType(secretBinding *gardencorev1beta1.SecretBinding, provid
 		return false
 	}
 
-	return sets.New[string](types...).Has(providerType)
+	return sets.New(types...).Has(providerType)
 }
 
 // AddTypeToSecretBinding adds the given provider type to the SecretBinding.
@@ -1111,7 +1103,7 @@ func AddTypeToSecretBinding(secretBinding *gardencorev1beta1.SecretBinding, prov
 	}
 
 	types := GetSecretBindingTypes(secretBinding)
-	if !sets.New[string](types...).Has(providerType) {
+	if !sets.New(types...).Has(providerType) {
 		types = append(types, providerType)
 	}
 	secretBinding.Provider.Type = strings.Join(types, ",")
@@ -1307,7 +1299,7 @@ func GetShootServiceAccountKeyRotationPhase(credentials *gardencorev1beta1.Shoot
 
 // MutateShootServiceAccountKeyRotation mutates the .status.credentials.rotation.serviceAccountKey field based on the
 // provided mutation function. If the field is nil then it is initialized.
-func MutateShootServiceAccountKeyRotation(shoot *gardencorev1beta1.Shoot, f func(*gardencorev1beta1.ShootServiceAccountKeyRotation)) {
+func MutateShootServiceAccountKeyRotation(shoot *gardencorev1beta1.Shoot, f func(*gardencorev1beta1.ServiceAccountKeyRotation)) {
 	if f == nil {
 		return
 	}
@@ -1319,7 +1311,7 @@ func MutateShootServiceAccountKeyRotation(shoot *gardencorev1beta1.Shoot, f func
 		shoot.Status.Credentials.Rotation = &gardencorev1beta1.ShootCredentialsRotation{}
 	}
 	if shoot.Status.Credentials.Rotation.ServiceAccountKey == nil {
-		shoot.Status.Credentials.Rotation.ServiceAccountKey = &gardencorev1beta1.ShootServiceAccountKeyRotation{}
+		shoot.Status.Credentials.Rotation.ServiceAccountKey = &gardencorev1beta1.ServiceAccountKeyRotation{}
 	}
 
 	f(shoot.Status.Credentials.Rotation.ServiceAccountKey)
@@ -1336,7 +1328,7 @@ func GetShootETCDEncryptionKeyRotationPhase(credentials *gardencorev1beta1.Shoot
 
 // MutateShootETCDEncryptionKeyRotation mutates the .status.credentials.rotation.etcdEncryptionKey field based on the
 // provided mutation function. If the field is nil then it is initialized.
-func MutateShootETCDEncryptionKeyRotation(shoot *gardencorev1beta1.Shoot, f func(*gardencorev1beta1.ShootETCDEncryptionKeyRotation)) {
+func MutateShootETCDEncryptionKeyRotation(shoot *gardencorev1beta1.Shoot, f func(*gardencorev1beta1.ETCDEncryptionKeyRotation)) {
 	if f == nil {
 		return
 	}
@@ -1348,7 +1340,7 @@ func MutateShootETCDEncryptionKeyRotation(shoot *gardencorev1beta1.Shoot, f func
 		shoot.Status.Credentials.Rotation = &gardencorev1beta1.ShootCredentialsRotation{}
 	}
 	if shoot.Status.Credentials.Rotation.ETCDEncryptionKey == nil {
-		shoot.Status.Credentials.Rotation.ETCDEncryptionKey = &gardencorev1beta1.ShootETCDEncryptionKeyRotation{}
+		shoot.Status.Credentials.Rotation.ETCDEncryptionKey = &gardencorev1beta1.ETCDEncryptionKeyRotation{}
 	}
 
 	f(shoot.Status.Credentials.Rotation.ETCDEncryptionKey)
@@ -1356,6 +1348,11 @@ func MutateShootETCDEncryptionKeyRotation(shoot *gardencorev1beta1.Shoot, f func
 
 // IsPSPDisabled returns true if the PodSecurityPolicy plugin is explicitly disabled in the ShootSpec or the cluster version is >= 1.25.
 func IsPSPDisabled(shoot *gardencorev1beta1.Shoot) bool {
+	// we have disabled the policy/v1beta1/podsecuritypolicies API for workerless Shoots
+	if IsWorkerless(shoot) {
+		return true
+	}
+
 	if versionutils.ConstraintK8sGreaterEqual125.Check(semver.MustParse(shoot.Spec.Kubernetes.Version)) {
 		return true
 	}
@@ -1390,9 +1387,15 @@ func IsMultiZonalShootControlPlane(shoot *gardencorev1beta1.Shoot) bool {
 	return shoot.Spec.ControlPlane != nil && shoot.Spec.ControlPlane.HighAvailability != nil && shoot.Spec.ControlPlane.HighAvailability.FailureTolerance.Type == gardencorev1beta1.FailureToleranceTypeZone
 }
 
+// IsWorkerless checks if the shoot has zero workers.
+func IsWorkerless(shoot *gardencorev1beta1.Shoot) bool {
+	return len(shoot.Spec.Provider.Workers) == 0
+}
+
 // ShootEnablesSSHAccess returns true if ssh access to worker nodes should be allowed for the given shoot.
 func ShootEnablesSSHAccess(shoot *gardencorev1beta1.Shoot) bool {
-	return shoot.Spec.Provider.WorkersSettings == nil || shoot.Spec.Provider.WorkersSettings.SSHAccess == nil || shoot.Spec.Provider.WorkersSettings.SSHAccess.Enabled
+	return !IsWorkerless(shoot) &&
+		(shoot.Spec.Provider.WorkersSettings == nil || shoot.Spec.Provider.WorkersSettings.SSHAccess == nil || shoot.Spec.Provider.WorkersSettings.SSHAccess.Enabled)
 }
 
 // GetFailureToleranceType determines the failure tolerance type of the given shoot.
@@ -1406,4 +1409,10 @@ func GetFailureToleranceType(shoot *gardencorev1beta1.Shoot) *gardencorev1beta1.
 // SeedWantsManagedIngress returns true in case the seed cluster wants its ingress controller to be managed by Gardener.
 func SeedWantsManagedIngress(seed *gardencorev1beta1.Seed) bool {
 	return seed.Spec.DNS.Provider != nil && seed.Spec.Ingress != nil && seed.Spec.Ingress.Controller.Kind == v1beta1constants.IngressKindNginx
+}
+
+// IsTopologyAwareRoutingForShootControlPlaneEnabled returns whether the topology aware routing is enabled for the given Shoot control plane.
+// Topology-aware routing is enabled when the corresponding Seed setting is enabled and the Shoot has a multi-zonal control plane.
+func IsTopologyAwareRoutingForShootControlPlaneEnabled(seed *gardencorev1beta1.Seed, shoot *gardencorev1beta1.Shoot) bool {
+	return SeedSettingTopologyAwareRoutingEnabled(seed.Spec.Settings) && IsMultiZonalShootControlPlane(shoot)
 }
