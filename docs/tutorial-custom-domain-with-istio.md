@@ -16,7 +16,7 @@ As we ramp up more and more friends of Gardener, I thought it worthwile to explo
 
 
 Here are some pre-pointers that you will need to go deeper:
-* [CRUD Gardener Shoot](https://github.com/gardener/documentation/blob/master/website/documentation/guides/administer_shoots/create-delete-shoot/_index.md)
+* [CRUD Gardener Shoot](https://github.com/gardener/documentation/blob/master/website/documentation/guides/administer-shoots/create-delete-shoot/_index.md)
 * [DNS Management](https://github.com/gardener/external-dns-management/blob/master/README.md)
 * [Certificate Management](https://github.com/gardener/cert-management/blob/master/README.md)
 * [Tutorial Domain Names](https://github.com/gardener/gardener-extension-shoot-dns-service/blob/master/docs/usage/dns_names.md)
