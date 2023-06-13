@@ -4,6 +4,7 @@ metadata:
   name: certmanager-parser
   labels:
     fluentbit.gardener/type: "seed"
+    fluentbit.gardener.cloud/type: "seed"
 spec:
   regex:
     timeKey: time
