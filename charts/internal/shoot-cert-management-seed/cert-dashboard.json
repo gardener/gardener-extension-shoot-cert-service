@@ -139,7 +139,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "7.2.1",
+      "pluginVersion": "7.5.21",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -253,7 +253,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "7.2.1",
+      "pluginVersion": "7.5.21",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -364,7 +364,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "7.2.1",
+      "pluginVersion": "7.5.21",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -480,7 +480,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "7.2.1",
+      "pluginVersion": "7.5.21",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -584,7 +584,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "7.2.1",
+      "pluginVersion": "7.5.21",
       "targets": [
         {
           "expr": "cert_management_overdue_renewal_certificates",
@@ -600,13 +600,73 @@
     },
     {
       "datasource": null,
+      "description": "Shows the expiration dates of the certificates objects in days. Normally a certificate should be renewed 30 days before its expires.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "#EAB839",
+                "value": 29
+              },
+              {
+                "color": "green",
+                "value": 31
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 15
+      },
+      "id": 55,
+      "options": {
+        "displayMode": "basic",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "text": {}
+      },
+      "pluginVersion": "7.5.21",
+      "targets": [
+        {
+          "exemplar": true,
+          "expr": "(cert_management_cert_object_expire-time())/86400",
+          "interval": "",
+          "legendFormat": "{{namespace}}/{{name}}",
+          "refId": "A"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Expire dates of certficaate objects",
+      "type": "bargauge"
+    },
+    {
+      "datasource": null,
       "description": "",
       "fieldConfig": {
         "defaults": {
-          "custom": {
-            "align": null,
-            "filterable": false
-          },
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -625,9 +685,9 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 4,
-        "w": 24,
-        "x": 0,
+        "h": 8,
+        "w": 12,
+        "x": 12,
         "y": 15
       },
       "id": 51,
@@ -643,9 +703,10 @@
           "fields": "",
           "values": false
         },
+        "text": {},
         "textMode": "name"
       },
-      "pluginVersion": "7.2.1",
+      "pluginVersion": "7.5.21",
       "targets": [
         {
           "expr": "sum(cert_management_acme_account_registrations) by (uri, email)",
@@ -661,7 +722,7 @@
       "type": "stat"
     },
     {
-      "datasource": "loki",
+      "datasource": "vali",
       "fieldConfig": {
         "defaults": {
           "custom": {}
@@ -672,7 +733,7 @@
         "h": 17,
         "w": 24,
         "x": 0,
-        "y": 19
+        "y": 23
       },
       "id": 43,
       "interval": "",
@@ -695,7 +756,7 @@
     }
   ],
   "refresh": "1m",
-  "schemaVersion": 26,
+  "schemaVersion": 27,
   "style": "dark",
   "tags": [
     "controlplane",
