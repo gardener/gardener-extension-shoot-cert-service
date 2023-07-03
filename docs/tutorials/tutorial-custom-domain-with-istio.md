@@ -20,7 +20,7 @@ Here are some pre-pointers that you will need to go deeper:
 * [DNS Management](https://github.com/gardener/external-dns-management/blob/master/README.md)
 * [Certificate Management](https://github.com/gardener/cert-management/blob/master/README.md)
 * [Tutorial Domain Names](https://github.com/gardener/gardener-extension-shoot-dns-service/blob/master/docs/usage/dns_names.md)
-* [Tutorial Certificates](./usage/request_cert.md)
+* [Tutorial Certificates](../usage/request_cert.md)
 
 {{% alert title="Tip" color="primary" %}}
 <p>If you try my instructions and fail, then read the alternative title of this tutorial as "Shoot yourself in the foot with Gardener, custom Domains, Istio and Certificates".</p>
@@ -28,16 +28,16 @@ Here are some pre-pointers that you will need to go deeper:
 
 ## First Things First
 
-Login to your Gardener landscape, setup a project with adequate infrastructure credentials and then navigate to your account. Note down the name of your secret. I chose the GCP infrastructure from the vast possible options that my Gardener provides me with, so i had named the secret as `shoot-operator-gcp`. 
+Login to your Gardener landscape, setup a project with adequate infrastructure credentials and then navigate to your account. Note down the name of your secret. I chose the GCP infrastructure from the vast possible options that my Gardener provides me with, so i had named the secret as `shoot-operator-gcp`.
 
 From the Access widget (leave the default settings) download your personalized `kubeconfig` into `~/.kube/kubeconfig-garden-myproject`. Follow the instructions to setup `kubelogin`:
 
 ![access](images/access.png)
 
-For convinience, let us set an alias command with 
+For convinience, let us set an alias command with
 ```bash
 alias kgarden="kubectl --kubeconfig ~/.kube/kubeconfig-garden-myproject.yaml"
-``` 
+```
 `kgarden` now gives you all botanical powers and connects you directly with your Gardener.
 
 You should now be able to run `kgarden get shoots`, automatically get an oidc token, and list already running clusters/shoots.
@@ -207,7 +207,7 @@ service/kubernetes   ClusterIP   100.64.0.1   <none>        443/TCP   89m
 
 ## Install Istio
 
-Please follow the Istio installation [instructions](https://istio.io/docs/setup/getting-started/) and download `istioctl`. If you are on a Mac, I recommend 
+Please follow the Istio installation [instructions](https://istio.io/docs/setup/getting-started/) and download `istioctl`. If you are on a Mac, I recommend
 ```bash
 $ brew install istioctl
 ```
@@ -224,7 +224,7 @@ I want to install Istio with a default profile and SDS enabled. Furthermore I pa
 With these annotations three things now happen automagically:
 1. The [External DNS Manager](https://github.com/gardener/external-dns-management/blob/master/README.md), provided to you as a service (`dns.gardener.cloud/class: garden`), picks up the request and creates the wildcard DNS entry `*.gsicdc.mydomain.io` with a time to live of 120sec at your DNS provider. My provider Cloud Flare is very very quick (as opposed to some other services). You should be able to verify the entry with `dig lovemygardener.gsicdc.mydomain.io` within seconds.
 2. The [Certificate Management](https://github.com/gardener/cert-management/blob/master/README.md) picks up the request as well and initates a DNS01 protocol exchange with Let's Encrypt; using the staging environment referred to with the issuer behind `mydomain-staging`.
-3. After aproximately 70sec (give and take) you will receive the wildcard certificate in the `wildcard-tls` secret in the namespace `istio-system`. 
+3. After aproximately 70sec (give and take) you will receive the wildcard certificate in the `wildcard-tls` secret in the namespace `istio-system`.
 
 {{% alert color="info" %}}
 <p>Notice, that the namespace for the certificate secret is often the cause of many troubeshooting sessions: the secret must reside in the same namespace of the gateway.</p>
@@ -250,7 +250,7 @@ spec:
           cert.gardener.cloud/secretname: wildcard-tls
           dns.gardener.cloud/class: garden
           dns.gardener.cloud/dnsnames: "${domainname}"
-          dns.gardener.cloud/ttl: "120" 
+          dns.gardener.cloud/ttl: "120"
 EOF
 ```
 
@@ -279,7 +279,7 @@ $ dig lovemygardener.gsicdc.mydomain.io
 lovemygardener.gsicdc.mydomain.io. 120 IN A	35.195.120.62
 <snip>
 ```
-There you have it, the wildcard-tls certificate is ready and the *.gsicdc.mydomain.io dns entry is active. Traffic will be going your way.  
+There you have it, the wildcard-tls certificate is ready and the *.gsicdc.mydomain.io dns entry is active. Traffic will be going your way.
 
 ## Handy tools to install
 
@@ -439,7 +439,7 @@ $ curl -k https://httpbin.gsicdc.mydomain.io/ip
 }
 ```
 Quod erat demonstrandum.
-The proof of exchanging the issuer is now left to the reader. 
+The proof of exchanging the issuer is now left to the reader.
 
 {{% alert title="Tip" color="primary" %}}
 <p>Remember that the certificate is actually not valid because it is issued from the Let's encrypt staging environment. Thus, we needed "curl -k" or "http --verify no".</p>
