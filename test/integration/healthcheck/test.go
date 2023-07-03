@@ -23,8 +23,6 @@
 		1) Extension CRD
 			1.1) HealthCondition Type: ShootControlPlaneHealthy
 				-  update the ManagedResource 'extension-shoot-cert-service-seed' and verify the health check conditions in the Extension CRD status.
-			1.2) HealthCondition Type: ShootSystemComponentsHealthy
-				-  update the ManagedResource 'extension-shoot-cert-service-shoot' and verify the health check conditions in the Extension CRD status.
 
  **/
 
