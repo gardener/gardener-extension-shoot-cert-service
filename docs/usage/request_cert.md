@@ -65,6 +65,7 @@ metadata:
     #cert.gardener.cloud/dnsnames: "" # optional, if not specified the names from spec.tls[].hosts are used
     #cert.gardener.cloud/follow-cname: "true" # optional, same as spec.followCNAME in certificates
     #cert.gardener.cloud/secret-labels: "key1=value1,key2=value2" # optional labels for the certificate secret
+    #cert.gardener.cloud/issuer: custom-issuer # optional to specify custom issuer (use namespace/name for shoot issuers)
 spec:
   tls:
   - hosts:
@@ -102,6 +103,7 @@ metadata:
     cert.gardener.cloud/dnsnames: ""
     #cert.gardener.cloud/follow-cname: "true" # optional, same as spec.followCNAME in certificates
     #cert.gardener.cloud/secret-labels: "key1=value1,key2=value2" # optional labels for the certificate secret
+    #cert.gardener.cloud/issuer: custom-issuer # optional to specify custom issuer (use namespace/name for shoot issuers)
   name: test-service
   namespace: default
 spec:

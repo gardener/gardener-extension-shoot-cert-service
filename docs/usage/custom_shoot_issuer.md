@@ -50,7 +50,34 @@ checking the availability of the DNS challenge's TXT record before the certifica
 By default, only public DNS servers may be used for this purpose.
 At least one of the `precheckNameservers` must be able to resolve the private domain names. 
 
-## Using an issuer in the shoot cluster
+### Using the custom issuer
+
+To use the custom issuer in a certificate, just specify its name in the spec.
+
+```yaml
+apiVersion: cert.gardener.cloud/v1alpha1
+kind: Certificate
+spec:
+  ...
+  issuerRef:
+    name: custom-issuer
+  ...
+```
+
+For source resources like `Ingress` or `Service` use the `cert.gardener.cloud/issuer` annotation.
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: amazing-ingress
+  annotations:
+    cert.gardener.cloud/purpose: managed
+    cert.gardener.cloud/issuer: custom-issuer
+...
+```
+
+## Custom issuer in the shoot cluster
 
 *Prerequiste*: The `shootIssuers` feature has to be enabled.
 It is either enabled globally in the `ControllerDeployment` or in the shoot manifest
@@ -98,4 +125,32 @@ metadata:
 type: Opaque
 data:
   privateKey: ... # replace '...' with valus encoded as base64
+```
+
+### Using the custom shoot issuer
+
+To use the custom issuer in a certificate, just specify its name and namespace in the spec.
+
+```yaml
+apiVersion: cert.gardener.cloud/v1alpha1
+kind: Certificate
+spec:
+  ...
+  issuerRef:
+    name: my-own-issuer
+    namespace: my-namespace
+  ...
+```
+
+For source resources like `Ingress` or `Service` use the `cert.gardener.cloud/issuer` annotation.
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: amazing-ingress
+  annotations:
+    cert.gardener.cloud/purpose: managed
+    cert.gardener.cloud/issuer: my-namespace/my-own-issuer
+...
 ```
