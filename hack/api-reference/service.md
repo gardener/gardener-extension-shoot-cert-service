@@ -98,6 +98,20 @@ string
 challenge before calling ACME CA. Please consider to specify nameservers per issuer instead.</p>
 </td>
 </tr>
+<tr>
+<td>
+<code>alerting</code></br>
+<em>
+<a href="#service.cert.extensions.gardener.cloud/v1alpha1.Alerting">
+Alerting
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>Alerting contains configuration for alerting of certificate expiration.</p>
+</td>
+</tr>
 </tbody>
 </table>
 <h3 id="service.cert.extensions.gardener.cloud/v1alpha1.ACMEExternalAccountBinding">ACMEExternalAccountBinding
@@ -140,6 +154,37 @@ string
 Secret which holds the symmetric MAC key of the External Account Binding with data key &lsquo;hmacKey&rsquo;.
 The secret key stored in the Secret <strong>must</strong> be un-padded, base64 URL
 encoded data.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="service.cert.extensions.gardener.cloud/v1alpha1.Alerting">Alerting
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#service.cert.extensions.gardener.cloud/v1alpha1.CertConfig">CertConfig</a>)
+</p>
+<p>
+<p>Alerting contains configuration for alerting of certificate expiration.</p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>certExpirationAlertDays</code></br>
+<em>
+int
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>CertExpirationAlertDays are the number of days before the certificate expiration date an alert is triggered.</p>
 </td>
 </tr>
 </tbody>
