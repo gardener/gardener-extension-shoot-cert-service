@@ -36,16 +36,16 @@ data:
       - name: cert-controller-manager.rules
         rules:
         - alert: SslCertificateWillExpireSoon
-          expr:  (cert_management_cert_object_expire-time())/86400 <= 3
+          expr:  (cert_management_cert_object_expire-time())/86400 <= {{ .Values.configuration.certExpirationAlertDays }}
           for: 30m
           labels:
             service: cert-controller-manager
             severity: critical
             type: seed
-            visibility: all
+            visibility: operator
           annotations:
-            description: Certificate in namespace {{ .Release.Namespace }} will be expired in 3 days.
-            summary: SSL certificate will expire in 3 days
+            description: Certificate in namespace {{ .Release.Namespace }} will be expired in {{ .Values.configuration.certExpirationAlertDays }} days.
+            summary: SSL certificate will expire in {{ .Values.configuration.certExpirationAlertDays }} days
 
   dashboard_operators: |
     cert-controller-manager-dashboard.json: |-

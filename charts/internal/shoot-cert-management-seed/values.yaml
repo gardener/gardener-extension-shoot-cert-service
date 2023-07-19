@@ -76,6 +76,7 @@ configuration:
 #   ...
 #   -----END CERTIFICATE-----
   deactivateAuthorizations: true
+  certExpirationAlertDays: 15
 
 additionalConfiguration:
 - --kubeconfig.disable-deploy-crds
