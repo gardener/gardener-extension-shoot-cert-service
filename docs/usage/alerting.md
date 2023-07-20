@@ -15,6 +15,7 @@ As a second line of defense, there is an alerting in Prometheus activated if the
 before expiration. By default, the alert is triggered 15 days before expiration.
 
 You can configure the days in the `providerConfig` of the extension.
+Setting it to 0 disables the alerting.
 
 In this example, the days are changed to 3 days before expiration.
 

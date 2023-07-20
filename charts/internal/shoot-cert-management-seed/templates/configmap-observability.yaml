@@ -30,6 +30,7 @@ data:
         regex: ^(cert_management_.+)$
         action: keep
 
+{{- if gt .Values.configuration.certExpirationAlertDays 0.0 }}
   alerting_rules: |
     cert-controller-manager.rules.yaml: |
       groups:
@@ -46,6 +47,7 @@ data:
           annotations:
             description: Certificate in namespace {{ .Release.Namespace }} will expire in less than {{ .Values.configuration.certExpirationAlertDays }} days.
             summary: TLS certificate will expire in less than {{ .Values.configuration.certExpirationAlertDays }} days
+{{- end }}
 
   dashboard_operators: |
     cert-controller-manager-dashboard.json: |-
