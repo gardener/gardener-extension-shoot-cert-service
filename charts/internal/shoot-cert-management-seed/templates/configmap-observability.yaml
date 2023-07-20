@@ -44,8 +44,8 @@ data:
             type: seed
             visibility: operator
           annotations:
-            description: Certificate in namespace {{ .Release.Namespace }} will be expired in {{ .Values.configuration.certExpirationAlertDays }} days.
-            summary: SSL certificate will expire in {{ .Values.configuration.certExpirationAlertDays }} days
+            description: Certificate in namespace {{ .Release.Namespace }} will be expired less than {{ .Values.configuration.certExpirationAlertDays }} days.
+            summary: SSL certificate will expire less than {{ .Values.configuration.certExpirationAlertDays }} days
 
   dashboard_operators: |
     cert-controller-manager-dashboard.json: |-
