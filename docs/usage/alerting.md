@@ -11,7 +11,7 @@ description: How to change the alerting on expiring certificates
 # Changing alerting settings
 
 Certificates are normally renewed automatically 30 days before they expire.
-As a second defense line, there is an alerting in Prometheus activated if the certificate is a few days
+As a second line of defense, there is an alerting in Prometheus activated if the certificate is a few days
 before expiration. By default, the alert is triggered 15 days before expiration.
 
 You can configure the days in the `providerConfig` of the extension.
