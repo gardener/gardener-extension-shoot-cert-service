@@ -38,6 +38,15 @@ type CertConfig struct {
 	// PrecheckNameservers is used to specify a comma-separated list of DNS servers for checking availability for DNS
 	// challenge before calling ACME CA. Please consider to specify nameservers per issuer instead.
 	PrecheckNameservers *string
+
+	// Alerting contains configuration for alerting of certificate expiration.
+	Alerting *Alerting
+}
+
+// Alerting contains configuration for alerting of certificate expiration.
+type Alerting struct {
+	// CertExpirationAlertDays are the number of days before the certificate expiration date an alert is triggered.
+	CertExpirationAlertDays *int
 }
 
 // IssuerConfig contains information for certificate issuers.

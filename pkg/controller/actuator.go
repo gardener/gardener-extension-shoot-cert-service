@@ -303,6 +303,10 @@ func (a *actuator) createSeedResources(ctx context.Context, certConfig *service.
 		cfg["deactivateAuthorizations"] = *a.serviceConfig.ACME.DeactivateAuthorizations
 	}
 
+	if certConfig.Alerting != nil && certConfig.Alerting.CertExpirationAlertDays != nil {
+		cfg["certExpirationAlertDays"] = *certConfig.Alerting.CertExpirationAlertDays
+	}
+
 	certManagementConfig, err = chart.InjectImages(certManagementConfig, imagevector.ImageVector(), []string{v1alpha1.CertManagementImageName})
 	if err != nil {
 		return fmt.Errorf("failed to find image version for %s: %v", v1alpha1.CertManagementImageName, err)

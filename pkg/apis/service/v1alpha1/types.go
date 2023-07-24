@@ -63,6 +63,17 @@ type CertConfig struct {
 	// challenge before calling ACME CA. Please consider to specify nameservers per issuer instead.
 	// +optional
 	PrecheckNameservers *string `json:"precheckNameservers,omitempty"`
+
+	// Alerting contains configuration for alerting of certificate expiration.
+	// +optional
+	Alerting *Alerting `json:"alerting,omitempty"`
+}
+
+// Alerting contains configuration for alerting of certificate expiration.
+type Alerting struct {
+	// CertExpirationAlertDays are the number of days before the certificate expiration date an alert is triggered.
+	// +optional
+	CertExpirationAlertDays *int `json:"certExpirationAlertDays,omitempty"`
 }
 
 // IssuerConfig contains information for certificate issuers.
