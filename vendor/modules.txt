@@ -66,10 +66,10 @@ github.com/fsnotify/fsnotify
 ## explicit; go 1.19
 github.com/gardener/cert-management/pkg/apis/cert
 github.com/gardener/cert-management/pkg/apis/cert/v1alpha1
-# github.com/gardener/etcd-druid v0.18.4
+# github.com/gardener/etcd-druid v0.19.1
 ## explicit; go 1.20
 github.com/gardener/etcd-druid/api/v1alpha1
-# github.com/gardener/gardener v1.76.2
+# github.com/gardener/gardener v1.77.0
 ## explicit; go 1.20
 github.com/gardener/gardener/.github
 github.com/gardener/gardener/.github/ISSUE_TEMPLATE
@@ -148,6 +148,7 @@ github.com/gardener/gardener/test/framework/reporter
 github.com/gardener/gardener/test/testmachinery/extensions/healthcheck
 github.com/gardener/gardener/test/testmachinery/extensions/operation
 github.com/gardener/gardener/test/utils/access
+github.com/gardener/gardener/third_party/gopkg.in/yaml.v2
 # github.com/gardener/hvpa-controller/api v0.5.0
 ## explicit; go 1.15
 github.com/gardener/hvpa-controller/api/v1alpha1
@@ -468,6 +469,10 @@ github.com/xi2/xz
 # go.uber.org/atomic v1.9.0
 ## explicit; go 1.13
 go.uber.org/atomic
+# go.uber.org/mock v0.2.0
+## explicit; go 1.19
+go.uber.org/mock/mockgen
+go.uber.org/mock/mockgen/model
 # go.uber.org/multierr v1.7.0
 ## explicit; go 1.14
 go.uber.org/multierr
