@@ -45,11 +45,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	"github.com/gardener/gardener-extension-shoot-cert-service/charts"
+	"github.com/gardener/gardener-extension-shoot-cert-service/imagevector"
 	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/config"
 	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/service"
 	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/service/v1alpha1"
 	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/service/validation"
-	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/imagevector"
 )
 
 // ActuatorName is the name of the Certificate Service actuator.

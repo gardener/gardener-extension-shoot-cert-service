@@ -6,6 +6,7 @@
 !cmd/
 !docs/
 !example/
+!imagevector/
 !hack/
 !pkg/
 !test/
