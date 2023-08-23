@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/ahmetb/gen-crd-api-reference-docs v0.3.0
 	github.com/gardener/cert-management v0.10.1
-	github.com/gardener/gardener v1.77.0
+	github.com/gardener/gardener v1.77.1
 	github.com/go-logr/logr v1.2.4
 	github.com/onsi/ginkgo/v2 v2.9.2
 	github.com/onsi/gomega v1.27.6
