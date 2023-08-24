@@ -47,9 +47,10 @@ metadata:
   name: amazing-ingress
   annotations:
     cert.gardener.cloud/purpose: managed
-    #cert.gardener.cloud/issuer: custom-issuer
-    #cert.gardener.cloud/follow-cname: "true" # optional, same as spec.followCNAME in certificates
+    #cert.gardener.cloud/issuer: custom-issuer                    # optional to specify custom issuer (use namespace/name for shoot issuers)
+    #cert.gardener.cloud/follow-cname: "true"                     # optional, same as spec.followCNAME in certificates
     #cert.gardener.cloud/secret-labels: "key1=value1,key2=value2" # optional labels for the certificate secret
+    #cert.gardener.cloud/preferred-chain: "chain name"            # optional to specify preferred-chain (value is the Subject Common Name of the root issuer)
 spec:
   tls:
   - hosts:
@@ -82,9 +83,10 @@ metadata:
     # You may add more domains separated by commas (e.g. "service.shoot.project.default-domain.gardener.cloud, amazing.shoot.project.default-domain.gardener.cloud")
     dns.gardener.cloud/dnsnames: "service.shoot.project.default-domain.gardener.cloud" 
     dns.gardener.cloud/ttl: "600"
-    #cert.gardener.cloud/issuer: custom-issuer
-    #cert.gardener.cloud/follow-cname: "true" # optional, same as spec.followCNAME in certificates
+    #cert.gardener.cloud/issuer: custom-issuer                    # optional to specify custom issuer (use namespace/name for shoot issuers)
+    #cert.gardener.cloud/follow-cname: "true"                     # optional, same as spec.followCNAME in certificates
     #cert.gardener.cloud/secret-labels: "key1=value1,key2=value2" # optional labels for the certificate secret
+    #cert.gardener.cloud/preferred-chain: "chain name"            # optional to specify preferred-chain (value is the Subject Common Name of the root issuer)
   name: test-service
   namespace: default
 spec:
