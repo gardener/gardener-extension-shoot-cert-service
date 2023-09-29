@@ -69,9 +69,13 @@ func (o *Options) run(ctx context.Context) error {
 
 	mgrOpts := o.managerOptions.Completed().Options()
 
-	mgrOpts.ClientDisableCacheFor = []client.Object{
-		&corev1.Secret{},    // applied for ManagedResources
-		&corev1.ConfigMap{}, // applied for monitoring config
+	mgrOpts.Client = client.Options{
+		Cache: &client.CacheOptions{
+			DisableFor: []client.Object{
+				&corev1.Secret{},    // applied for ManagedResources
+				&corev1.ConfigMap{}, // applied for monitoring config
+			},
+		},
 	}
 
 	mgr, err := manager.New(o.restOptions.Completed().Config, mgrOpts)
