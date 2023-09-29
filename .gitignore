@@ -3,6 +3,7 @@
 /dev
 /local
 **/dev
+/hack/tools/bin
 
 *.coverprofile
 *.html
