@@ -1,6 +1,6 @@
 module github.com/gardener/gardener-extension-shoot-cert-service
 
-go 1.20
+go 1.21
 
 require (
 	github.com/ahmetb/gen-crd-api-reference-docs v0.3.0
