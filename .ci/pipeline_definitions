@@ -1,14 +1,11 @@
 gardener-extension-shoot-cert-service:
-  template: 'default'
   base_definition:
-    repo: ~
     traits:
       version:
         preprocess: 'inject-commit-hash'
       publish:
         dockerimages:
           gardener-extension-shoot-cert-service:
-            registry: 'gcr-readwrite'
             image: 'eu.gcr.io/gardener-project/gardener/extensions/shoot-cert-service'
             dockerfile: 'Dockerfile'
             target: gardener-extension-shoot-cert-service
