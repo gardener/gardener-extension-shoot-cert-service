@@ -173,7 +173,7 @@ string
 <td>
 <code>propagationTimeout</code></br>
 <em>
-<a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.25/#duration-v1-meta">
+<a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#duration-v1-meta">
 Kubernetes meta/v1.Duration
 </a>
 </em>
