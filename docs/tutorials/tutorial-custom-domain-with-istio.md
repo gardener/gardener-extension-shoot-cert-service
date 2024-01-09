@@ -283,7 +283,7 @@ There you have it, the wildcard-tls certificate is ready and the *.gsicdc.mydoma
 
 ## Handy tools to install
 
-Another set of fine tools to use are [kapp](https://get-kapp.io/) (formerly known as k14s), [k9s](https://k9scli.io/) and [HTTPie](https://httpie.org/). While we are at it, let's install them all. If you are on a Mac, I recommend:
+Another set of fine tools to use are [kapp](https://carvel.dev/kapp/) (formerly known as k14s), [k9s](https://k9scli.io/) and [HTTPie](https://httpie.org/). While we are at it, let's install them all. If you are on a Mac, I recommend:
 
 ```bash
 brew tap vmware-tanzu/carvel
