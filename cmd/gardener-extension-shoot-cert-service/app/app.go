@@ -25,6 +25,7 @@ import (
 	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
 	componentbaseconfig "k8s.io/component-base/config"
+	"k8s.io/component-base/version/verflag"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
@@ -43,6 +44,8 @@ func NewServiceControllerCommand() *cobra.Command {
 		SilenceErrors: true,
 
 		RunE: func(cmd *cobra.Command, args []string) error {
+			verflag.PrintAndExitIfRequested()
+
 			if err := options.optionAggregator.Complete(); err != nil {
 				return fmt.Errorf("error completing options: %s", err)
 			}
