@@ -23,6 +23,10 @@ source "$GARDENER_HACK_DIR"/vgopath-setup.sh
 
 CODE_GEN_DIR=$(go list -m -f '{{.Dir}}' k8s.io/code-generator)
 
+# We need to explicitly pass GO111MODULE=off to k8s.io/code-generator as it is significantly slower otherwise,
+# see https://github.com/kubernetes/code-generator/issues/100.
+export GO111MODULE=off
+
 rm -f $GOPATH/bin/*-gen
 
 bash "${CODE_GEN_DIR}"/generate-internal-groups.sh \
