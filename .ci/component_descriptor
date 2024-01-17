@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-COMPONENT_PREFIXES="europe-docker.pkg.dev/gardener-project/releases/cert-controller-manager" \
-  "$(dirname $0)"/../vendor/github.com/gardener/gardener/hack/.ci/component_descriptor "$(dirname $0)"/..
+COMPONENT_PREFIXES="europe-docker.pkg.dev/gardener-project" \
+                   "$(dirname $0)"/hack/component_descriptor "$(dirname $0)"/..
 
 # print component descriptor for debugging
 cat "${COMPONENT_DESCRIPTOR_PATH}"
