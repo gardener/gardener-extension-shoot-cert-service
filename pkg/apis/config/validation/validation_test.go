@@ -20,7 +20,7 @@ import (
 	. "github.com/onsi/gomega/gstruct"
 	gomegatypes "github.com/onsi/gomega/types"
 	"k8s.io/apimachinery/pkg/util/validation/field"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 
 	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/config"
 	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/config/validation"
@@ -75,8 +75,8 @@ var _ = Describe("Validation", func() {
 			ACME: config.ACME{
 				Email:               validACME.Email,
 				Server:              validACME.Server,
-				PrecheckNameservers: pointer.String("8.8.8.8,foo.com"),
-				CACertificates:      pointer.String("blabla"),
+				PrecheckNameservers: ptr.To("8.8.8.8,foo.com"),
+				CACertificates:      ptr.To("blabla"),
 			},
 		}, ConsistOf(
 			PointTo(MatchFields(IgnoreExtras, Fields{
@@ -93,8 +93,8 @@ var _ = Describe("Validation", func() {
 			ACME: config.ACME{
 				Email:               validACME.Email,
 				Server:              validACME.Server,
-				PrecheckNameservers: pointer.String("8.8.8.8,172.11.22.253"),
-				CACertificates: pointer.String(`
+				PrecheckNameservers: ptr.To("8.8.8.8,172.11.22.253"),
+				CACertificates: ptr.To(`
 -----BEGIN CERTIFICATE-----
 AAABBBCCCDDD
 -----END CERTIFICATE-----
@@ -103,7 +103,7 @@ AAABBBCCCDDD
 		}, BeEmpty()),
 		Entry("Invalid DefaultRequestsPerDayQuota", config.Configuration{
 			IssuerName:                 "gardener",
-			DefaultRequestsPerDayQuota: pointer.Int32(0),
+			DefaultRequestsPerDayQuota: ptr.To(int32(0)),
 			ACME:                       validACME,
 		}, ConsistOf(
 			PointTo(MatchFields(IgnoreExtras, Fields{
@@ -113,7 +113,7 @@ AAABBBCCCDDD
 		)),
 		Entry("Valid configuration", config.Configuration{
 			IssuerName:                 "gardener",
-			DefaultRequestsPerDayQuota: pointer.Int32(50),
+			DefaultRequestsPerDayQuota: ptr.To(int32(50)),
 			ACME:                       validACME,
 		}, BeEmpty()),
 	)
