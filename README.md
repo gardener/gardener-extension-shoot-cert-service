@@ -1,5 +1,5 @@
 # [Gardener Extension for certificate services](https://gardener.cloud)
-
+[![REUSE status](https://api.reuse.software/badge/github.com/gardener/gardener-extension-shoot-cert-service)](https://api.reuse.software/info/github.com/gardener/gardener-extension-shoot-cert-service)
 [![CI Build status](https://concourse.ci.gardener.cloud/api/v1/teams/gardener/pipelines/gardener-extension-shoot-cert-service-master/jobs/master-head-update-job/badge)](https://concourse.ci.gardener.cloud/teams/gardener/pipelines/gardener-extension-shoot-cert-service-master/jobs/master-head-update-job)
 [![Go Report Card](https://goreportcard.com/badge/github.com/gardener/gardener-extension-shoot-cert-service)](https://goreportcard.com/report/github.com/gardener/gardener-extension-shoot-cert-service)
 
