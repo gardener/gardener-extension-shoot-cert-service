@@ -51,7 +51,8 @@ metadata:
     #cert.gardener.cloud/follow-cname: "true"                     # optional, same as spec.followCNAME in certificates
     #cert.gardener.cloud/secret-labels: "key1=value1,key2=value2" # optional labels for the certificate secret
     #cert.gardener.cloud/preferred-chain: "chain name"            # optional to specify preferred-chain (value is the Subject Common Name of the root issuer)
-spec:
+    #cert.gardener.cloud/private-key-algorithm: ECDSA             # optional to specify algorithm for private key, allowed values are 'RSA' or 'ECDSA'
+    #cert.gardener.cloud/private-key-size: "384"                  # optional to specify size of private key, allowed values for RSA are "2048", "3072", "4096" and for ECDSA "256" and "384"spec:
   tls:
   - hosts:
     # Must not exceed 64 characters.
@@ -87,7 +88,8 @@ metadata:
     #cert.gardener.cloud/follow-cname: "true"                     # optional, same as spec.followCNAME in certificates
     #cert.gardener.cloud/secret-labels: "key1=value1,key2=value2" # optional labels for the certificate secret
     #cert.gardener.cloud/preferred-chain: "chain name"            # optional to specify preferred-chain (value is the Subject Common Name of the root issuer)
-  name: test-service
+    #cert.gardener.cloud/private-key-algorithm: ECDSA             # optional to specify algorithm for private key, allowed values are 'RSA' or 'ECDSA'
+    #cert.gardener.cloud/private-key-size: "384"                  # optional to specify size of private key, allowed values for RSA are "2048", "3072", "4096" and for ECDSA "256" and "384"  name: test-service
   namespace: default
 spec:
   ports:
