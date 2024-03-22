@@ -67,6 +67,8 @@ metadata:
     #cert.gardener.cloud/secret-labels: "key1=value1,key2=value2" # optional labels for the certificate secret
     #cert.gardener.cloud/issuer: custom-issuer                    # optional to specify custom issuer (use namespace/name for shoot issuers)
     #cert.gardener.cloud/preferred-chain: "chain name"            # optional to specify preferred-chain (value is the Subject Common Name of the root issuer)
+    #cert.gardener.cloud/private-key-algorithm: ECDSA             # optional to specify algorithm for private key, allowed values are 'RSA' or 'ECDSA'
+    #cert.gardener.cloud/private-key-size: "384"                  # optional to specify size of private key, allowed values for RSA are "2048", "3072", "4096" and for ECDSA "256" and "384"
 
 spec:
   tls:
@@ -107,6 +109,8 @@ metadata:
     #cert.gardener.cloud/secret-labels: "key1=value1,key2=value2" # optional labels for the certificate secret
     #cert.gardener.cloud/issuer: custom-issuer                    # optional to specify custom issuer (use namespace/name for shoot issuers)
     #cert.gardener.cloud/preferred-chain: "chain name"            # optional to specify preferred-chain (value is the Subject Common Name of the root issuer)
+    #cert.gardener.cloud/private-key-algorithm: ECDSA             # optional to specify algorithm for private key, allowed values are 'RSA' or 'ECDSA'
+    #cert.gardener.cloud/private-key-size: "384"                  # optional to specify size of private key, allowed values for RSA are "2048", "3072", "4096" and for ECDSA "256" and "384"
     
   name: test-service
   namespace: default
@@ -148,22 +152,30 @@ spec:
 
   # Optionally specify the preferred certificate chain: if the CA offers multiple certificate chains, prefer the chain with an issuer matching this Subject Common Name. If no match, the default offered chain will be used.
   #preferredChain: "ISRG Root X1"
+
+  # Optionally specify algorithm and key size for private key. Allowed algorithms: "RSA" (allowed sizes: 2048, 3072, 4096) and "ECDSA" (allowed sizes: 256, 384)
+  # If not specified, RSA with 2048 is used.
+  #privateKey:
+  #  algorithm: ECDSA
+  #  size: 384
 ```
 
 ## Supported attributes
 Here is a list of all supported annotations regarding the certificate extension:
 
-| Path                  | Annotation                            | Value                                                   | Required                                        | Description                                                                                                                                                                                                    |
-|-----------------------|---------------------------------------|---------------------------------------------------------|-------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| N/A                   | `cert.gardener.cloud/purpose:`        | `managed`                                               | Yes when using annotations                      | Flag for Gardener that this specific Ingress or Service requires a certificate                                                                                                                                 |
-| `spec.commonName`     | `cert.gardener.cloud/commonname:`     | E.g. "*.demo.example.com" or <br> "special.example.com" | Certificate and Ingress : No <br/> Service: yes | Specifies for which domain the certificate request will be created. If not specified, the names from spec.tls[].hosts are used. This entry must comply with the [64 character](#Character-Restrictions) limit. |
-| `spec.dnsName`        | `cert.gardener.cloud/dnsnames:`       | E.g. "special.example.com"                              | Certificate and Ingress : No <br/> Service: yes | Additional domains the certificate should be valid for (Subject Alternative Name). If not specified, the names from spec.tls[].hosts are used. Entries in this list can be longer than 64 characters.          |
-| `spec.secretRef.name` | `cert.gardener.cloud/secretname:`     | `any-name`                                              | Yes for certificate and Service                 | Specifies the secret which contains the certificate/key pair. If the secret is not available yet, it'll be created automatically as soon as the certificate has been issued.                                   |
-| `spec.issuerRef.name` | `cert.gardener.cloud/issuer:`         | E.g. `gardener`                                         | No                                              | Specifies the issuer you want to use. Only necessary if you request certificates for [custom domains](#Custom-Domains).                                                                                        |
-| N/A                   | `cert.gardener.cloud/revoked:`        | `true` otherwise always false                           | No                                              | Use only to revoke a certificate, see [reference](#references) for more details                                                                                                                                |
-| `spec.followCNAME`    | `cert.gardener.cloud/follow-cname`    | E.g. `true`                                             | No                                              | Specifies that the usage of a delegated domain for DNS challenges is allowed. Details see [Follow CNAME](https://github.com/gardener/cert-management#follow-cname).                                            |
-| `spec.preferredChain` | `cert.gardener.cloud/preferred-chain` | E.g. `ISRG Root X1`                                     | No                                              | Specifies the Common Name of the issuer for selecting the certificate chain. Details see [Preferred Chain](https://github.com/gardener/cert-management#preferred-chain).                                       |
-| `spec.secretLabels`   | `cert.gardener.cloud/secret-labels`   | for annotation use e.g. `key1=value1,key2=value2`       | No                                              | Specifies labels for the certificate secret.                                                                                                                                                                   |
+| Path                        | Annotation                                  | Value                                                   | Required                                                              | Description                                                                                                                                                                                                             |
+|-----------------------------|---------------------------------------------|---------------------------------------------------------|-----------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| N/A                         | `cert.gardener.cloud/purpose:`              | `managed`                                               | Yes when using annotations                                            | Flag for Gardener that this specific Ingress or Service requires a certificate                                                                                                                                          |
+| `spec.commonName`           | `cert.gardener.cloud/commonname:`           | E.g. "*.demo.example.com" or <br> "special.example.com" | Certificate and Ingress : No <br/> Service: Yes, if DNS names unset   | Specifies for which domain the certificate request will be created. If not specified, the names from spec.tls[].hosts are used. This entry must comply with the [64 character](#Character-Restrictions) limit.          |
+| `spec.dnsNames`             | `cert.gardener.cloud/dnsnames:`             | E.g. "special.example.com"                              | Certificate and Ingress : No <br/> Service: Yes, if common name unset | Additional domains the certificate should be valid for (Subject Alternative Name). If not specified, the names from spec.tls[].hosts are used. Entries in this list can be longer than 64 characters.                   |
+| `spec.secretRef.name`       | `cert.gardener.cloud/secretname:`           | `any-name`                                              | Yes for certificate and Service                                       | Specifies the secret which contains the certificate/key pair. If the secret is not available yet, it'll be created automatically as soon as the certificate has been issued.                                            |
+| `spec.issuerRef.name`       | `cert.gardener.cloud/issuer:`               | E.g. `gardener`                                         | No                                                                    | Specifies the issuer you want to use. Only necessary if you request certificates for [custom domains](#Custom-Domains).                                                                                                 |
+| N/A                         | `cert.gardener.cloud/revoked:`              | `true` otherwise always false                           | No                                                                    | Use only to revoke a certificate, see [reference](#references) for more details                                                                                                                                         |
+| `spec.followCNAME`          | `cert.gardener.cloud/follow-cname`          | E.g. `true`                                             | No                                                                    | Specifies that the usage of a delegated domain for DNS challenges is allowed. Details see [Follow CNAME](https://github.com/gardener/cert-management#follow-cname).                                                     |
+| `spec.preferredChain`       | `cert.gardener.cloud/preferred-chain`       | E.g. `ISRG Root X1`                                     | No                                                                    | Specifies the Common Name of the issuer for selecting the certificate chain. Details see [Preferred Chain](https://github.com/gardener/cert-management#preferred-chain).                                                |
+| `spec.secretLabels`         | `cert.gardener.cloud/secret-labels`         | for annotation use e.g. `key1=value1,key2=value2`       | No                                                                    | Specifies labels for the certificate secret.                                                                                                                                                                            |
+| `spec.privateKey.algorithm` | `cert.gardener.cloud/private-key-algorithm` | `RSA`, `ECDSA`                                          | No                                                                    | Specifies algorithm for private key generation. If not specified defaults to `RSA`.                                                                                                                                     |
+| `spec.privateKey.size`      | `cert.gardener.cloud/private-key-size`      | `"256"`, `"384"`, `"2048"`, `"3072"`, `"4096"`          | No                                                                    | Specifies size for private key generation. If not specified defaults to `2048` for `RSA` and `256` for `ECDSA`. Allowed values for `RSA` are `2048`, `3072`, and `4096`. For `ECDSA` allowed values are `256` and `384` |
 
 ## Request a wildcard certificate
 In order to avoid the creation of multiples certificates for every single endpoints, you may want to create a wildcard certificate for your shoot's default cluster.
@@ -226,10 +238,13 @@ spec:
 ```
 
 ## DNS Propagation
-As stated before, cert-manager uses the ACME challenge protocol to authenticate that you are the DNS owner for the domain's certificate you are requesting. This works by creating a DNS TXT record in your DNS provider under `_acme-challenge.example.example.com` containing a token to compare with. The TXT record is only visible during the domain validation. Typically, the record is propagated within a few minutes. But if the record is not visible to the ACME server for any reasons, the certificate request is retried again after several minutes. This means you may have to wait up to one hour after the propagation problem has been resolved before the certificate request is retried. Take a look in the events with `kubectl describe ingress example` for troubleshooting.
+As stated before, cert-manager uses the ACME challenge protocol to authenticate that you are the DNS owner for the domain's certificate you are requesting.
+This works by creating a DNS TXT record in your DNS provider under `_acme-challenge.example.example.com` containing a token to compare with. The TXT record is only applied during the domain validation.
+Typically, the record is propagated within a few minutes. But if the record is not visible to the ACME server for any reasons, the certificate request is retried again after several minutes.
+This means you may have to wait up to one hour after the propagation problem has been resolved before the certificate request is retried. Take a look in the events with `kubectl describe ingress example` for troubleshooting.
 
 ## Character Restrictions
-Due to the ACME protocol specification, at least one domain of the domains you request a certificate for must not exceed a character limit of 64  (CN - Common Name).
+Due to restriction of the common name to 64 characters, you may to leave the common name unset in such cases.
 
 For example, the following request is invalid:
 
@@ -243,7 +258,7 @@ spec:
   commonName: morethan64characters.ingress.shoot.project.default-domain.gardener.cloud
 ```
 
-But it is valid to request a certificate for this domain if you have at least one domain which does not exceed the mentioned limit:
+But it is valid to request a certificate for this domain if you have left the common name unset:
 
 ```yaml
 apiVersion: cert.gardener.cloud/v1alpha1
@@ -252,7 +267,6 @@ metadata:
   name: cert-example
   namespace: default
 spec:
-  commonName: short.ingress.shoot.project.default-domain.gardener.cloud
   dnsNames:
   - morethan64characters.ingress.shoot.project.default-domain.gardener.cloud
 ```
