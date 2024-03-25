@@ -9,4 +9,5 @@ cd "$(dirname $0)/.."
 git config --global user.email "gardener@sap.com"
 git config --global user.name "Gardener CI/CD"
 
+export GOTOOLCHAIN=auto
 make verify-extended
