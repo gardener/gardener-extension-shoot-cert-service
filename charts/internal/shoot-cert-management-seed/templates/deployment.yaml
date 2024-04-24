@@ -90,6 +90,15 @@ spec:
         {{- range $idx, $flag := .Values.additionalConfiguration }}
         - {{ $flag }}
         {{- end }}
+        {{- if .Values.configuration.privateKeyDefaults.algorithm }}
+        - --default-private-key-algorithm={{ .Values.configuration.privateKeyDefaults.algorithm }}
+        {{- end }}
+        {{- if .Values.configuration.privateKeyDefaults.sizeRSA }}
+        - --default-rsa-private-key-size={{ .Values.configuration.privateKeyDefaults.sizeRSA }}
+        {{- end }}
+        {{- if .Values.configuration.privateKeyDefaults.sizeECDSA }}
+        - --default-ecdsa-private-key-size={{ .Values.configuration.privateKeyDefaults.sizeECDSA }}
+        {{- end }}
         {{- if .Values.configuration.caCertificates }}
         env:
         - name: LEGO_CA_SYSTEM_CERT_POOL

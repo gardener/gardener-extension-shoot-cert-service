@@ -116,6 +116,20 @@ github.com/gardener/gardener/extensions/pkg/apis/config/v1alpha1.HealthCheckConf
 <p>HealthCheckConfig is the config for the health check controller.</p>
 </td>
 </tr>
+<tr>
+<td>
+<code>privateKeyDefaults</code></br>
+<em>
+<a href="#shoot-cert-service.extensions.config.gardener.cloud/v1alpha1.PrivateKeyDefaults">
+PrivateKeyDefaults
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>PrivateKeyDefaults default algorithm and sizes for certificate private keys.</p>
+</td>
+</tr>
 </tbody>
 </table>
 <h3 id="shoot-cert-service.extensions.config.gardener.cloud/v1alpha1.ACME">ACME
@@ -218,6 +232,61 @@ bool
 <td>
 <em>(Optional)</em>
 <p>DeactivateAuthorizations enables deactivation of authorizations after successful certificate request</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="shoot-cert-service.extensions.config.gardener.cloud/v1alpha1.PrivateKeyDefaults">PrivateKeyDefaults
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#shoot-cert-service.extensions.config.gardener.cloud/v1alpha1.Configuration">Configuration</a>)
+</p>
+<p>
+<p>PrivateKeyDefaults default algorithm and sizes for certificate private keys.</p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>algorithm</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>Algorithm is the default algorithm (&lsquo;RSA&rsquo; or &lsquo;ECDSA&rsquo;)</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>sizeRSA</code></br>
+<em>
+int
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>SizeRSA is the default size for RSA algorithm.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>sizeECDSA</code></br>
+<em>
+int
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>SizeECDSA is the default size for ECDSA algorithm.</p>
 </td>
 </tr>
 </tbody>

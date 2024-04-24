@@ -27,6 +27,18 @@ type Configuration struct {
 	ACME ACME
 	// HealthCheckConfig is the config for the health check controller.
 	HealthCheckConfig *apisconfig.HealthCheckConfig
+	// PrivateKeyDefaults default algorithm and sizes for certificate private keys.
+	PrivateKeyDefaults *PrivateKeyDefaults
+}
+
+// PrivateKeyDefaults default algorithm and sizes for certificate private keys.
+type PrivateKeyDefaults struct {
+	// Algorithm is the default algorithm ('RSA' or 'ECDSA')
+	Algorithm *string
+	// SizeRSA is the default size for RSA algorithm.
+	SizeRSA *int
+	// SizeECDSA is the default size for ECDSA algorithm.
+	SizeECDSA *int
 }
 
 // ShootIssuers holds enablement for issuers on shoot cluster

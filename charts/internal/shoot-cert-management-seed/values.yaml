@@ -77,6 +77,10 @@ configuration:
 #   -----END CERTIFICATE-----
   deactivateAuthorizations: true
   certExpirationAlertDays: 15
+  privateKeyDefaults:
+      algorithm: RSA
+      sizeRSA: 3072
+      sizeECDSA: 384
 
 additionalConfiguration:
 - --kubeconfig.disable-deploy-crds

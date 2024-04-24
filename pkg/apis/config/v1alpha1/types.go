@@ -32,6 +32,22 @@ type Configuration struct {
 	// HealthCheckConfig is the config for the health check controller.
 	// +optional
 	HealthCheckConfig *configv1alpha1.HealthCheckConfig `json:"healthCheckConfig,omitempty"`
+	// PrivateKeyDefaults default algorithm and sizes for certificate private keys.
+	// +optional
+	PrivateKeyDefaults *PrivateKeyDefaults `json:"privateKeyDefaults,omitempty"`
+}
+
+// PrivateKeyDefaults default algorithm and sizes for certificate private keys.
+type PrivateKeyDefaults struct {
+	// Algorithm is the default algorithm ('RSA' or 'ECDSA')
+	// +optional
+	Algorithm *string `json:"algorithm,omitempty"`
+	// SizeRSA is the default size for RSA algorithm.
+	// +optional
+	SizeRSA *int `json:"sizeRSA,omitempty"`
+	// SizeECDSA is the default size for ECDSA algorithm.
+	// +optional
+	SizeECDSA *int `json:"sizeECDSA,omitempty"`
 }
 
 // ShootIssuers holds enablement for issuers on shoot cluster
