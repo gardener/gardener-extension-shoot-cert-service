@@ -106,5 +106,41 @@ AAABBBCCCDDD
 			DefaultRequestsPerDayQuota: ptr.To(int32(50)),
 			ACME:                       validACME,
 		}, BeEmpty()),
+		Entry("Valid PrivateKeyDefaults", config.Configuration{
+			IssuerName:                 "gardener",
+			DefaultRequestsPerDayQuota: ptr.To(int32(50)),
+			ACME:                       validACME,
+			PrivateKeyDefaults: &config.PrivateKeyDefaults{
+				Algorithm: ptr.To("ECDSA"),
+				SizeRSA:   ptr.To(2048),
+				SizeECDSA: ptr.To(256),
+			},
+		}, BeEmpty()),
+		Entry("Invalid PrivateKeyDefaults", config.Configuration{
+			IssuerName:                 "gardener",
+			DefaultRequestsPerDayQuota: ptr.To(int32(50)),
+			ACME:                       validACME,
+			PrivateKeyDefaults: &config.PrivateKeyDefaults{
+				Algorithm: ptr.To("X"),
+				SizeRSA:   ptr.To(999),
+				SizeECDSA: ptr.To(444),
+			},
+		}, ConsistOf(
+			PointTo(MatchFields(IgnoreExtras, Fields{
+				"Type":   Equal(field.ErrorTypeInvalid),
+				"Field":  Equal("privateKeyDefaults.algorithm"),
+				"Detail": Equal("algorithm must either be 'RSA' or 'ECDSA'"),
+			})),
+			PointTo(MatchFields(IgnoreExtras, Fields{
+				"Type":   Equal(field.ErrorTypeInvalid),
+				"Field":  Equal("privateKeyDefaults.sizeRSA"),
+				"Detail": Equal("size for RSA algorithm must either be '2048' or '3072' or '4096"),
+			})),
+			PointTo(MatchFields(IgnoreExtras, Fields{
+				"Type":   Equal(field.ErrorTypeInvalid),
+				"Field":  Equal("privateKeyDefaults.sizeECDSA"),
+				"Detail": Equal("size for ECDSA algorithm must either be '256' or '384'"),
+			})),
+		)),
 	)
 })

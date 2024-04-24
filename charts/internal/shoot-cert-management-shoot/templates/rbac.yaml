@@ -8,10 +8,29 @@ metadata:
     app.kubernetes.io/managed-by: {{ .Release.Service }}
 rules:
 - apiGroups:
-  - "extensions"
   - "networking.k8s.io"
   resources:
   - ingresses
+  verbs:
+  - get
+  - list
+  - update
+  - watch
+- apiGroups:
+  - "gateway.networking.k8s.io"
+  resources:
+  - gateways
+  - httproutes
+  verbs:
+  - get
+  - list
+  - update
+  - watch
+- apiGroups:
+  - "networking.istio.io"
+  resources:
+  - gateways
+  - virtualservices
   verbs:
   - get
   - list
@@ -84,6 +103,7 @@ rules:
   - list
   - update
   - create
+  - watch
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding

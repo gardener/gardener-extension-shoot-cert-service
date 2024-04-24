@@ -30,6 +30,8 @@ func ValidateConfiguration(config *config.Configuration) field.ErrorList {
 
 	allErrs = append(allErrs, validateACME(&config.ACME, field.NewPath("acme"))...)
 
+	allErrs = append(allErrs, validatePrivateKeyDefaults(config.PrivateKeyDefaults, field.NewPath("privateKeyDefaults"))...)
+
 	return allErrs
 }
 
@@ -67,5 +69,24 @@ func validateACME(acme *config.ACME, fldPath *field.Path) field.ErrorList {
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("caCertificates"), short, "invalid certificate(s), expected PEM format)"))
 		}
 	}
+	return allErrs
+}
+
+func validatePrivateKeyDefaults(defaults *config.PrivateKeyDefaults, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	if defaults == nil {
+		return allErrs
+	}
+
+	if defaults.Algorithm != nil && *defaults.Algorithm != "RSA" && *defaults.Algorithm != "ECDSA" {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("algorithm"), *defaults.Algorithm, "algorithm must either be 'RSA' or 'ECDSA'"))
+	}
+	if defaults.SizeRSA != nil && *defaults.SizeRSA != 2048 && *defaults.SizeRSA != 3072 && *defaults.SizeRSA != 4096 {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("sizeRSA"), *defaults.SizeRSA, "size for RSA algorithm must either be '2048' or '3072' or '4096"))
+	}
+	if defaults.SizeECDSA != nil && *defaults.SizeECDSA != 256 && *defaults.SizeECDSA != 384 {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("sizeECDSA"), *defaults.SizeECDSA, "size for ECDSA algorithm must either be '256' or '384'"))
+	}
+
 	return allErrs
 }

@@ -15,6 +15,18 @@ defaultRequestsPerDayQuota: {{ .Values.certificateConfig.defaultRequestsPerDayQu
 shootIssuers:
   enabled: {{ .Values.certificateConfig.shootIssuers.enabled }}
 {{- end }}
+{{- if .Values.certificateConfig.privateKeyDefaults }}
+privateKeyDefaults:
+{{- if .Values.certificateConfig.privateKeyDefaults.algorithm }}
+  algorithm: {{ .Values.certificateConfig.privateKeyDefaults.algorithm }}
+{{- end }}
+{{- if .Values.certificateConfig.privateKeyDefaults.sizeRSA }}
+  sizeRSA: {{ .Values.certificateConfig.privateKeyDefaults.sizeRSA }}
+{{- end }}
+{{- if .Values.certificateConfig.privateKeyDefaults.sizeECDSA }}
+  sizeECDSA: {{ .Values.certificateConfig.privateKeyDefaults.sizeECDSA }}
+{{- end }}
+{{- end }}
 acme:
   email: {{ required ".Values.certificateConfig.defaultIssuer.acme.email is required" .Values.certificateConfig.defaultIssuer.acme.email }}
   server: {{ required ".Values.certificateConfig.defaultIssuer.acme.server is required" .Values.certificateConfig.defaultIssuer.acme.server }}

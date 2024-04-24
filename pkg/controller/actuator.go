@@ -302,6 +302,20 @@ func (a *actuator) createSeedResources(ctx context.Context, certConfig *service.
 		cfg["certExpirationAlertDays"] = *certConfig.Alerting.CertExpirationAlertDays
 	}
 
+	if a.serviceConfig.PrivateKeyDefaults != nil {
+		defaults := map[string]interface{}{}
+		if a.serviceConfig.PrivateKeyDefaults.Algorithm != nil {
+			defaults["algorithm"] = *a.serviceConfig.PrivateKeyDefaults.Algorithm
+		}
+		if a.serviceConfig.PrivateKeyDefaults.SizeRSA != nil {
+			defaults["sizeRSA"] = *a.serviceConfig.PrivateKeyDefaults.SizeRSA
+		}
+		if a.serviceConfig.PrivateKeyDefaults.SizeECDSA != nil {
+			defaults["sizeECDSA"] = *a.serviceConfig.PrivateKeyDefaults.SizeECDSA
+		}
+		cfg["privateKeyDefaults"] = defaults
+	}
+
 	certManagementConfig, err = chart.InjectImages(certManagementConfig, imagevector.ImageVector(), []string{v1alpha1.CertManagementImageName})
 	if err != nil {
 		return fmt.Errorf("failed to find image version for %s: %v", v1alpha1.CertManagementImageName, err)
