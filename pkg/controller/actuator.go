@@ -24,6 +24,7 @@ import (
 	kutil "github.com/gardener/gardener/pkg/utils/kubernetes"
 	"github.com/gardener/gardener/pkg/utils/managedresources"
 	"github.com/go-logr/logr"
+	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv1 "k8s.io/api/autoscaling/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -315,6 +316,15 @@ func (a *actuator) createSeedResources(ctx context.Context, certConfig *service.
 		}
 		cfg["privateKeyDefaults"] = defaults
 	}
+
+	// TODO(rfranzke): Delete this after August 2024.
+	gep19Monitoring := a.client.Get(ctx, client.ObjectKey{Name: "prometheus-shoot", Namespace: namespace}, &appsv1.StatefulSet{}) == nil
+	if gep19Monitoring {
+		if err := kutil.DeleteObject(ctx, a.client, &corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "cert-controller-manager-observability-config", Namespace: namespace}}); err != nil {
+			return fmt.Errorf("failed deleting cert-controller-manager-observability-config ConfigMap: %w", err)
+		}
+	}
+	certManagementConfig["gep19Monitoring"] = gep19Monitoring
 
 	certManagementConfig, err = chart.InjectImages(certManagementConfig, imagevector.ImageVector(), []string{v1alpha1.CertManagementImageName})
 	if err != nil {
