@@ -1,3 +1,6 @@
+{{/* HINT: This file is intentionally NOT called _helpers.tpl (as usual) since this Helm chart is embedded via go embed. */}}
+{{/* HINT: go embed does not support hidden files, hence, _helpers.tpl cannot be used as name. */}}
+
 {{/* vim: set filetype=mustache: */}}
 {{/*
 Expand the name of the chart.
