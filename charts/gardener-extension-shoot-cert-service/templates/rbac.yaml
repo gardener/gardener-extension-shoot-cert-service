@@ -68,6 +68,7 @@ rules:
   resources:
   - "secrets"
   - "events"
+  - "configmaps"
   verbs:
   - "*"
 - apiGroups:
