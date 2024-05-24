@@ -39,7 +39,7 @@ $ kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.20/sa
 #### Create an Istio Gateway:
 ```bash
 $ cat <<EOF | kubectl apply -f -
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
   name: httpbin-gateway
@@ -75,7 +75,7 @@ items:
     name: httpbin-gateway-gateway-hdbjb
     namespace: istio-system
     ownerReferences:
-    - apiVersion: networking.istio.io/v1beta1
+    - apiVersion: networking.istio.io/v1
       blockOwnerDeletion: true
       controller: true
       kind: Gateway
@@ -99,7 +99,7 @@ These resources don't need an additional annotation.
 #### Create an Istio Gateway:
 ```bash
 $ cat <<EOF | kubectl apply -f -
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
   name: httpbin-gateway
@@ -124,7 +124,7 @@ EOF
 #### Configure routes for traffic entering via the Gateway:
 ```bash
 $ cat <<EOF | kubectl apply -f -
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: httpbin
