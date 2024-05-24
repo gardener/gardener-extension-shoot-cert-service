@@ -298,7 +298,7 @@ brew install httpie
 <p>Networking is a central part of Kubernetes, but it can be challenging to understand exactly how it is expected to work. You should learn about Kubernetes networking, and first try to debug problems yourself. With a solid managed cluster from Gardener, it is always PEBCAK!</p>
 {{% /alert %}}
 
-Kubernetes Ingress is a subject that is evolving to much broader standard. Please watch [Evolving the Kubernetes Ingress APIs to GA and Beyond](https://www.youtube.com/watch?v=cduG0FrjdJA) for a good introduction. In this example, I did not want to use the Kubernetes `Ingress` compatibility option of Istio. Instead, I used `VirtualService` and `Gateway` from the Istio's API group `networking.istio.io/v1beta1` directly, and enabled istio-injection generically for the namespace.
+Kubernetes Ingress is a subject that is evolving to much broader standard. Please watch [Evolving the Kubernetes Ingress APIs to GA and Beyond](https://www.youtube.com/watch?v=cduG0FrjdJA) for a good introduction. In this example, I did not want to use the Kubernetes `Ingress` compatibility option of Istio. Instead, I used `VirtualService` and `Gateway` from the Istio's API group `networking.istio.io/v1` directly, and enabled istio-injection generically for the namespace.
 
 I use [httpbin](https://httpbin.org/) as service that I want to expose to the internet, or where my ingress should be routed to (depends on your point of view, I guess).
 
@@ -347,7 +347,7 @@ spec:
         ports:
         - containerPort: 80
 ---
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
   name: httpbin-gw
@@ -374,7 +374,7 @@ spec:
     hosts:
     - "httpbin.gsicdc.mydomain.io"
 ---
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: httpbin-vs
