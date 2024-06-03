@@ -31,7 +31,7 @@ data:
         regex: ^(cert_management_.+)$
         action: keep
       - source_labels: [ __name__, code ]
-        regex: ^(promhttp_metric_handler_requests_total);(200|500|503)$
+        regex: ^(promhttp_metric_handler_requests_total);(200|500|503|400|404)$
         target_label: __name__
         replacement: cert_controller_manager_$1
 {{- if gt .Values.configuration.certExpirationAlertDays 0.0 }}
