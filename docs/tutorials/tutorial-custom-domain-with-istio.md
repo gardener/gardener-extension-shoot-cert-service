@@ -8,22 +8,23 @@ scope: app-developer
 ---
 
 
-As we ramp up more and more friends of Gardener, I thought it worthwile to explore and write a tutorial about how to simply
-* create a Gardener managed Kubernetes Cluster (Shoot) via kubectl,
-* install Istio as a preferred, production ready Ingress/Service Mesh (instead of the Nginx Ingress addon),
-* attach your own custom domain to be managed by Gardener,
-* combine everything with certificates from Let's Encrypt.
+As we ramp up more and more friends of Gardener, I thought it worthwhile to explore and write a tutorial about how to simply:
 
+* create a Gardener managed Kubernetes Cluster (Shoot) via kubectl
+* install Istio as a preferred, production ready Ingress/Service Mesh (instead of the Nginx Ingress addon)
+* attach your own custom domain to be managed by Gardener
+* combine everything with certificates from Let's Encrypt
 
 Here are some pre-pointers that you will need to go deeper:
-* [CRUD Gardener Shoot](https://github.com/gardener/documentation/blob/master/website/documentation/guides/administer-shoots/create-delete-shoot/_index.md)
+
+* [CRUD Gardener Shoot](https://github.com/gardener/documentation/blob/master/website/documentation/guides/administer-shoots/create-delete-shoot.md)
 * [DNS Management](https://github.com/gardener/external-dns-management/blob/master/README.md)
 * [Certificate Management](https://github.com/gardener/cert-management/blob/master/README.md)
 * [Tutorial Domain Names](https://github.com/gardener/gardener-extension-shoot-dns-service/blob/master/docs/usage/dns_names.md)
 * [Tutorial Certificates](../usage/request_cert.md)
 
 {{% alert title="Tip" color="primary" %}}
-<p>If you try my instructions and fail, then read the alternative title of this tutorial as "Shoot yourself in the foot with Gardener, custom Domains, Istio and Certificates".</p>
+If you try my instructions and fail, then read the alternative title of this tutorial as "Shoot yourself in the foot with Gardener, custom Domains, Istio and Certificates".
 {{% /alert %}}
 
 ## First Things First
@@ -35,17 +36,21 @@ From the Access widget (leave the default settings) download your personalized `
 ![access](images/access.png)
 
 For convinience, let us set an alias command with
+
 ```bash
 alias kgarden="kubectl --kubeconfig ~/.kube/kubeconfig-garden-myproject.yaml"
 ```
+
 `kgarden` now gives you all botanical powers and connects you directly with your Gardener.
 
 You should now be able to run `kgarden get shoots`, automatically get an oidc token, and list already running clusters/shoots.
 
 ## Prepare your Custom Domain
+
 I am going to use [Cloud Flare](https://www.cloudflare.com/) as programmatic DNS of my custom domain `mydomain.io`. Please follow detailed instructions from Cloud Flare on how to delegate your domain (the free account does not support delegating subdomains). Alternatively, AWS Route53 (and most others) support [delegating subdomains](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/CreatingNewSubdomain.html).
 
 I needed to follow these [instructions](https://github.com/gardener/external-dns-management/blob/master/docs/cloudflare/README.md) and created the following secret:
+
 ```yaml
 apiVersion: v1
 kind: Secret
@@ -55,18 +60,20 @@ type: Opaque
 data:
   CLOUDFLARE_API_TOKEN: useYOURownDAMITzNDU2Nzg5MDEyMzQ1Njc4OQ==
 ```
+
 Apply this secret into your project with `kgarden create -f cloudflare-mydomain-io.yaml`.
 
 Our [External DNS Manager](https://github.com/gardener/external-dns-management/) also supports Amazon Route53, Google CloudDNS, AliCloud DNS, Azure DNS, or OpenStack Designate. Check it out.
 
 ## Prepare Gardener Extensions
+
 I now need to prepare the Gardener extensions `shoot-dns-service` and `shoot-cert-service` and set the parameters accordingly.
 
 {{% alert color="info" %}}
-<p>Please note, that the availability of Gardener Extensions depends on how your administrator has configured the Gardener landscape. Please contact your Gardener administrator in case you experience any issues during activation.</p>
+Please note, that the availability of Gardener Extensions depends on how your administrator has configured the Gardener landscape. Please contact your Gardener administrator in case you experience any issues during activation.
 {{% /alert %}}
 
-The following snipplet allows Gardener to manage my entire custom domain, whereas with the `include:` attribute I restrict all dynamic entries under the subdomain `gsicdc.mydomain.io`:
+The following snippet allows Gardener to manage my entire custom domain, whereas with the `include:` attribute I restrict all dynamic entries under the subdomain `gsicdc.mydomain.io`:
 
 ```yaml
   dns:
@@ -82,6 +89,7 @@ The following snipplet allows Gardener to manage my entire custom domain, wherea
 ```
 
 The next snipplet allows Gardener to manage certificates automatically from *[Let's Encrypt](https://letsencrypt.org/)* on `mydomain.io` for me:
+
 ```yaml
   extensions:
     - type: shoot-cert-service
@@ -97,10 +105,11 @@ The next snipplet allows Gardener to manage certificates automatically from *[Le
 ```
 
 {{% alert color="info" %}}
-<p>Adjust the snipplets with your parameters (don't forget your email). And please use the mydomain-staging issuer while you are testing and learning. Otherwise, Let's Encrypt will rate limit your frequent requests and you can wait a week until you can continue.</p>
+Adjust the snipplets with your parameters (don't forget your email). And please use the mydomain-staging issuer while you are testing and learning. Otherwise, Let's Encrypt will rate limit your frequent requests and you can wait a week until you can continue.
 {{% /alert %}}
 
 References for [Let's Encrypt](https://letsencrypt.org):
+
 * [Rate limit](https://letsencrypt.org/docs/rate-limits/)
 * [Staging environment](https://letsencrypt.org/docs/staging-environment/)
 * [Challenge Types](https://letsencrypt.org/docs/challenge-types/)
@@ -108,7 +117,7 @@ References for [Let's Encrypt](https://letsencrypt.org):
 
 ## Create the Gardener Shoot Cluster
 
-Remember I chose to create the Shoot on GCP, so below is the simplest declarative shoot or cluster order document. Notice that I am referring to the infrastructure credentials with `shoot-operator-gcp` and I combined the above snipplets into the yaml file:
+Remember I chose to create the Shoot on GCP, so below is the simplest declarative shoot or cluster order document. Notice that I am referring to the infrastructure credentials with `shoot-operator-gcp` and I combined the above snippets into the yaml file:
 
 ```yaml
 apiVersion: core.gardener.cloud/v1beta1
@@ -207,12 +216,14 @@ service/kubernetes   ClusterIP   100.64.0.1   <none>        443/TCP   89m
 
 ## Install Istio
 
-Please follow the Istio installation [instructions](https://istio.io/docs/setup/getting-started/) and download `istioctl`. If you are on a Mac, I recommend
+Please follow the Istio installation [instructions](https://istio.io/docs/setup/getting-started/) and download `istioctl`. If you are on a Mac, I recommend:
+
 ```bash
-$ brew install istioctl
+brew install istioctl
 ```
 
 I want to install Istio with a default profile and SDS enabled. Furthermore I pass the following annotations to the service object `istio-ingressgateway` in the `istio-system` namespace.
+
 ```yaml
   annotations:
     cert.gardener.cloud/issuer: mydomain-staging
@@ -221,16 +232,19 @@ I want to install Istio with a default profile and SDS enabled. Furthermore I pa
     dns.gardener.cloud/dnsnames: "*.gsicdc.mydomain.io"
     dns.gardener.cloud/ttl: "120"
 ```
-With these annotations three things now happen automagically:
+
+With these annotations three things now happen automatically:
+
 1. The [External DNS Manager](https://github.com/gardener/external-dns-management/blob/master/README.md), provided to you as a service (`dns.gardener.cloud/class: garden`), picks up the request and creates the wildcard DNS entry `*.gsicdc.mydomain.io` with a time to live of 120sec at your DNS provider. My provider Cloud Flare is very very quick (as opposed to some other services). You should be able to verify the entry with `dig lovemygardener.gsicdc.mydomain.io` within seconds.
-2. The [Certificate Management](https://github.com/gardener/cert-management/blob/master/README.md) picks up the request as well and initates a DNS01 protocol exchange with Let's Encrypt; using the staging environment referred to with the issuer behind `mydomain-staging`.
-3. After aproximately 70sec (give and take) you will receive the wildcard certificate in the `wildcard-tls` secret in the namespace `istio-system`.
+1. The [Certificate Management](https://github.com/gardener/cert-management/blob/master/README.md) picks up the request as well and initiates a DNS01 protocol exchange with Let's Encrypt; using the staging environment referred to with the issuer behind `mydomain-staging`.
+1. After aproximately 70sec (give and take) you will receive the wildcard certificate in the `wildcard-tls` secret in the namespace `istio-system`.
 
 {{% alert color="info" %}}
-<p>Notice, that the namespace for the certificate secret is often the cause of many troubeshooting sessions: the secret must reside in the same namespace of the gateway.</p>
+Notice, that the namespace for the certificate secret is often the cause of many troubleshooting sessions: the secret must reside in the same namespace of the gateway.
 {{% /alert %}}
 
 Here is the istio-install script:
+
 ```bash
 $ export domainname="*.gsicdc.mydomain.io"
 $ export issuer="mydomain-staging"
@@ -255,6 +269,7 @@ EOF
 ```
 
 Verify that setup is working and that DNS and certificates have been created/delivered:
+
 ```bash
 $ kubectl -n istio-system describe service istio-ingressgateway
 <snip>
@@ -279,9 +294,10 @@ $ dig lovemygardener.gsicdc.mydomain.io
 lovemygardener.gsicdc.mydomain.io. 120 IN A	35.195.120.62
 <snip>
 ```
+
 There you have it, the wildcard-tls certificate is ready and the *.gsicdc.mydomain.io dns entry is active. Traffic will be going your way.
 
-## Handy tools to install
+## Handy Tools to Install
 
 Another set of fine tools to use are [kapp](https://carvel.dev/kapp/) (formerly known as k14s), [k9s](https://k9scli.io/) and [HTTPie](https://httpie.org/). While we are at it, let's install them all. If you are on a Mac, I recommend:
 
@@ -292,10 +308,10 @@ brew install derailed/k9s/k9s
 brew install httpie
 ```
 
-## Ingress to your service
+## Ingress at Your Service
 
 {{% alert color="info" %}}
-<p>Networking is a central part of Kubernetes, but it can be challenging to understand exactly how it is expected to work. You should learn about Kubernetes networking, and first try to debug problems yourself. With a solid managed cluster from Gardener, it is always PEBCAK!</p>
+Networking is a central part of Kubernetes, but it can be challenging to understand exactly how it is expected to work. You should learn about Kubernetes networking, and first try to debug problems yourself. With a solid managed cluster from Gardener, it is always PEBCAK!
 {{% /alert %}}
 
 Kubernetes Ingress is a subject that is evolving to much broader standard. Please watch [Evolving the Kubernetes Ingress APIs to GA and Beyond](https://www.youtube.com/watch?v=cduG0FrjdJA) for a good introduction. In this example, I did not want to use the Kubernetes `Ingress` compatibility option of Istio. Instead, I used `VirtualService` and `Gateway` from the Istio's API group `networking.istio.io/v1` directly, and enabled istio-injection generically for the namespace.
@@ -397,6 +413,7 @@ spec:
 ```
 
 Let us now deploy the whole package of Kubernetes primitives using `kapp`:
+
 ```bash
 $ kapp deploy -a httpbin -f httpbin-kapp.yaml
 Target cluster 'https://api.gsicdc.myproject.shoot.devgarden.cloud' (nodes: shoot--myproject--gsicdc-my-workerpool-z1-6586c8f6cb-x24kh)
@@ -424,7 +441,8 @@ Continue? [yN]: y
 Succeeded
 ```
 
-Let's finaly test the service (Of course you can use the browser as well):
+Let's finally test the service (Of course you can use the browser as well):
+
 ```bash
 $ http httpbin.gsicdc.mydomain.io
 HTTP/1.1 301 Moved Permanently
@@ -438,11 +456,12 @@ $ curl -k https://httpbin.gsicdc.mydomain.io/ip
     "origin": "10.250.0.2"
 }
 ```
+
 Quod erat demonstrandum.
 The proof of exchanging the issuer is now left to the reader.
 
 {{% alert title="Tip" color="primary" %}}
-<p>Remember that the certificate is actually not valid because it is issued from the Let's encrypt staging environment. Thus, we needed "curl -k" or "http --verify no".</p>
+Remember that the certificate is actually not valid because it is issued from the Let's encrypt staging environment. Thus, we needed "curl -k" or "http --verify no".
 {{% /alert %}}
 
 Hint: use the interactive k9s tool.
@@ -451,6 +470,7 @@ Hint: use the interactive k9s tool.
 ## Cleanup
 
 Remove the cloud native application:
+
 ```bash
 $ kapp ls
 Apps in namespace 'default'
@@ -468,6 +488,7 @@ Succeeded
 ```
 
 Remove Istio:
+
 ```bash
 $ istioctl x uninstall --purge
 clusterrole.rbac.authorization.k8s.io "prometheus-istio-system" deleted
@@ -476,6 +497,7 @@ clusterrolebinding.rbac.authorization.k8s.io "prometheus-istio-system" deleted
 ```
 
 Delete your Shoot:
+
 ```bash
 kgarden annotate shoot gsicdc confirmation.gardener.cloud/deletion=true --overwrite
 kgarden delete shoot gsicdc --wait=false
