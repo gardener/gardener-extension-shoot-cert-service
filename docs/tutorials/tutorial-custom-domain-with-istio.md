@@ -120,7 +120,7 @@ References for [Let's Encrypt](https://letsencrypt.org):
 Remember I chose to create the Shoot on GCP, so below is the simplest declarative shoot or cluster order document. Notice that I am referring to the infrastructure credentials with `shoot-operator-gcp` and I combined the above snippets into the yaml file:
 
 ```yaml
-apiVersion: core.gardener.cloud/v1
+apiVersion: core.gardener.cloud/v1beta1
 kind: Shoot
 metadata:
   name: gsicdc
