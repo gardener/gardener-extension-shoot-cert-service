@@ -1,4 +1,16 @@
 gardener-extension-shoot-cert-service:
+  templates:
+    helmcharts:
+    - &shoot-cert-service
+      name: shoot-cert-service
+      dir: charts/gardener-extension-shoot-cert-service
+      registry: europe-docker.pkg.dev/gardener-project/snapshots/charts/gardener/extensions
+      mappings:
+      - ref: ocm-resource:gardener-extension-shoot-cert-service.repository
+        attribute: image.repository
+      - ref: ocm-resource:gardener-extension-shoot-cert-service.tag
+        attribute: image.tag
+
   base_definition:
     traits:
       version:
@@ -21,6 +33,9 @@ gardener-extension-shoot-cert-service:
         draft_release: ~
         options:
           public_build_logs: true
+        publish:
+          helmcharts:
+          - *shoot-cert-service
     pull-request:
       traits:
         pull-request: ~
@@ -29,6 +44,9 @@ gardener-extension-shoot-cert-service:
             - repository: europe-docker.pkg.dev/gardener-project/releases
         options:
           public_build_logs: true
+        publish:
+          helmcharts:
+          - *shoot-cert-service
     release:
       traits:
         version:
@@ -50,3 +68,6 @@ gardener-extension-shoot-cert-service:
             gardener-extension-shoot-cert-service:
               image: europe-docker.pkg.dev/gardener-project/releases/gardener/extensions/shoot-cert-service
               tag_as_latest: true
+          helmcharts:
+          - <<: *shoot-cert-service
+            registry: europe-docker.pkg.dev/gardener-project/releases/charts/gardener/extensions
