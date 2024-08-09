@@ -93,7 +93,7 @@ func (o *Options) run(ctx context.Context) error {
 	ctrlConfig.Apply(&controller.DefaultAddOptions.ServiceConfig)
 	o.controllerOptions.Completed().Apply(&controller.DefaultAddOptions.ControllerOptions)
 	o.healthOptions.Completed().Apply(&healthcheck.DefaultAddOptions.Controller)
-	o.reconcileOptions.Completed().Apply(&controller.DefaultAddOptions.IgnoreOperationAnnotation)
+	o.reconcileOptions.Completed().Apply(&controller.DefaultAddOptions.IgnoreOperationAnnotation, nil)
 	o.heartbeatOptions.Completed().Apply(&heartbeat.DefaultAddOptions)
 
 	if err := o.controllerSwitches.Completed().AddToManager(ctx, mgr); err != nil {
