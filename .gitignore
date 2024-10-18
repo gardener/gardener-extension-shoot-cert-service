@@ -19,3 +19,6 @@ TODO
 .fuse_hidden*
 
 .go-version
+
+# gosec
+gosec-report.sarif
