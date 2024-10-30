@@ -148,7 +148,7 @@ spec:
   cloudProfileName: gcp
   kubernetes:
     allowPrivilegedContainers: true
-    version: 1.24.8
+    version: 1.28.2
   maintenance:
     autoUpdate:
       kubernetesVersion: true
