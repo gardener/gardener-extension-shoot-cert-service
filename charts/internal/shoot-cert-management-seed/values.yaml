@@ -15,8 +15,8 @@ genericTokenKubeconfigSecretName: generic-token-kubeconfig
 
 resources:
   requests:
-    cpu: 100m
-    memory: 128Mi
+    cpu: 5m
+    memory: 30Mi
 
 nodeSelector: {}
 tolerations: []
@@ -84,6 +84,13 @@ additionalConfiguration:
 - --kubeconfig.disable-deploy-crds
 - --source.disable-deploy-crds
 - --target.disable-deploy-crds
+
+vpa:
+  enabled: true
+  minAllowed:
+    memory: 20Mi
+  updatePolicy:
+    updateMode: "Auto"
 
 # TODO(rfranzke): Remove this field after August 2024.
 gep19Monitoring: false
