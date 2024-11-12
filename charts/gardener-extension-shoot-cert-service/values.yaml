@@ -44,6 +44,16 @@ certificateConfig:
     #   ...
     #   -----END RSA PRIVATE KEY-----
 
+  # ca: # use own root or intermediate certifcate for a CA issuer as alternative to ACME issuer,
+    # certificate: | # CA certificate
+    #  -----BEGIN CERTIFICATE-----
+    #  ...
+    #  -----END CERTIFICATE-----
+    # certificateKey: | # CA certificate key
+    #  -----BEGIN PRIVATE KEY-----
+    #  ...
+    #  -----END PRIVATE KEY-----
+
   #precheckNameservers: 8.8.8.8,8.8.4.4
 
   #caCertificates: | # optional custom CA certificates when using private ACME provider
@@ -71,3 +81,6 @@ disableControllers: []
 
 gardener:
   version: ""
+  runtimeCluster:
+    enabled: false
+  # priorityClassName: gardener-garden-system-200
