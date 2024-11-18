@@ -7,7 +7,6 @@ package controller
 import (
 	"context"
 
-	controllerconfig "github.com/gardener/gardener-extension-shoot-cert-service/pkg/controller/config"
 	extensionscontroller "github.com/gardener/gardener/extensions/pkg/controller"
 	"github.com/gardener/gardener/extensions/pkg/controller/extension"
 	extensionspredicate "github.com/gardener/gardener/extensions/pkg/predicate"
@@ -16,6 +15,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+
+	controllerconfig "github.com/gardener/gardener-extension-shoot-cert-service/pkg/controller/config"
 )
 
 const (
