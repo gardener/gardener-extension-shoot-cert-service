@@ -27,6 +27,9 @@ dnsChallengeOnShoot:
   enabled: false
 deployOnGardenRuntime: true
 
+defaultIssuer:
+  name: garden
+
 configuration:
   # propagationTimeout: 60s # TTL for DNS01 challenges
   serverPortHttp: 10258
@@ -75,3 +78,10 @@ issuers:
     #   exclude:
     #   - private.my.domain.com
 # requestsPerDayQuota: 10
+
+vpa:
+  enabled: true
+  minAllowed:
+    memory: 20Mi
+  updatePolicy:
+    updateMode: "Auto"
