@@ -1,4 +1,4 @@
----
+{{- if .Values.vpa.enabled }}
 apiVersion: autoscaling.k8s.io/v1
 kind: VerticalPodAutoscaler
 metadata:
@@ -10,10 +10,11 @@ spec:
     kind: Deployment
     name: {{ include "cert-management.fullname" . }}
   updatePolicy:
-    updateMode: "Auto"
+    updateMode: {{ .Values.vpa.updatePolicy.updateMode }}
   resourcePolicy:
     containerPolicies:
       - containerName: '*'
         controlledValues: RequestsOnly
         minAllowed:
-          memory: 20Mi
+          memory: {{ .Values.vpa.minAllowed.memory }}
+{{- end }}
