@@ -6,3 +6,5 @@ dnsChallengeOnShoot:
   enabled: false
 
 shootAccessServiceAccountName: ""
+
+deployOnGardenRuntime: false
