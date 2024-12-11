@@ -17,7 +17,6 @@ metadata:
     app.kubernetes.io/instance: {{ .Release.Name }}
 spec:
   type: ClusterIP
-  clusterIP: None
   ports:
   - name: metrics
     port: {{ .Values.metrics.port }}
