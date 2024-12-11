@@ -130,63 +130,73 @@ func (a *actuator) Migrate(ctx context.Context, log logr.Logger, ex *extensionsv
 }
 
 func (a *actuator) createIssuerValues(cluster *controller.Cluster, issuers ...service.IssuerConfig) ([]map[string]interface{}, error) {
-	issuerList := []map[string]interface{}{
-		{
-			"name": a.serviceConfig.IssuerName,
-			"acme": map[string]interface{}{
-				"email":      a.serviceConfig.ACME.Email,
-				"server":     a.serviceConfig.ACME.Server,
-				"privateKey": a.serviceConfig.ACME.PrivateKey,
-			},
-		},
+	gardenIssuer := map[string]interface{}{
+		"name": a.serviceConfig.IssuerName,
+	}
+	if a.serviceConfig.ACME != nil {
+		gardenIssuer["acme"] = map[string]interface{}{
+			"email":      a.serviceConfig.ACME.Email,
+			"server":     a.serviceConfig.ACME.Server,
+			"privateKey": a.serviceConfig.ACME.PrivateKey,
+		}
+	}
+	if a.serviceConfig.CA != nil {
+		gardenIssuer["ca"] = map[string]interface{}{
+			"certificate":    a.serviceConfig.CA.Certificate,
+			"certificateKey": a.serviceConfig.CA.CertificateKey,
+		}
 	}
 
-	for _, issuer := range issuers {
-		if issuer.Name == a.serviceConfig.IssuerName {
-			continue
-		}
+	issuerList := []map[string]interface{}{gardenIssuer}
 
-		acme := map[string]interface{}{
-			"email":  issuer.Email,
-			"server": issuer.Server,
-		}
-		issuerValues := map[string]interface{}{
-			"name": issuer.Name,
-			"acme": acme,
-		}
-		if issuer.PrivateKeySecretName != nil {
-			secretName := a.lookupReferencedSecret(cluster, *issuer.PrivateKeySecretName)
-			acme["privateKeySecretName"] = secretName
-		}
-		if issuer.ExternalAccountBinding != nil {
-			secretName := a.lookupReferencedSecret(cluster, issuer.ExternalAccountBinding.KeySecretName)
-			acme["externalAccountBinding"] = map[string]interface{}{
-				"keyID":         issuer.ExternalAccountBinding.KeyID,
-				"keySecretName": secretName,
+	if cluster != nil {
+		for _, issuer := range issuers {
+			if issuer.Name == a.serviceConfig.IssuerName {
+				continue
 			}
-		}
-		if issuer.SkipDNSChallengeValidation != nil && *issuer.SkipDNSChallengeValidation {
-			acme["skipDNSChallengeValidation"] = true
-		}
-		if issuer.Domains != nil && len(issuer.Domains.Include)+len(issuer.Domains.Exclude) > 0 {
-			selection := map[string]interface{}{}
-			if issuer.Domains.Include != nil {
-				selection["include"] = issuer.Domains.Include
+
+			acme := map[string]interface{}{
+				"email":  issuer.Email,
+				"server": issuer.Server,
 			}
-			if issuer.Domains.Exclude != nil {
-				selection["exclude"] = issuer.Domains.Exclude
+			issuerValues := map[string]interface{}{
+				"name": issuer.Name,
+				"acme": acme,
 			}
-			if len(selection) > 0 {
-				acme["domains"] = selection
+			if issuer.PrivateKeySecretName != nil {
+				secretName := a.lookupReferencedSecret(cluster, *issuer.PrivateKeySecretName)
+				acme["privateKeySecretName"] = secretName
 			}
+			if issuer.ExternalAccountBinding != nil {
+				secretName := a.lookupReferencedSecret(cluster, issuer.ExternalAccountBinding.KeySecretName)
+				acme["externalAccountBinding"] = map[string]interface{}{
+					"keyID":         issuer.ExternalAccountBinding.KeyID,
+					"keySecretName": secretName,
+				}
+			}
+			if issuer.SkipDNSChallengeValidation != nil && *issuer.SkipDNSChallengeValidation {
+				acme["skipDNSChallengeValidation"] = true
+			}
+			if issuer.Domains != nil && len(issuer.Domains.Include)+len(issuer.Domains.Exclude) > 0 {
+				selection := map[string]interface{}{}
+				if issuer.Domains.Include != nil {
+					selection["include"] = issuer.Domains.Include
+				}
+				if issuer.Domains.Exclude != nil {
+					selection["exclude"] = issuer.Domains.Exclude
+				}
+				if len(selection) > 0 {
+					acme["domains"] = selection
+				}
+			}
+			if issuer.RequestsPerDayQuota != nil {
+				issuerValues["requestsPerDayQuota"] = *issuer.RequestsPerDayQuota
+			}
+			if len(issuer.PrecheckNameservers) > 0 {
+				issuerValues["precheckNameservers"] = issuer.PrecheckNameservers
+			}
+			issuerList = append(issuerList, issuerValues)
 		}
-		if issuer.RequestsPerDayQuota != nil {
-			issuerValues["requestsPerDayQuota"] = *issuer.RequestsPerDayQuota
-		}
-		if len(issuer.PrecheckNameservers) > 0 {
-			issuerValues["precheckNameservers"] = issuer.PrecheckNameservers
-		}
-		issuerList = append(issuerList, issuerValues)
 	}
 
 	return issuerList, nil
@@ -248,7 +258,7 @@ func (a *actuator) createSeedResources(ctx context.Context, certConfig *service.
 	}
 
 	var propagationTimeout string
-	if a.serviceConfig.ACME.PropagationTimeout != nil {
+	if a.serviceConfig.ACME != nil && a.serviceConfig.ACME.PropagationTimeout != nil {
 		propagationTimeout = a.serviceConfig.ACME.PropagationTimeout.Duration.String()
 	}
 
@@ -281,21 +291,27 @@ func (a *actuator) createSeedResources(ctx context.Context, certConfig *service.
 		cfg["defaultRequestsPerDayQuota"] = *a.serviceConfig.DefaultRequestsPerDayQuota
 	}
 
-	if a.serviceConfig.ACME.PrecheckNameservers != nil {
-		cfg["precheckNameservers"] = *a.serviceConfig.ACME.PrecheckNameservers
-	}
-	if certConfig.PrecheckNameservers != nil {
-		servers := *certConfig.PrecheckNameservers
+	if a.serviceConfig.ACME != nil {
 		if a.serviceConfig.ACME.PrecheckNameservers != nil {
-			servers = mergeServers(servers, *a.serviceConfig.ACME.PrecheckNameservers)
+			cfg["precheckNameservers"] = *a.serviceConfig.ACME.PrecheckNameservers
 		}
-		cfg["precheckNameservers"] = servers
+		if certConfig.PrecheckNameservers != nil {
+			servers := *certConfig.PrecheckNameservers
+			if a.serviceConfig.ACME.PrecheckNameservers != nil {
+				servers = mergeServers(servers, *a.serviceConfig.ACME.PrecheckNameservers)
+			}
+			cfg["precheckNameservers"] = servers
+		}
+		if a.serviceConfig.ACME.CACertificates != nil {
+			cfg["caCertificates"] = *a.serviceConfig.ACME.CACertificates
+		}
+		if a.serviceConfig.ACME.DeactivateAuthorizations != nil {
+			cfg["deactivateAuthorizations"] = *a.serviceConfig.ACME.DeactivateAuthorizations
+		}
 	}
-	if a.serviceConfig.ACME.CACertificates != nil {
-		cfg["caCertificates"] = *a.serviceConfig.ACME.CACertificates
-	}
-	if a.serviceConfig.ACME.DeactivateAuthorizations != nil {
-		cfg["deactivateAuthorizations"] = *a.serviceConfig.ACME.DeactivateAuthorizations
+
+	if a.serviceConfig.CA != nil && a.serviceConfig.CA.CACertificates != nil {
+		cfg["caCertificates"] = *a.serviceConfig.CA.CACertificates
 	}
 
 	if certConfig.Alerting != nil && certConfig.Alerting.CertExpirationAlertDays != nil {
