@@ -1,3 +1,4 @@
+{{- if .Values.deployCRDs }}
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
@@ -686,7 +687,7 @@ spec:
       storage: true
       subresources:
         status: {}
-{{- if .Values.shootIssuers.enabled }}
+{{- if or .Values.shootIssuers.enabled .Values.deployEmbedded }}
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
@@ -912,4 +913,5 @@ spec:
       storage: true
       subresources:
         status: {}
+{{- end}}
 {{- end}}
