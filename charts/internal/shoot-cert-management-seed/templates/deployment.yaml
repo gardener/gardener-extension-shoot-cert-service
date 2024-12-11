@@ -34,15 +34,17 @@ spec:
         networking.gardener.cloud/to-runtime-apiserver: allowed
         networking.resources.gardener.cloud/to-kube-apiserver-tcp-443: allowed
     spec:
-      priorityClassName: gardener-system-200
+      priorityClassName: {{ .Values.priorityClassName }}
       containers:
       - name: {{ .Chart.Name }}
         image: {{ index .Values.images "cert-management" }}
         imagePullPolicy: IfNotPresent
         volumeMounts:
+        {{- if not .Values.deployOnGardenRuntime }}
         - mountPath: /var/run/secrets/gardener.cloud/shoot/generic-kubeconfig
           name: kubeconfig
           readOnly: true
+        {{- end }}
         {{- if .Values.configuration.caCertificates }}
         - name: ca-certificates
           mountPath: /var/run/cert-manager/certs
@@ -50,8 +52,12 @@ spec:
         {{- end }}
         args:
         - --name={{ include "cert-management.fullname" . }}
+        {{- if not .Values.deployOnGardenRuntime }}
         - --namespace=kube-system
         - --source=/var/run/secrets/gardener.cloud/shoot/generic-kubeconfig/kubeconfig
+        {{- else }}
+        - --namespace={{ .Release.Namespace }}
+        {{- end }}
         - --issuer.issuer-namespace={{ .Release.Namespace }}
         - --issuer.default-issuer={{ .Values.defaultIssuer.name }}
         {{- if .Values.configuration.defaultRequestsPerDayQuota }}
@@ -99,6 +105,9 @@ spec:
         {{- if .Values.configuration.privateKeyDefaults.sizeECDSA }}
         - --default-ecdsa-private-key-size={{ .Values.configuration.privateKeyDefaults.sizeECDSA }}
         {{- end }}
+        {{- if .Values.deployOnGardenRuntime }}
+        - --use-dnsrecords=true
+        {{- end }}
         {{- if .Values.configuration.caCertificates }}
         env:
         - name: LEGO_CA_SYSTEM_CERT_POOL
@@ -120,6 +129,7 @@ spec:
         resources:
           {{- toYaml .Values.resources | nindent 10 }}
       volumes:
+      {{- if not .Values.deployOnGardenRuntime }}
       - name: kubeconfig
         projected:
           defaultMode: 420
@@ -136,6 +146,7 @@ spec:
                 path: token
               name: {{ .Values.shootClusterSecret }}
               optional: false
+      {{- end }}
       {{- if .Values.configuration.caCertificates }}
       - name: ca-certificates
         configMap:
