@@ -65,7 +65,6 @@ certificateConfig:
   #  ...
   #  -----END CERTIFICATE-----
 
-
   shootIssuers:
     enabled: false # if true, allows to specify issuers in the shoot clusters
 
@@ -82,3 +81,6 @@ disableControllers: []
 
 gardener:
   version: ""
+  runtimeCluster:
+    enabled: false
+  # priorityClassName: gardener-garden-system-200
