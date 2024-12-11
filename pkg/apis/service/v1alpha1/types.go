@@ -14,6 +14,9 @@ const CertManagementResourceNameSeed = "extension-shoot-cert-service-seed"
 // CertManagementResourceNameShoot is the name for Cert-Management resources in the shoot.
 const CertManagementResourceNameShoot = "extension-shoot-cert-service-shoot"
 
+// CertManagementResourceNameEmbedded is the name for Cert-Management resources in the garden namespace of runtime cluster or seed.
+const CertManagementResourceNameEmbedded = "extension-shoot-cert-service-embedded"
+
 // CertManagementImageName is the name of the Cert-Management image in the image vector.
 const CertManagementImageName = "cert-management"
 
@@ -28,6 +31,9 @@ const CertManagementChartNameSeed = "shoot-cert-management-seed"
 
 // CertManagementChartNameShoot is the name of the chart for Cert-Management in the shoot.
 const CertManagementChartNameShoot = "shoot-cert-management-shoot"
+
+// CertManagementChartNameEmbedded is the name of the chart for Cert-Management in the garden namespace on runtime cluster and seeds.
+const CertManagementChartNameEmbedded = "embedded-cert-management"
 
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

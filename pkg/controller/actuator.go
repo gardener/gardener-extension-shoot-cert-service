@@ -70,6 +70,10 @@ type actuator struct {
 
 // Reconcile the Extension resource.
 func (a *actuator) Reconcile(ctx context.Context, log logr.Logger, ex *extensionsv1alpha1.Extension) error {
+	if a.extensionClass == extensionsv1alpha1.ExtensionClassGarden {
+		return a.reconcileOnRuntimeCluster(ctx, log, ex)
+	}
+
 	namespace := ex.GetNamespace()
 
 	cluster, err := controller.GetCluster(ctx, a.client, namespace)
@@ -102,6 +106,10 @@ func (a *actuator) Reconcile(ctx context.Context, log logr.Logger, ex *extension
 
 // Delete the Extension resource.
 func (a *actuator) Delete(ctx context.Context, log logr.Logger, ex *extensionsv1alpha1.Extension) error {
+	if a.extensionClass == extensionsv1alpha1.ExtensionClassGarden {
+		return a.deleteOnRuntimeCluster(ctx, log, ex)
+	}
+
 	namespace := ex.GetNamespace()
 	a.logger.Info("Component is being deleted", "component", "cert-management", "namespace", namespace)
 	if err := a.deleteShootResources(ctx, namespace); err != nil {
@@ -249,14 +257,20 @@ func (a *actuator) createSeedResources(ctx context.Context, certConfig *service.
 		return err
 	}
 
-	dnsChallengeOnShoot, err := createDNSChallengeOnShootValues(certConfig.DNSChallengeOnShoot)
-	if err != nil {
-		return err
-	}
+	var (
+		restricted        bool
+		restrictedDomains *string
+		replicaCount      = 1
+	)
 
-	if cluster.Shoot.Spec.DNS == nil || cluster.Shoot.Spec.DNS.Domain == nil {
-		a.logger.Info("no domain given for shoot %s/%s - aborting", cluster.Shoot.Name, cluster.Shoot.Namespace)
-		return nil
+	if cluster != nil {
+		replicaCount = controller.GetReplicas(cluster, 1)
+		if cluster.Shoot.Spec.DNS == nil || cluster.Shoot.Spec.DNS.Domain == nil {
+			a.logger.Info("no domain given for shoot %s/%s - aborting", cluster.Shoot.Name, cluster.Shoot.Namespace)
+			return nil
+		}
+		restricted = *a.serviceConfig.RestrictIssuer
+		restrictedDomains = cluster.Shoot.Spec.DNS.Domain
 	}
 
 	var propagationTimeout string
@@ -264,29 +278,33 @@ func (a *actuator) createSeedResources(ctx context.Context, certConfig *service.
 		propagationTimeout = a.serviceConfig.ACME.PropagationTimeout.Duration.String()
 	}
 
-	var (
-		shootIssuers         = a.createShootIssuersValues(certConfig)
-		certManagementConfig = map[string]interface{}{
-			"replicaCount": controller.GetReplicas(cluster, 1),
-			"defaultIssuer": map[string]interface{}{
-				"name":       a.serviceConfig.IssuerName,
-				"restricted": *a.serviceConfig.RestrictIssuer,
-				"domains":    cluster.Shoot.Spec.DNS.Domain,
-			},
-			"issuers": issuers,
-			"configuration": map[string]interface{}{
-				"propagationTimeout": propagationTimeout,
-			},
-			"dnsChallengeOnShoot":              dnsChallengeOnShoot,
-			"shootIssuers":                     shootIssuers,
-			"genericTokenKubeconfigSecretName": extensions.GenericTokenKubeconfigSecretNameFromCluster(cluster),
-		}
-	)
-
-	if err := gutil.NewShootAccessSecret(v1alpha1.ShootAccessSecretName, namespace).Reconcile(ctx, a.client); err != nil {
-		return err
+	certManagementConfig := map[string]interface{}{
+		"replicaCount": replicaCount,
+		"defaultIssuer": map[string]interface{}{
+			"name":       a.serviceConfig.IssuerName,
+			"restricted": restricted,
+			"domains":    restrictedDomains,
+		},
+		"issuers": issuers,
+		"configuration": map[string]interface{}{
+			"propagationTimeout": propagationTimeout,
+		},
 	}
-	certManagementConfig["shootClusterSecret"] = gutil.SecretNamePrefixShootAccess + v1alpha1.ShootAccessSecretName
+
+	if cluster != nil {
+		dnsChallengeOnShoot, err := createDNSChallengeOnShootValues(certConfig.DNSChallengeOnShoot)
+		if err != nil {
+			return err
+		}
+		certManagementConfig["shootIssuers"] = a.createShootIssuersValues(certConfig)
+		certManagementConfig["dnsChallengeOnShoot"] = dnsChallengeOnShoot
+		if err := gutil.NewShootAccessSecret(v1alpha1.ShootAccessSecretName, namespace).Reconcile(ctx, a.client); err != nil {
+			return err
+		}
+		certManagementConfig["genericTokenKubeconfigSecretName"] = extensions.GenericTokenKubeconfigSecretNameFromCluster(cluster)
+
+		certManagementConfig["shootClusterSecret"] = gutil.SecretNamePrefixShootAccess + v1alpha1.ShootAccessSecretName
+	}
 
 	cfg := certManagementConfig["configuration"].(map[string]interface{})
 	if a.serviceConfig.DefaultRequestsPerDayQuota != nil {
@@ -346,7 +364,13 @@ func (a *actuator) createSeedResources(ctx context.Context, certConfig *service.
 
 	a.logger.Info("Component is being applied", "component", "cert-management", "namespace", namespace)
 
-	return a.createManagedResource(ctx, namespace, v1alpha1.CertManagementResourceNameSeed, "seed", renderer, v1alpha1.CertManagementChartNameSeed, namespace, certManagementConfig, nil)
+	resourceName := v1alpha1.CertManagementResourceNameSeed
+	chartName := v1alpha1.CertManagementChartNameSeed
+	if cluster == nil {
+		resourceName = v1alpha1.CertManagementResourceNameRuntime
+		chartName = v1alpha1.CertManagementChartNameRuntime
+	}
+	return a.createManagedResource(ctx, namespace, resourceName, "seed", renderer, chartName, namespace, certManagementConfig, nil)
 }
 
 func (a *actuator) createShootResources(ctx context.Context, certConfig *service.CertConfig, cluster *controller.Cluster, namespace string) error {
@@ -440,6 +464,41 @@ func (a *actuator) createShootIssuersValues(certConfig *service.CertConfig) map[
 	return map[string]interface{}{
 		"enabled": shootIssuersEnabled,
 	}
+}
+
+func (a *actuator) reconcileOnRuntimeCluster(ctx context.Context, _ logr.Logger, ex *extensionsv1alpha1.Extension) error {
+	namespace := ex.GetNamespace()
+
+	certConfig := &service.CertConfig{}
+	if ex.Spec.ProviderConfig != nil {
+		if _, _, err := a.decoder.Decode(ex.Spec.ProviderConfig.Raw, nil, certConfig); err != nil {
+			return fmt.Errorf("failed to decode provider config: %+v", err)
+		}
+		if errs := validation.ValidateCertConfig(certConfig, nil); len(errs) > 0 {
+			return errs.ToAggregate()
+		}
+	}
+
+	if err := a.createSeedResources(ctx, certConfig, nil, namespace); err != nil {
+		return err
+	}
+
+	return a.updateStatus(ctx, ex, certConfig)
+}
+
+func (a *actuator) deleteOnRuntimeCluster(ctx context.Context, logger logr.Logger, ex *extensionsv1alpha1.Extension) error {
+	namespace := ex.GetNamespace()
+	a.logger.Info("Component is being deleted", "component", "cert-management", "namespace", namespace)
+
+	a.logger.Info("Deleting managed resource for runtime", "namespace", namespace)
+
+	if err := managedresources.Delete(ctx, a.client, namespace, v1alpha1.CertManagementResourceNameRuntime, false); err != nil {
+		return err
+	}
+
+	timeoutCtx, cancel := context.WithTimeout(ctx, 2*time.Minute)
+	defer cancel()
+	return managedresources.WaitUntilDeleted(timeoutCtx, a.client, namespace, v1alpha1.CertManagementResourceNameRuntime)
 }
 
 func mergeServers(serversList ...string) string {
