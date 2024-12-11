@@ -2,7 +2,7 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: extensions.gardener.cloud:extension-shoot-cert-service:shoot
+  name: {{ include "clusterRoleName" . }}
   labels:
     app.kubernetes.io/instance: {{ .Release.Name }}
     app.kubernetes.io/managed-by: {{ .Release.Service }}
@@ -108,15 +108,21 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: extensions.gardener.cloud:extension-shoot-cert-service:shoot
+  name: {{ include "clusterRoleName" . }}
   labels:
     app.kubernetes.io/instance: {{ .Release.Name }}
     app.kubernetes.io/managed-by: {{ .Release.Service }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: extensions.gardener.cloud:extension-shoot-cert-service:shoot
+  name: {{ include "clusterRoleName" . }}
 subjects:
+{{- if .Values.deployEmbedded }}
+- kind: ServiceAccount
+  name: {{ default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
+  namespace: {{ .Release.Namespace }}
+{{- else }}
 - kind: ServiceAccount
   name: {{ .Values.shootAccessServiceAccountName }}
   namespace: kube-system
+{{- end }}

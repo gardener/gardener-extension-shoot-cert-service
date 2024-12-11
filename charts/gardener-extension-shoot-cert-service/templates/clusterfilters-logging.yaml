@@ -1,3 +1,5 @@
+{{- if not .Values.gardener.runtimeCluster.enabled }}
+---
 apiVersion: fluentbit.fluent.io/v1alpha2
 kind: ClusterFilter
 metadata:
@@ -26,3 +28,5 @@ spec:
       rules:
       - '$tag ^kubernetes\.var\.log\.containers\.(cert-controller-manager-.+?_.+?_shoot-cert-management-seed) user-exposed.$TAG true'
   match: kubernetes.*
+---
+{{- end }}
