@@ -1,5 +1,5 @@
 {{- range .Values.issuers }}
-{{- if .acme.privateKey }}
+{{- if and .acme .acme.privateKey }}
 apiVersion: v1
 kind: Secret
 metadata: 
@@ -11,12 +11,25 @@ data:
   privateKey: {{ .acme.privateKey | b64enc | trim }}
 {{- end }}
 ---
+{{- if .ca }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: extension-shoot-cert-service-issuer-{{ .name }}-ca
+  namespace: {{ $.Release.Namespace }}
+type: kubernetes.io/tls
+data:
+  tls.crt: {{ .ca.certificate | b64enc | trim }}
+  tls.key: {{ .ca.certificateKey | b64enc | trim }}
+{{- end }}
+---
 apiVersion: cert.gardener.cloud/v1alpha1
 kind: Issuer
 metadata:
   name: {{ .name }}
   namespace: {{ $.Release.Namespace }}
 spec:
+{{- if .acme }}
   acme:
     server: {{ .acme.server }}
     email: {{ .acme.email }}
@@ -56,6 +69,13 @@ spec:
   {{- range .precheckNameservers }}
     - {{ . }}
   {{- end }}
+{{- end }}
+{{- end }}
+{{- if .ca }}
+  ca:
+    privateKeySecretRef:
+      name: extension-shoot-cert-service-issuer-{{ .name }}-ca
+      namespace: {{ $.Release.Namespace }}
 {{- end }}
 {{- if .requestsPerDayQuota }}
   requestsPerDayQuota: {{ .requestsPerDayQuota }}

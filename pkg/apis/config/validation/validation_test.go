@@ -17,9 +17,17 @@ import (
 )
 
 var _ = Describe("Validation", func() {
-	validACME := config.ACME{
+	validACME := &config.ACME{
 		Email:  "john.doe@example.com",
 		Server: "https://acme-v02.api.letsencrypt.org/directory",
+	}
+	validCA := &config.CA{
+		Certificate: "-----BEGIN CERTIFICATE-----\nAAABBBCCCDDD\n-----END CERTIFICATE-----",
+		CertificateKey: `
+-----BEGIN PRIVATE KEY-----
+...
+-----END PRIVATE KEY-----
+`,
 	}
 
 	DescribeTable("#ValidateConfiguration",
@@ -29,7 +37,7 @@ var _ = Describe("Validation", func() {
 		},
 		Entry("Empty configuration", config.Configuration{
 			IssuerName: "",
-			ACME:       config.ACME{},
+			ACME:       &config.ACME{},
 		}, ConsistOf(
 			PointTo(MatchFields(IgnoreExtras, Fields{
 				"Type":  Equal(field.ErrorTypeRequired),
@@ -46,7 +54,7 @@ var _ = Describe("Validation", func() {
 		)),
 		Entry("Invalid ACME configuration", config.Configuration{
 			IssuerName: "gardener",
-			ACME: config.ACME{
+			ACME: &config.ACME{
 				Email:  "john.doe.com",
 				Server: "acme-v02.api.letsencrypt.org/directory",
 			},
@@ -62,7 +70,7 @@ var _ = Describe("Validation", func() {
 		)),
 		Entry("Invalid precheck nameservers and caCertificates", config.Configuration{
 			IssuerName: "gardener",
-			ACME: config.ACME{
+			ACME: &config.ACME{
 				Email:               validACME.Email,
 				Server:              validACME.Server,
 				PrecheckNameservers: ptr.To("8.8.8.8,foo.com"),
@@ -80,7 +88,7 @@ var _ = Describe("Validation", func() {
 		)),
 		Entry("Valid precheck nameservers and caCertificates", config.Configuration{
 			IssuerName: "gardener",
-			ACME: config.ACME{
+			ACME: &config.ACME{
 				Email:               validACME.Email,
 				Server:              validACME.Server,
 				PrecheckNameservers: ptr.To("8.8.8.8,172.11.22.253"),
@@ -140,6 +148,32 @@ AAABBBCCCDDD
 				"Type":   Equal(field.ErrorTypeInvalid),
 				"Field":  Equal("privateKeyDefaults.sizeECDSA"),
 				"Detail": Equal("size for ECDSA algorithm must either be '256' or '384'"),
+			})),
+		)),
+		Entry("Valid specification of CA", config.Configuration{
+			IssuerName: "gardener",
+			CA:         validCA,
+		}, BeEmpty()),
+		Entry("Invalid specification of both ACME and CA", config.Configuration{
+			IssuerName: "gardener",
+			ACME:       validACME,
+			CA:         validCA,
+		}, ConsistOf(
+			PointTo(MatchFields(IgnoreExtras, Fields{
+				"Type":   Equal(field.ErrorTypeInvalid),
+				"Field":  Equal("acme"),
+				"Detail": Equal("only one of ACME or CA can be specified"),
+			})),
+		)),
+		Entry("Invalid specification of none of ACME and CA", config.Configuration{
+			IssuerName: "gardener",
+			ACME:       nil,
+			CA:         nil,
+		}, ConsistOf(
+			PointTo(MatchFields(IgnoreExtras, Fields{
+				"Type":   Equal(field.ErrorTypeRequired),
+				"Field":  Equal("acme"),
+				"Detail": Equal("at least one of ACME or CA must be specified"),
 			})),
 		)),
 	)
