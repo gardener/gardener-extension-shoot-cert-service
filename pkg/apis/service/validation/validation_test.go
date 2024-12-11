@@ -45,7 +45,7 @@ var _ = Describe("Validation", func() {
 			},
 		}
 	)
-	DescribeTable("#ValidateCertConfig",
+	DescribeTable("#ValidateCertConfigShoot",
 		func(config service.CertConfig, match gomegatypes.GomegaMatcher) {
 			err := validation.ValidateCertConfig(&config, cluster)
 			Expect(err).To(match)
@@ -288,6 +288,64 @@ var _ = Describe("Validation", func() {
 				"Type":   Equal(field.ErrorTypeInvalid),
 				"Field":  Equal("precheckNameservers"),
 				"Detail": Equal("must contain at least one DNS server IP"),
+			})),
+		)),
+	)
+	DescribeTable("#ValidateCertConfigRuntimeCluster",
+		func(config service.CertConfig, match gomegatypes.GomegaMatcher) {
+			err := validation.ValidateCertConfig(&config, nil)
+			Expect(err).To(match)
+		},
+		Entry("No issuers", service.CertConfig{}, BeEmpty()),
+		Entry("Unsupported issuer", service.CertConfig{
+			Issuers: []service.IssuerConfig{
+				{
+					Name:   "issuer",
+					Server: "https://acme-v02.api.letsencrypt.org/directory",
+					Email:  "john@example.com",
+				},
+			},
+		}, ConsistOf(
+			PointTo(MatchFields(IgnoreExtras, Fields{
+				"Type":  Equal(field.ErrorTypeForbidden),
+				"Field": Equal("issuers"),
+			})),
+		)),
+		Entry("Unsupported DNSChallengeOnShoot", service.CertConfig{
+			DNSChallengeOnShoot: &service.DNSChallengeOnShoot{
+				Enabled:   true,
+				Namespace: "kube-system",
+			},
+		}, ConsistOf(
+			PointTo(MatchFields(IgnoreExtras, Fields{
+				"Type":  Equal(field.ErrorTypeForbidden),
+				"Field": Equal("dnsChallengeOnShoot"),
+			})),
+		)),
+		Entry("Unsupported PrecheckNameservers", service.CertConfig{
+			PrecheckNameservers: &nameservers,
+		}, ConsistOf(
+			PointTo(MatchFields(IgnoreExtras, Fields{
+				"Type":  Equal(field.ErrorTypeForbidden),
+				"Field": Equal("precheckNameservers"),
+			})),
+		)),
+		Entry("Unsupported ShootIssuer", service.CertConfig{
+			ShootIssuers: &service.ShootIssuers{
+				Enabled: true,
+			},
+		}, ConsistOf(
+			PointTo(MatchFields(IgnoreExtras, Fields{
+				"Type":  Equal(field.ErrorTypeForbidden),
+				"Field": Equal("shootIssuers"),
+			})),
+		)),
+		Entry("Unsupported Alerting", service.CertConfig{
+			Alerting: &service.Alerting{},
+		}, ConsistOf(
+			PointTo(MatchFields(IgnoreExtras, Fields{
+				"Type":  Equal(field.ErrorTypeForbidden),
+				"Field": Equal("alerting"),
 			})),
 		)),
 	)
