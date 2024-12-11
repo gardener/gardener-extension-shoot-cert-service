@@ -9,7 +9,9 @@ metadata:
     app.kubernetes.io/name: {{ include "cert-management.name" . }}
     app.kubernetes.io/instance: {{ .Release.Name }}
     app.kubernetes.io/managed-by: {{ .Release.Service }}
+    {{- if not .Values.internalDeployment }}
     high-availability-config.resources.gardener.cloud/type: controller
+    {{- end }}
 spec:
   revisionHistoryLimit: 2
   replicas: {{ .Values.replicaCount }}
@@ -34,7 +36,7 @@ spec:
         networking.gardener.cloud/to-runtime-apiserver: allowed
         networking.resources.gardener.cloud/to-kube-apiserver-tcp-443: allowed
     spec:
-      priorityClassName: gardener-system-200
+      priorityClassName: {{ .Values.priorityClassName }}
       containers:
       - name: {{ .Chart.Name }}
         image: {{ index .Values.images "cert-management" }}
@@ -42,9 +44,11 @@ spec:
         securityContext:
           allowPrivilegeEscalation: false
         volumeMounts:
+        {{- if not .Values.internalDeployment }}
         - mountPath: /var/run/secrets/gardener.cloud/shoot/generic-kubeconfig
           name: kubeconfig
           readOnly: true
+        {{- end }}
         {{- if .Values.configuration.caCertificates }}
         - name: ca-certificates
           mountPath: /var/run/cert-manager/certs
@@ -52,8 +56,15 @@ spec:
         {{- end }}
         args:
         - --name={{ include "cert-management.fullname" . }}
+        {{- if not .Values.internalDeployment }}
         - --namespace=kube-system
         - --source=/var/run/secrets/gardener.cloud/shoot/generic-kubeconfig/kubeconfig
+        {{- else }}
+        - --namespace={{ .Release.Namespace }}
+        - --issuer.cert-class={{ .Values.certClass }}
+        {{- end }}
+        {{- if .Values.configuration.defaultRequestsPerDayQuota }}
+        {{- end }}
         - --issuer.issuer-namespace={{ .Release.Namespace }}
         - --issuer.default-issuer={{ .Values.defaultIssuer.name }}
         {{- if .Values.configuration.defaultRequestsPerDayQuota }}
@@ -101,6 +112,9 @@ spec:
         {{- if .Values.configuration.privateKeyDefaults.sizeECDSA }}
         - --default-ecdsa-private-key-size={{ .Values.configuration.privateKeyDefaults.sizeECDSA }}
         {{- end }}
+        {{- if .Values.internalDeployment }}
+        - --use-dnsrecords=true
+        {{- end }}
         {{- if .Values.configuration.caCertificates }}
         env:
         - name: LEGO_CA_SYSTEM_CERT_POOL
@@ -122,6 +136,7 @@ spec:
         resources:
           {{- toYaml .Values.resources | nindent 10 }}
       volumes:
+      {{- if not .Values.internalDeployment }}
       - name: kubeconfig
         projected:
           defaultMode: 420
@@ -138,6 +153,7 @@ spec:
                 path: token
               name: {{ .Values.shootClusterSecret }}
               optional: false
+      {{- end }}
       {{- if .Values.configuration.caCertificates }}
       - name: ca-certificates
         configMap:

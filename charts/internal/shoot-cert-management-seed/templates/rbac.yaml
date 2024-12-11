@@ -24,42 +24,58 @@ rules:
   - configmaps
   verbs:
   - create
+{{- if .Values.internalDeployment }}
 - apiGroups:
-    - dns.gardener.cloud
+  - extensions.gardener.cloud
   resources:
-    - dnsentries
+  - dnsrecords
   verbs:
-    - get
-    - list
-    - update
-    - watch
-    - create
-    - delete
+  - get
+  - list
+  - update
+  - patch
+  - watch
+  - create
+  - delete
+{{- else }}
 - apiGroups:
-    - "cert.gardener.cloud"
+  - dns.gardener.cloud
   resources:
-    - issuers
-    - issuers/status
+  - dnsentries
   verbs:
-    - get
-    - update
-    - list
-    - patch
-    - watch
+  - get
+  - list
+  - update
+  - patch
+  - watch
+  - create
+  - delete
+{{- end }}
 - apiGroups:
-    - ""
+  - "cert.gardener.cloud"
   resources:
-    - "secrets"
+  - issuers
+  - issuers/status
   verbs:
-    - "*"
+  - get
+  - update
+  - list
+  - patch
+  - watch
 - apiGroups:
-    - ""
-    - events.k8s.io
+  - ""
   resources:
-    - events
+  - "secrets"
   verbs:
-    - create
-    - patch
+  - "*"
+- apiGroups:
+  - ""
+  - events.k8s.io
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
