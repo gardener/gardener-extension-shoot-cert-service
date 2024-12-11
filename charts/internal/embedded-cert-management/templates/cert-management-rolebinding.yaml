@@ -1,0 +1,19 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: extensions.gardener.cloud:extension-shoot-cert-service:cert-controller-manager
+  namespace: {{ .Release.Namespace }}
+subjects:
+- kind: ServiceAccount
+{{- if .Values.deployEmbedded }}
+  name: {{ default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
+  namespace: {{ .Release.Namespace }}
+{{- else }}
+  name: {{ .Values.shootAccessServiceAccountName }}
+  namespace: kube-system
+{{- end }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: extensions.gardener.cloud:extension-shoot-cert-service:cert-controller-manager

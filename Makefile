@@ -74,6 +74,7 @@ tidy:
 clean:
 	@$(shell find ./example -type f -name "controller-registration.yaml" -exec rm '{}' \;)
 	@bash $(GARDENER_HACK_DIR)/clean.sh ./cmd/... ./pkg/... ./test/...
+	@rm -f $(REPO_ROOT)/charts/internal/embedded-cert-management/templates/*
 
 .PHONY: check-generate
 check-generate:
@@ -87,6 +88,7 @@ check: $(GOIMPORTS) $(GOLANGCI_LINT) $(HELM)
 .PHONY: generate
 generate: $(CONTROLLER_GEN) $(GEN_CRD_API_REFERENCE_DOCS) $(HELM) $(MOCKGEN) $(YQ) $(VGOPATH)
 	@VGOPATH=$(VGOPATH) REPO_ROOT=$(REPO_ROOT) GARDENER_HACK_DIR=$(GARDENER_HACK_DIR) bash $(GARDENER_HACK_DIR)/generate-sequential.sh ./charts/... ./cmd/... ./pkg/... ./test/...
+	@$(REPO_ROOT)/hack/copy-templates-for-embedded-cert-management.sh
 	$(MAKE) format
 
 .PHONY: format
