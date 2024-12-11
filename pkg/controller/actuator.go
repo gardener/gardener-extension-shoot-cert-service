@@ -46,20 +46,22 @@ import (
 const ActuatorName = "shoot-cert-service-actuator"
 
 // NewActuator returns an actuator responsible for Extension resources.
-func NewActuator(mgr manager.Manager, config config.Configuration) extension.Actuator {
+func NewActuator(mgr manager.Manager, config config.Configuration, extensionClass extensionsv1alpha1.ExtensionClass) extension.Actuator {
 	return &actuator{
-		client:        mgr.GetClient(),
-		config:        mgr.GetConfig(),
-		decoder:       serializer.NewCodecFactory(mgr.GetScheme(), serializer.EnableStrict).UniversalDecoder(),
-		logger:        log.Log.WithName(ActuatorName),
-		serviceConfig: config,
+		client:         mgr.GetClient(),
+		config:         mgr.GetConfig(),
+		decoder:        serializer.NewCodecFactory(mgr.GetScheme(), serializer.EnableStrict).UniversalDecoder(),
+		logger:         log.Log.WithName(ActuatorName),
+		serviceConfig:  config,
+		extensionClass: extensionClass,
 	}
 }
 
 type actuator struct {
-	client  client.Client
-	config  *rest.Config
-	decoder runtime.Decoder
+	client         client.Client
+	config         *rest.Config
+	decoder        runtime.Decoder
+	extensionClass extensionsv1alpha1.ExtensionClass
 
 	serviceConfig config.Configuration
 
