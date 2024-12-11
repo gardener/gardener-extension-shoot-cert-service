@@ -23,6 +23,26 @@ import (
 // ValidateCertConfig validates the passed configuration instance.
 func ValidateCertConfig(config *service.CertConfig, cluster *controller.Cluster) field.ErrorList {
 	allErrs := field.ErrorList{}
+
+	if cluster == nil {
+		if len(config.Issuers) > 0 {
+			allErrs = append(allErrs, field.Forbidden(field.NewPath("issuers"), "issuers are not allowed in extension on runtime cluster. Please add issuer in the Helm values of the gardener-extension-shoot-cert-service extension"))
+		}
+		if config.PrecheckNameservers != nil {
+			allErrs = append(allErrs, field.Forbidden(field.NewPath("precheckNameservers"), "precheckNameservers are not allowed in extension on runtime cluster."))
+		}
+		if config.DNSChallengeOnShoot != nil {
+			allErrs = append(allErrs, field.Forbidden(field.NewPath("dnsChallengeOnShoot"), "dnsChallengeOnShoot is not allowed in extension on runtime cluster."))
+		}
+		if config.ShootIssuers != nil {
+			allErrs = append(allErrs, field.Forbidden(field.NewPath("shootIssuers"), "shootIssuers is not allowed in extension on runtime cluster."))
+		}
+		if config.Alerting != nil {
+			allErrs = append(allErrs, field.Forbidden(field.NewPath("alerting"), "alerting is not allowed in extension on runtime cluster."))
+		}
+		return allErrs
+	}
+
 	allErrs = append(allErrs, validateIssuers(cluster, config.Issuers, field.NewPath("issuers"))...)
 
 	allErrs = append(allErrs, validateDNSChallengeOnShoot(config.DNSChallengeOnShoot, field.NewPath("dnsChallengeOnShoot"))...)
