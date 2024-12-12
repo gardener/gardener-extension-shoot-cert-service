@@ -120,15 +120,6 @@ rules:
   - patch
   - update
   - delete
-# TODO(rfranzke): Remove this after August 2024.
-- apiGroups:
-  - apps
-  resources:
-  - statefulsets
-  verbs:
-  - get
-  - list
-  - watch
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
