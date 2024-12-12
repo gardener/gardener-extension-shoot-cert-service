@@ -27,8 +27,12 @@ type Configuration struct {
 	// ShootIssuers contains enablement for issuers on shoot cluster
 	// +optional
 	ShootIssuers *ShootIssuers `json:"shootIssuers,omitempty"`
-	// ACME contains ACME related configuration.
-	ACME ACME `json:"acme"`
+	// ACME contains the ACME default issuer related configuration. Either ACME or CA must be set.
+	// +optional
+	ACME *ACME `json:"acme,omitempty"`
+	// CA contains the CA default issuer related configuration. Either ACME or CA must be set.
+	// +optional
+	CA *CA `json:"ca,omitempty"`
 	// HealthCheckConfig is the config for the health check controller.
 	// +optional
 	HealthCheckConfig *configv1alpha1.HealthCheckConfig `json:"healthCheckConfig,omitempty"`
@@ -77,4 +81,14 @@ type ACME struct {
 	// DeactivateAuthorizations enables deactivation of authorizations after successful certificate request
 	// +optional
 	DeactivateAuthorizations *bool `json:"deactivateAuthorizations,omitempty"`
+}
+
+type CA struct {
+	// Certificate is the public certificate of the CA in PEM format.
+	Certificate string `json:"certificate"`
+	// CertificateKey is the private certificate key of the CA in PEM format.
+	CertificateKey string `json:"certificateKey"`
+	// CACertificates are custom root certificates to be made available for the cert-controller-manager
+	// +optional
+	CACertificates *string `json:"caCertificates,omitempty"`
 }

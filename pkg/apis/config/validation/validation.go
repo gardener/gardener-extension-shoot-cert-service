@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net"
 	"net/url"
+	"regexp"
 	"strings"
 
 	"github.com/gardener/gardener/pkg/utils"
@@ -28,7 +29,18 @@ func ValidateConfiguration(config *config.Configuration) field.ErrorList {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("defaultRequestsPerDayQuota"), *config.DefaultRequestsPerDayQuota, "must be >= 1"))
 	}
 
-	allErrs = append(allErrs, validateACME(&config.ACME, field.NewPath("acme"))...)
+	if config.ACME != nil && config.CA != nil {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("acme"), config.ACME, "only one of ACME or CA can be specified"))
+	}
+	if config.ACME == nil && config.CA == nil {
+		allErrs = append(allErrs, field.Required(field.NewPath("acme"), "at least one of ACME or CA must be specified"))
+	}
+	if config.ACME != nil {
+		allErrs = append(allErrs, validateACME(config.ACME, field.NewPath("acme"))...)
+	}
+	if config.CA != nil {
+		allErrs = append(allErrs, validateCA(config.CA, field.NewPath("ca"))...)
+	}
 
 	allErrs = append(allErrs, validatePrivateKeyDefaults(config.PrivateKeyDefaults, field.NewPath("privateKeyDefaults"))...)
 
@@ -62,13 +74,32 @@ func validateACME(acme *config.ACME, fldPath *field.Path) field.ErrorList {
 	if acme.CACertificates != nil {
 		s := strings.TrimSpace(*acme.CACertificates)
 		if !strings.HasPrefix(s, "-----BEGIN CERTIFICATE-----") || !strings.HasSuffix(s, "-----END CERTIFICATE-----") {
-			short := s
-			if len(short) > 60 {
-				short = s[:30] + "..." + s[len(s)-30:]
-			}
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("caCertificates"), short, "invalid certificate(s), expected PEM format)"))
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("caCertificates"), shorten(s), "invalid certificate(s), expected PEM format)"))
 		}
 	}
+	return allErrs
+}
+
+func validateCA(ca *config.CA, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	s := strings.TrimSpace(ca.Certificate)
+	if !strings.HasPrefix(s, "-----BEGIN CERTIFICATE-----") || !strings.HasSuffix(s, "-----END CERTIFICATE-----") {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("certificate"), shorten(s), "invalid certificate, expected PEM format)"))
+	}
+
+	s = strings.TrimSpace(ca.CertificateKey)
+	if found, err := regexp.MatchString(`(?s)^-----BEGIN.* PRIVATE KEY-----.+-----END.* PRIVATE KEY-----$`, s); err != nil || !found {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("certificate"), shorten(s), "invalid RSA private key, expected PEM format)"))
+	}
+
+	if ca.CACertificates != nil {
+		s := strings.TrimSpace(*ca.CACertificates)
+		if !strings.HasPrefix(s, "-----BEGIN CERTIFICATE-----") || !strings.HasSuffix(s, "-----END CERTIFICATE-----") {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("caCertificates"), shorten(s), "invalid certificate(s), expected PEM format)"))
+		}
+	}
+
 	return allErrs
 }
 
@@ -89,4 +120,11 @@ func validatePrivateKeyDefaults(defaults *config.PrivateKeyDefaults, fldPath *fi
 	}
 
 	return allErrs
+}
+
+func shorten(s string) string {
+	if len(s) > 60 {
+		return s[:30] + "..." + s[len(s)-30:]
+	}
+	return s
 }
