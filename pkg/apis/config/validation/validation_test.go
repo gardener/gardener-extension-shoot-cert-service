@@ -5,6 +5,14 @@
 package validation_test
 
 import (
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/pem"
+	"math/big"
+	"time"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	. "github.com/onsi/gomega/gstruct"
@@ -17,18 +25,25 @@ import (
 )
 
 var _ = Describe("Validation", func() {
-	validACME := &config.ACME{
-		Email:  "john.doe@example.com",
-		Server: "https://acme-v02.api.letsencrypt.org/directory",
-	}
-	validCA := &config.CA{
-		Certificate: "-----BEGIN CERTIFICATE-----\nAAABBBCCCDDD\n-----END CERTIFICATE-----",
-		CertificateKey: `
------BEGIN PRIVATE KEY-----
-...
------END PRIVATE KEY-----
-`,
-	}
+	var (
+		validACME = &config.ACME{
+			Email:  "john.doe@example.com",
+			Server: "https://acme-v02.api.letsencrypt.org/directory",
+		}
+		validCA = func() *config.CA {
+			pemCert, pemKey, err := createCA()
+			Expect(err).ToNot(HaveOccurred())
+			return &config.CA{
+				Certificate:    pemCert,
+				CertificateKey: pemKey,
+			}
+		}
+		validCACerts = func() string {
+			pemCert, _, err := createCA()
+			Expect(err).ToNot(HaveOccurred())
+			return pemCert + "\n" + pemCert
+		}
+	)
 
 	DescribeTable("#ValidateConfiguration",
 		func(config config.Configuration, match gomegatypes.GomegaMatcher) {
@@ -92,11 +107,7 @@ var _ = Describe("Validation", func() {
 				Email:               validACME.Email,
 				Server:              validACME.Server,
 				PrecheckNameservers: ptr.To("8.8.8.8,172.11.22.253"),
-				CACertificates: ptr.To(`
------BEGIN CERTIFICATE-----
-AAABBBCCCDDD
------END CERTIFICATE-----
-`),
+				CACertificates:      ptr.To(validCACerts()),
 			},
 		}, BeEmpty()),
 		Entry("Invalid DefaultRequestsPerDayQuota", config.Configuration{
@@ -142,7 +153,7 @@ AAABBBCCCDDD
 			PointTo(MatchFields(IgnoreExtras, Fields{
 				"Type":   Equal(field.ErrorTypeInvalid),
 				"Field":  Equal("privateKeyDefaults.sizeRSA"),
-				"Detail": Equal("size for RSA algorithm must either be '2048' or '3072' or '4096"),
+				"Detail": Equal("size for RSA algorithm must either be '2048' or '3072' or '4096'"),
 			})),
 			PointTo(MatchFields(IgnoreExtras, Fields{
 				"Type":   Equal(field.ErrorTypeInvalid),
@@ -152,12 +163,30 @@ AAABBBCCCDDD
 		)),
 		Entry("Valid specification of CA", config.Configuration{
 			IssuerName: "gardener",
-			CA:         validCA,
+			CA:         validCA(),
 		}, BeEmpty()),
+		Entry("Invalid CA certificate and private key", config.Configuration{
+			IssuerName: "gardener",
+			CA: &config.CA{
+				Certificate:    "blabla",
+				CertificateKey: "blabla",
+			},
+		}, ConsistOf(
+			PointTo(MatchFields(IgnoreExtras, Fields{
+				"Type":   Equal(field.ErrorTypeInvalid),
+				"Field":  Equal("ca.certificate"),
+				"Detail": Equal("invalid certificate: expected PEM format"),
+			})),
+			PointTo(MatchFields(IgnoreExtras, Fields{
+				"Type":   Equal(field.ErrorTypeInvalid),
+				"Field":  Equal("ca.certificateKey"),
+				"Detail": Equal("invalid certificate private key: expected PEM format"),
+			})),
+		)),
 		Entry("Invalid specification of both ACME and CA", config.Configuration{
 			IssuerName: "gardener",
 			ACME:       validACME,
-			CA:         validCA,
+			CA:         validCA(),
 		}, ConsistOf(
 			PointTo(MatchFields(IgnoreExtras, Fields{
 				"Type":   Equal(field.ErrorTypeInvalid),
@@ -178,3 +207,27 @@ AAABBBCCCDDD
 		)),
 	)
 })
+
+func createCA() (string, string, error) {
+	priv, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		return "", "", err
+	}
+	keyBytes, err := x509.MarshalPKCS8PrivateKey(priv)
+	if err != nil {
+		return "", "", err
+	}
+	pemKey := string(pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: keyBytes}))
+	cert := &x509.Certificate{
+		SerialNumber: big.NewInt(1234),
+		Subject:      pkix.Name{CommonName: "example.com"},
+		NotBefore:    time.Now(),
+		NotAfter:     time.Now().Add(time.Hour * 24 * 365),
+	}
+	certBytes, err := x509.CreateCertificate(rand.Reader, cert, cert, &priv.PublicKey, priv)
+	if err != nil {
+		return "", "", err
+	}
+	pemCert := string(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: certBytes}))
+	return pemCert, pemKey, nil
+}
