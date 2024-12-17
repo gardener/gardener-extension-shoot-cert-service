@@ -2,6 +2,14 @@
 gardener-extension-shoot-cert-service
 {{- end -}}
 
+{{- define "clusterRoleName" -}}
+{{- if .Values.gardener.runtimeCluster.enabled -}}
+gardener-extension-shoot-cert-service-runtime
+{{- else -}}
+gardener-extension-shoot-cert-service
+{{- end -}}
+{{- end -}}
+
 {{- define "certconfig" -}}
 ---
 apiVersion: shoot-cert-service.extensions.config.gardener.cloud/v1alpha1
@@ -27,6 +35,7 @@ privateKeyDefaults:
   sizeECDSA: {{ .Values.certificateConfig.privateKeyDefaults.sizeECDSA }}
 {{- end }}
 {{- end }}
+{{- if .Values.certificateConfig.defaultIssuer.acme }}
 acme:
   email: {{ required ".Values.certificateConfig.defaultIssuer.acme.email is required" .Values.certificateConfig.defaultIssuer.acme.email }}
   server: {{ required ".Values.certificateConfig.defaultIssuer.acme.server is required" .Values.certificateConfig.defaultIssuer.acme.server }}
@@ -46,6 +55,15 @@ acme:
   {{- if .Values.certificateConfig.deactivateAuthorizations }}
   deactivateAuthorizations: true
   {{- end }}
+{{- end }}
+{{- if .Values.certificateConfig.defaultIssuer.ca }}
+ca:
+  certificate: {{- toYaml (required ".Values.certificateConfig.defaultIssuer.ca.certificate is required" .Values.certificateConfig.defaultIssuer.ca.certificate) | indent 2 }}
+  certificateKey: {{- toYaml (required ".Values.certificateConfig.defaultIssuer.ca.certificateKey is required" .Values.certificateConfig.defaultIssuer.ca.certificateKey) | indent 2 }}
+  {{- if .Values.certificateConfig.caCertificates }}
+  caCertificates: {{- toYaml .Values.certificateConfig.caCertificates | indent 2 }}
+  {{- end }}
+{{- end }}
 {{- end }}
 
 {{-  define "image" -}}
