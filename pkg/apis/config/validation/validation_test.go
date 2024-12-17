@@ -32,7 +32,7 @@ var _ = Describe("Validation", func() {
 		}
 		validCA = func() *config.CA {
 			pemCert, pemKey, err := createCA()
-			Expect(err).ToNot(HaveOccurred())
+			ExpectWithOffset(1, err).ToNot(HaveOccurred())
 			return &config.CA{
 				Certificate:    pemCert,
 				CertificateKey: pemKey,
@@ -40,7 +40,7 @@ var _ = Describe("Validation", func() {
 		}
 		validCACerts = func() string {
 			pemCert, _, err := createCA()
-			Expect(err).ToNot(HaveOccurred())
+			ExpectWithOffset(1, err).ToNot(HaveOccurred())
 			return pemCert + "\n" + pemCert
 		}
 	)
