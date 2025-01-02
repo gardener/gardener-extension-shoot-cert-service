@@ -2,15 +2,17 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-package controller
+package shootcertservice
 
 import (
 	"context"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
+	certv1alpha1 "github.com/gardener/cert-management/pkg/apis/cert/v1alpha1"
 	"github.com/gardener/gardener/extensions/pkg/controller"
 	"github.com/gardener/gardener/extensions/pkg/controller/extension"
 	"github.com/gardener/gardener/extensions/pkg/util"
@@ -18,6 +20,7 @@ import (
 	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
 	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
 	"github.com/gardener/gardener/pkg/chartrenderer"
+	"github.com/gardener/gardener/pkg/controllerutils"
 	"github.com/gardener/gardener/pkg/extensions"
 	"github.com/gardener/gardener/pkg/utils/chart"
 	gutil "github.com/gardener/gardener/pkg/utils/gardener"
@@ -29,8 +32,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/client-go/rest"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
@@ -40,10 +46,16 @@ import (
 	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/service"
 	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/service/v1alpha1"
 	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/service/validation"
+	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/controller/runtimecluster/certificate"
 )
 
-// ActuatorName is the name of the Certificate Service actuator.
-const ActuatorName = "shoot-cert-service-actuator"
+const (
+	// ActuatorName is the name of the Certificate Service actuator.
+	ActuatorName = "shoot-cert-service-actuator"
+
+	// EnvSeedIngressDNSDomain is the environment variable for the seed ingress DNS domain.
+	EnvSeedIngressDNSDomain = "SEED_INGRESS_DNS_DOMAIN"
+)
 
 // NewActuator returns an actuator responsible for Extension resources.
 func NewActuator(mgr manager.Manager, config config.Configuration, extensionClass extensionsv1alpha1.ExtensionClass) extension.Actuator {
@@ -70,11 +82,11 @@ type actuator struct {
 
 // Reconcile the Extension resource.
 func (a *actuator) Reconcile(ctx context.Context, log logr.Logger, ex *extensionsv1alpha1.Extension) error {
-	if a.extensionClass == extensionsv1alpha1.ExtensionClassGarden {
-		return a.reconcileOnRuntimeCluster(ctx, log, ex)
-	}
-
 	namespace := ex.GetNamespace()
+
+	if IsSpecialNamespace(namespace) {
+		return a.reconcileInOwnExtensionNamespace(ctx, log, ex)
+	}
 
 	cluster, err := controller.GetCluster(ctx, a.client, namespace)
 	if err != nil {
@@ -105,12 +117,13 @@ func (a *actuator) Reconcile(ctx context.Context, log logr.Logger, ex *extension
 }
 
 // Delete the Extension resource.
-func (a *actuator) Delete(ctx context.Context, log logr.Logger, ex *extensionsv1alpha1.Extension) error {
-	if a.extensionClass == extensionsv1alpha1.ExtensionClassGarden {
-		return a.deleteOnRuntimeCluster(ctx, log, ex)
+func (a *actuator) Delete(ctx context.Context, _ logr.Logger, ex *extensionsv1alpha1.Extension) error {
+	namespace := ex.GetNamespace()
+
+	if IsSpecialNamespace(namespace) {
+		return a.deleteInOwnExtensionNamespace(ctx, ex)
 	}
 
-	namespace := ex.GetNamespace()
 	a.logger.Info("Component is being deleted", "component", "cert-management", "namespace", namespace)
 	if err := a.deleteShootResources(ctx, namespace); err != nil {
 		return err
@@ -369,6 +382,9 @@ func (a *actuator) createSeedResources(ctx context.Context, certConfig *service.
 	if cluster == nil {
 		resourceName = v1alpha1.CertManagementResourceNameInternal
 		chartName = v1alpha1.CertManagementChartNameInternal
+		if namespace != v1beta1constants.GardenNamespace {
+			certManagementConfig["certClass"] = "seed"
+		}
 	}
 	return a.createManagedResource(ctx, namespace, resourceName, "seed", renderer, chartName, namespace, certManagementConfig, nil)
 }
@@ -466,9 +482,7 @@ func (a *actuator) createShootIssuersValues(certConfig *service.CertConfig) map[
 	}
 }
 
-func (a *actuator) reconcileOnRuntimeCluster(ctx context.Context, _ logr.Logger, ex *extensionsv1alpha1.Extension) error {
-	namespace := ex.GetNamespace()
-
+func (a *actuator) reconcileInOwnExtensionNamespace(ctx context.Context, log logr.Logger, ex *extensionsv1alpha1.Extension) error {
 	certConfig := &service.CertConfig{}
 	if ex.Spec.ProviderConfig != nil {
 		if _, _, err := a.decoder.Decode(ex.Spec.ProviderConfig.Raw, nil, certConfig); err != nil {
@@ -479,14 +493,22 @@ func (a *actuator) reconcileOnRuntimeCluster(ctx context.Context, _ logr.Logger,
 		}
 	}
 
-	if err := a.createSeedResources(ctx, certConfig, nil, namespace); err != nil {
+	if err := a.createSeedResources(ctx, certConfig, nil, ex.GetNamespace()); err != nil {
 		return err
+	}
+
+	if ptr.Deref(ex.Spec.Class, extensionsv1alpha1.ExtensionClassShoot) == extensionsv1alpha1.ExtensionClassShoot {
+		if domain := os.Getenv(EnvSeedIngressDNSDomain); domain != "" {
+			if err := a.ensureSeedIngressWildcardCert(ctx, log, domain); err != nil {
+				return err
+			}
+		}
 	}
 
 	return a.updateStatus(ctx, ex, certConfig)
 }
 
-func (a *actuator) deleteOnRuntimeCluster(ctx context.Context, logger logr.Logger, ex *extensionsv1alpha1.Extension) error {
+func (a *actuator) deleteInOwnExtensionNamespace(ctx context.Context, ex *extensionsv1alpha1.Extension) error {
 	namespace := ex.GetNamespace()
 	a.logger.Info("Component is being deleted", "component", "cert-management", "namespace", namespace)
 
@@ -501,13 +523,60 @@ func (a *actuator) deleteOnRuntimeCluster(ctx context.Context, logger logr.Logge
 	return managedresources.WaitUntilDeleted(timeoutCtx, a.client, namespace, v1alpha1.CertManagementResourceNameInternal)
 }
 
+func (a *actuator) ensureSeedIngressWildcardCert(ctx context.Context, log logr.Logger, ingressDomain string) error {
+	cert := &certv1alpha1.Certificate{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "ingress-wildcard-cert",
+			Namespace: v1beta1constants.GardenNamespace,
+		},
+	}
+	result, err := controllerutils.CreateOrGetAndMergePatch(ctx, a.client, cert, func() error {
+		cert.Spec.CommonName = ptr.To("*." + ingressDomain)
+		cert.Spec.SecretLabels = map[string]string{
+			v1beta1constants.GardenRole: v1beta1constants.GardenRoleControlPlaneWildcardCert,
+			certificate.ManagedByLabel:  ControllerName + "-controller",
+		}
+		cert.Spec.SecretRef = &corev1.SecretReference{
+			Name:      cert.Name,
+			Namespace: cert.Namespace,
+		}
+		if cert.Annotations == nil {
+			cert.Annotations = map[string]string{}
+		}
+		cert.Annotations["cert.gardener.cloud/class"] = "seed"
+		if cert.Labels == nil {
+			cert.Labels = map[string]string{}
+		}
+		for k, v := range cert.Spec.SecretLabels {
+			cert.Labels[k] = v
+		}
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("failed to create or update certificate %s: %w", client.ObjectKeyFromObject(cert), err)
+	}
+
+	switch result {
+	case controllerutil.OperationResultCreated:
+		log.Info("Created certificate", "name", cert.Name)
+	case controllerutil.OperationResultUpdated:
+		log.Info("Updated certificate", "name", cert.Name)
+	case controllerutil.OperationResultNone:
+		log.Info("Certificate unchanged", "name", cert.Name)
+	}
+
+	return nil
+}
+
 func mergeServers(serversList ...string) string {
-	existing := map[string]struct{}{}
-	merged := []string{}
+	var (
+		existing = sets.New[string]()
+		merged   []string
+	)
 	for _, servers := range serversList {
 		for _, item := range strings.Split(servers, ",") {
-			if _, ok := existing[item]; !ok {
-				existing[item] = struct{}{}
+			if !existing.Has(item) {
+				existing.Insert(item)
 				merged = append(merged, item)
 			}
 		}

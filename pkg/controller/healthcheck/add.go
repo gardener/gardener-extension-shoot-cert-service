@@ -18,9 +18,10 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	certv1alpha1 "github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/service/v1alpha1"
-	certcontroller "github.com/gardener/gardener-extension-shoot-cert-service/pkg/controller"
+	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/controller/shootcertservice"
 )
 
 var (
@@ -37,15 +38,20 @@ func RegisterHealthChecks(ctx context.Context, mgr manager.Manager, opts healthc
 	preCheckFunc := func(_ context.Context, _ client.Client, _ client.Object, cluster *extensionscontroller.Cluster) bool {
 		return cluster.Shoot.Spec.DNS != nil && cluster.Shoot.Spec.DNS.Domain != nil
 	}
+	customPredicates := []predicate.Predicate{
+		predicate.NewPredicateFuncs(func(obj client.Object) bool {
+			return obj != nil && !shootcertservice.IsSpecialNamespace(obj.GetNamespace())
+		}),
+	}
 
 	return healthcheck.DefaultRegistration(
-		certcontroller.Type,
+		shootcertservice.Type,
 		extensionsv1alpha1.SchemeGroupVersion.WithKind(extensionsv1alpha1.ExtensionResource),
 		func() client.ObjectList { return &extensionsv1alpha1.ExtensionList{} },
 		func() extensionsv1alpha1.Object { return &extensionsv1alpha1.Extension{} },
 		mgr,
 		opts,
-		nil,
+		customPredicates,
 		[]healthcheck.ConditionTypeToHealthCheck{
 			{
 				ConditionType: string(gardencorev1beta1.ShootControlPlaneHealthy),

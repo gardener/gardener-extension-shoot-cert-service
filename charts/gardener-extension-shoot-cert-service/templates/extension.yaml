@@ -1,0 +1,11 @@
+{{- if and .Values.gardenerCertificates.seed.enabled .Values.gardener.seed.ingressDomain }}
+apiVersion: extensions.gardener.cloud/v1alpha1
+kind: Extension
+metadata:
+  name: shoot-cert-service
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    confirmation.gardener.cloud/deletion: "true"
+spec:
+  type: shoot-cert-service
+{{- end}}
