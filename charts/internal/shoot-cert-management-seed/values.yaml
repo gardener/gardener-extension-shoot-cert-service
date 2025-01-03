@@ -10,6 +10,7 @@ images:
 
 shootClusterSecret: cert-management-kubecfg
 podAnnotations: {}
+priorityClassName: gardener-system-200
 
 genericTokenKubeconfigSecretName: generic-token-kubeconfig
 
@@ -79,6 +80,8 @@ configuration:
       algorithm: RSA
       sizeRSA: 3072
       sizeECDSA: 384
+
+deployEmbedded: false
 
 additionalConfiguration:
 - --kubeconfig.disable-deploy-crds

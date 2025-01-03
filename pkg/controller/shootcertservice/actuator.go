@@ -2,15 +2,17 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-package controller
+package shootcertservice
 
 import (
 	"context"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
+	certv1alpha1 "github.com/gardener/cert-management/pkg/apis/cert/v1alpha1"
 	"github.com/gardener/gardener/extensions/pkg/controller"
 	"github.com/gardener/gardener/extensions/pkg/controller/extension"
 	"github.com/gardener/gardener/extensions/pkg/util"
@@ -18,6 +20,7 @@ import (
 	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
 	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
 	"github.com/gardener/gardener/pkg/chartrenderer"
+	"github.com/gardener/gardener/pkg/controllerutils"
 	"github.com/gardener/gardener/pkg/extensions"
 	"github.com/gardener/gardener/pkg/utils/chart"
 	gutil "github.com/gardener/gardener/pkg/utils/gardener"
@@ -30,7 +33,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/client-go/rest"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
@@ -40,26 +45,34 @@ import (
 	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/service"
 	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/service/v1alpha1"
 	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/service/validation"
+	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/controller/runtimecluster/certificate"
 )
 
-// ActuatorName is the name of the Certificate Service actuator.
-const ActuatorName = "shoot-cert-service-actuator"
+const (
+	// ActuatorName is the name of the Certificate Service actuator.
+	ActuatorName = "shoot-cert-service-actuator"
+
+	// EnvSeedIngressDNSDomain is the environment variable for the seed ingress DNS domain.
+	EnvSeedIngressDNSDomain = "SEED_INGRESS_DNS_DOMAIN"
+)
 
 // NewActuator returns an actuator responsible for Extension resources.
-func NewActuator(mgr manager.Manager, config config.Configuration) extension.Actuator {
+func NewActuator(mgr manager.Manager, config config.Configuration, extensionClass extensionsv1alpha1.ExtensionClass) extension.Actuator {
 	return &actuator{
-		client:        mgr.GetClient(),
-		config:        mgr.GetConfig(),
-		decoder:       serializer.NewCodecFactory(mgr.GetScheme(), serializer.EnableStrict).UniversalDecoder(),
-		logger:        log.Log.WithName(ActuatorName),
-		serviceConfig: config,
+		client:         mgr.GetClient(),
+		config:         mgr.GetConfig(),
+		decoder:        serializer.NewCodecFactory(mgr.GetScheme(), serializer.EnableStrict).UniversalDecoder(),
+		logger:         log.Log.WithName(ActuatorName),
+		serviceConfig:  config,
+		extensionClass: extensionClass,
 	}
 }
 
 type actuator struct {
-	client  client.Client
-	config  *rest.Config
-	decoder runtime.Decoder
+	client         client.Client
+	config         *rest.Config
+	decoder        runtime.Decoder
+	extensionClass extensionsv1alpha1.ExtensionClass
 
 	serviceConfig config.Configuration
 
@@ -69,6 +82,10 @@ type actuator struct {
 // Reconcile the Extension resource.
 func (a *actuator) Reconcile(ctx context.Context, log logr.Logger, ex *extensionsv1alpha1.Extension) error {
 	namespace := ex.GetNamespace()
+
+	if IsSpecialNamespace(namespace) {
+		return a.reconcileInOwnExtensionNamespace(ctx, log, ex)
+	}
 
 	cluster, err := controller.GetCluster(ctx, a.client, namespace)
 	if err != nil {
@@ -101,6 +118,11 @@ func (a *actuator) Reconcile(ctx context.Context, log logr.Logger, ex *extension
 // Delete the Extension resource.
 func (a *actuator) Delete(ctx context.Context, log logr.Logger, ex *extensionsv1alpha1.Extension) error {
 	namespace := ex.GetNamespace()
+
+	if IsSpecialNamespace(namespace) {
+		return a.deleteInOwnExtensionNamespace(ctx, log, ex)
+	}
+
 	a.logger.Info("Component is being deleted", "component", "cert-management", "namespace", namespace)
 	if err := a.deleteShootResources(ctx, namespace); err != nil {
 		return err
@@ -130,63 +152,73 @@ func (a *actuator) Migrate(ctx context.Context, log logr.Logger, ex *extensionsv
 }
 
 func (a *actuator) createIssuerValues(cluster *controller.Cluster, issuers ...service.IssuerConfig) ([]map[string]interface{}, error) {
-	issuerList := []map[string]interface{}{
-		{
-			"name": a.serviceConfig.IssuerName,
-			"acme": map[string]interface{}{
-				"email":      a.serviceConfig.ACME.Email,
-				"server":     a.serviceConfig.ACME.Server,
-				"privateKey": a.serviceConfig.ACME.PrivateKey,
-			},
-		},
+	gardenIssuer := map[string]interface{}{
+		"name": a.serviceConfig.IssuerName,
+	}
+	if a.serviceConfig.ACME != nil {
+		gardenIssuer["acme"] = map[string]interface{}{
+			"email":      a.serviceConfig.ACME.Email,
+			"server":     a.serviceConfig.ACME.Server,
+			"privateKey": a.serviceConfig.ACME.PrivateKey,
+		}
+	}
+	if a.serviceConfig.CA != nil {
+		gardenIssuer["ca"] = map[string]interface{}{
+			"certificate":    a.serviceConfig.CA.Certificate,
+			"certificateKey": a.serviceConfig.CA.CertificateKey,
+		}
 	}
 
-	for _, issuer := range issuers {
-		if issuer.Name == a.serviceConfig.IssuerName {
-			continue
-		}
+	issuerList := []map[string]interface{}{gardenIssuer}
 
-		acme := map[string]interface{}{
-			"email":  issuer.Email,
-			"server": issuer.Server,
-		}
-		issuerValues := map[string]interface{}{
-			"name": issuer.Name,
-			"acme": acme,
-		}
-		if issuer.PrivateKeySecretName != nil {
-			secretName := a.lookupReferencedSecret(cluster, *issuer.PrivateKeySecretName)
-			acme["privateKeySecretName"] = secretName
-		}
-		if issuer.ExternalAccountBinding != nil {
-			secretName := a.lookupReferencedSecret(cluster, issuer.ExternalAccountBinding.KeySecretName)
-			acme["externalAccountBinding"] = map[string]interface{}{
-				"keyID":         issuer.ExternalAccountBinding.KeyID,
-				"keySecretName": secretName,
+	if cluster != nil {
+		for _, issuer := range issuers {
+			if issuer.Name == a.serviceConfig.IssuerName {
+				continue
 			}
-		}
-		if issuer.SkipDNSChallengeValidation != nil && *issuer.SkipDNSChallengeValidation {
-			acme["skipDNSChallengeValidation"] = true
-		}
-		if issuer.Domains != nil && len(issuer.Domains.Include)+len(issuer.Domains.Exclude) > 0 {
-			selection := map[string]interface{}{}
-			if issuer.Domains.Include != nil {
-				selection["include"] = issuer.Domains.Include
+
+			acme := map[string]interface{}{
+				"email":  issuer.Email,
+				"server": issuer.Server,
 			}
-			if issuer.Domains.Exclude != nil {
-				selection["exclude"] = issuer.Domains.Exclude
+			issuerValues := map[string]interface{}{
+				"name": issuer.Name,
+				"acme": acme,
 			}
-			if len(selection) > 0 {
-				acme["domains"] = selection
+			if issuer.PrivateKeySecretName != nil {
+				secretName := a.lookupReferencedSecret(cluster, *issuer.PrivateKeySecretName)
+				acme["privateKeySecretName"] = secretName
 			}
+			if issuer.ExternalAccountBinding != nil {
+				secretName := a.lookupReferencedSecret(cluster, issuer.ExternalAccountBinding.KeySecretName)
+				acme["externalAccountBinding"] = map[string]interface{}{
+					"keyID":         issuer.ExternalAccountBinding.KeyID,
+					"keySecretName": secretName,
+				}
+			}
+			if issuer.SkipDNSChallengeValidation != nil && *issuer.SkipDNSChallengeValidation {
+				acme["skipDNSChallengeValidation"] = true
+			}
+			if issuer.Domains != nil && len(issuer.Domains.Include)+len(issuer.Domains.Exclude) > 0 {
+				selection := map[string]interface{}{}
+				if issuer.Domains.Include != nil {
+					selection["include"] = issuer.Domains.Include
+				}
+				if issuer.Domains.Exclude != nil {
+					selection["exclude"] = issuer.Domains.Exclude
+				}
+				if len(selection) > 0 {
+					acme["domains"] = selection
+				}
+			}
+			if issuer.RequestsPerDayQuota != nil {
+				issuerValues["requestsPerDayQuota"] = *issuer.RequestsPerDayQuota
+			}
+			if len(issuer.PrecheckNameservers) > 0 {
+				issuerValues["precheckNameservers"] = issuer.PrecheckNameservers
+			}
+			issuerList = append(issuerList, issuerValues)
 		}
-		if issuer.RequestsPerDayQuota != nil {
-			issuerValues["requestsPerDayQuota"] = *issuer.RequestsPerDayQuota
-		}
-		if len(issuer.PrecheckNameservers) > 0 {
-			issuerValues["precheckNameservers"] = issuer.PrecheckNameservers
-		}
-		issuerList = append(issuerList, issuerValues)
 	}
 
 	return issuerList, nil
@@ -237,65 +269,81 @@ func (a *actuator) createSeedResources(ctx context.Context, certConfig *service.
 		return err
 	}
 
-	dnsChallengeOnShoot, err := createDNSChallengeOnShootValues(certConfig.DNSChallengeOnShoot)
-	if err != nil {
-		return err
-	}
+	var (
+		restricted        bool
+		restrictedDomains *string
+		replicaCount      = 1
+	)
 
-	if cluster.Shoot.Spec.DNS == nil || cluster.Shoot.Spec.DNS.Domain == nil {
-		a.logger.Info("no domain given for shoot %s/%s - aborting", cluster.Shoot.Name, cluster.Shoot.Namespace)
-		return nil
+	if cluster != nil {
+		replicaCount = controller.GetReplicas(cluster, 1)
+		if cluster.Shoot.Spec.DNS == nil || cluster.Shoot.Spec.DNS.Domain == nil {
+			a.logger.Info("no domain given for shoot %s/%s - aborting", cluster.Shoot.Name, cluster.Shoot.Namespace)
+			return nil
+		}
+		restricted = *a.serviceConfig.RestrictIssuer
+		restrictedDomains = cluster.Shoot.Spec.DNS.Domain
 	}
 
 	var propagationTimeout string
-	if a.serviceConfig.ACME.PropagationTimeout != nil {
+	if a.serviceConfig.ACME != nil && a.serviceConfig.ACME.PropagationTimeout != nil {
 		propagationTimeout = a.serviceConfig.ACME.PropagationTimeout.Duration.String()
 	}
 
-	var (
-		shootIssuers         = a.createShootIssuersValues(certConfig)
-		certManagementConfig = map[string]interface{}{
-			"replicaCount": controller.GetReplicas(cluster, 1),
-			"defaultIssuer": map[string]interface{}{
-				"name":       a.serviceConfig.IssuerName,
-				"restricted": *a.serviceConfig.RestrictIssuer,
-				"domains":    cluster.Shoot.Spec.DNS.Domain,
-			},
-			"issuers": issuers,
-			"configuration": map[string]interface{}{
-				"propagationTimeout": propagationTimeout,
-			},
-			"dnsChallengeOnShoot":              dnsChallengeOnShoot,
-			"shootIssuers":                     shootIssuers,
-			"genericTokenKubeconfigSecretName": extensions.GenericTokenKubeconfigSecretNameFromCluster(cluster),
-		}
-	)
-
-	if err := gutil.NewShootAccessSecret(v1alpha1.ShootAccessSecretName, namespace).Reconcile(ctx, a.client); err != nil {
-		return err
+	certManagementConfig := map[string]interface{}{
+		"replicaCount": replicaCount,
+		"defaultIssuer": map[string]interface{}{
+			"name":       a.serviceConfig.IssuerName,
+			"restricted": restricted,
+			"domains":    restrictedDomains,
+		},
+		"issuers": issuers,
+		"configuration": map[string]interface{}{
+			"propagationTimeout": propagationTimeout,
+		},
 	}
-	certManagementConfig["shootClusterSecret"] = gutil.SecretNamePrefixShootAccess + v1alpha1.ShootAccessSecretName
+
+	if cluster != nil {
+		dnsChallengeOnShoot, err := createDNSChallengeOnShootValues(certConfig.DNSChallengeOnShoot)
+		if err != nil {
+			return err
+		}
+		certManagementConfig["shootIssuers"] = a.createShootIssuersValues(certConfig)
+		certManagementConfig["dnsChallengeOnShoot"] = dnsChallengeOnShoot
+		if err := gutil.NewShootAccessSecret(v1alpha1.ShootAccessSecretName, namespace).Reconcile(ctx, a.client); err != nil {
+			return err
+		}
+		certManagementConfig["genericTokenKubeconfigSecretName"] = extensions.GenericTokenKubeconfigSecretNameFromCluster(cluster)
+
+		certManagementConfig["shootClusterSecret"] = gutil.SecretNamePrefixShootAccess + v1alpha1.ShootAccessSecretName
+	}
 
 	cfg := certManagementConfig["configuration"].(map[string]interface{})
 	if a.serviceConfig.DefaultRequestsPerDayQuota != nil {
 		cfg["defaultRequestsPerDayQuota"] = *a.serviceConfig.DefaultRequestsPerDayQuota
 	}
 
-	if a.serviceConfig.ACME.PrecheckNameservers != nil {
-		cfg["precheckNameservers"] = *a.serviceConfig.ACME.PrecheckNameservers
-	}
-	if certConfig.PrecheckNameservers != nil {
-		servers := *certConfig.PrecheckNameservers
+	if a.serviceConfig.ACME != nil {
 		if a.serviceConfig.ACME.PrecheckNameservers != nil {
-			servers = mergeServers(servers, *a.serviceConfig.ACME.PrecheckNameservers)
+			cfg["precheckNameservers"] = *a.serviceConfig.ACME.PrecheckNameservers
 		}
-		cfg["precheckNameservers"] = servers
+		if certConfig.PrecheckNameservers != nil {
+			servers := *certConfig.PrecheckNameservers
+			if a.serviceConfig.ACME.PrecheckNameservers != nil {
+				servers = mergeServers(servers, *a.serviceConfig.ACME.PrecheckNameservers)
+			}
+			cfg["precheckNameservers"] = servers
+		}
+		if a.serviceConfig.ACME.CACertificates != nil {
+			cfg["caCertificates"] = *a.serviceConfig.ACME.CACertificates
+		}
+		if a.serviceConfig.ACME.DeactivateAuthorizations != nil {
+			cfg["deactivateAuthorizations"] = *a.serviceConfig.ACME.DeactivateAuthorizations
+		}
 	}
-	if a.serviceConfig.ACME.CACertificates != nil {
-		cfg["caCertificates"] = *a.serviceConfig.ACME.CACertificates
-	}
-	if a.serviceConfig.ACME.DeactivateAuthorizations != nil {
-		cfg["deactivateAuthorizations"] = *a.serviceConfig.ACME.DeactivateAuthorizations
+
+	if a.serviceConfig.CA != nil && a.serviceConfig.CA.CACertificates != nil {
+		cfg["caCertificates"] = *a.serviceConfig.CA.CACertificates
 	}
 
 	if certConfig.Alerting != nil && certConfig.Alerting.CertExpirationAlertDays != nil {
@@ -328,7 +376,16 @@ func (a *actuator) createSeedResources(ctx context.Context, certConfig *service.
 
 	a.logger.Info("Component is being applied", "component", "cert-management", "namespace", namespace)
 
-	return a.createManagedResource(ctx, namespace, v1alpha1.CertManagementResourceNameSeed, "seed", renderer, v1alpha1.CertManagementChartNameSeed, namespace, certManagementConfig, nil)
+	resourceName := v1alpha1.CertManagementResourceNameSeed
+	chartName := v1alpha1.CertManagementChartNameSeed
+	if cluster == nil {
+		resourceName = v1alpha1.CertManagementResourceNameEmbedded
+		chartName = v1alpha1.CertManagementChartNameEmbedded
+		if namespace != v1beta1constants.GardenNamespace {
+			certManagementConfig["certClass"] = "seed"
+		}
+	}
+	return a.createManagedResource(ctx, namespace, resourceName, "seed", renderer, chartName, namespace, certManagementConfig, nil)
 }
 
 func (a *actuator) createShootResources(ctx context.Context, certConfig *service.CertConfig, cluster *controller.Cluster, namespace string) error {
@@ -422,6 +479,92 @@ func (a *actuator) createShootIssuersValues(certConfig *service.CertConfig) map[
 	return map[string]interface{}{
 		"enabled": shootIssuersEnabled,
 	}
+}
+
+func (a *actuator) reconcileInOwnExtensionNamespace(ctx context.Context, log logr.Logger, ex *extensionsv1alpha1.Extension) error {
+	certConfig := &service.CertConfig{}
+	if ex.Spec.ProviderConfig != nil {
+		if _, _, err := a.decoder.Decode(ex.Spec.ProviderConfig.Raw, nil, certConfig); err != nil {
+			return fmt.Errorf("failed to decode provider config: %+v", err)
+		}
+		if errs := validation.ValidateCertConfig(certConfig, nil); len(errs) > 0 {
+			return errs.ToAggregate()
+		}
+	}
+
+	if err := a.createSeedResources(ctx, certConfig, nil, ex.GetNamespace()); err != nil {
+		return err
+	}
+
+	if ptr.Deref(ex.Spec.Class, extensionsv1alpha1.ExtensionClassShoot) == extensionsv1alpha1.ExtensionClassShoot {
+		if domain := os.Getenv(EnvSeedIngressDNSDomain); domain != "" {
+			if err := a.ensureSeedIngressWildcardCert(ctx, log, domain); err != nil {
+				return err
+			}
+		}
+	}
+
+	return a.updateStatus(ctx, ex, certConfig)
+}
+
+func (a *actuator) deleteInOwnExtensionNamespace(ctx context.Context, logger logr.Logger, ex *extensionsv1alpha1.Extension) error {
+	namespace := ex.GetNamespace()
+	a.logger.Info("Component is being deleted", "component", "cert-management", "namespace", namespace)
+
+	a.logger.Info("Deleting managed resource for runtime", "namespace", namespace)
+
+	if err := managedresources.Delete(ctx, a.client, namespace, v1alpha1.CertManagementResourceNameEmbedded, false); err != nil {
+		return err
+	}
+
+	timeoutCtx, cancel := context.WithTimeout(ctx, 2*time.Minute)
+	defer cancel()
+	return managedresources.WaitUntilDeleted(timeoutCtx, a.client, namespace, v1alpha1.CertManagementResourceNameEmbedded)
+}
+
+func (a *actuator) ensureSeedIngressWildcardCert(ctx context.Context, log logr.Logger, ingressDomain string) error {
+	cert := &certv1alpha1.Certificate{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "ingress-wildcard-cert",
+			Namespace: v1beta1constants.GardenNamespace,
+		},
+	}
+	result, err := controllerutils.CreateOrGetAndMergePatch(ctx, a.client, cert, func() error {
+		cert.Spec.CommonName = ptr.To("*." + ingressDomain)
+		cert.Spec.SecretLabels = map[string]string{
+			v1beta1constants.GardenRole: v1beta1constants.GardenRoleControlPlaneWildcardCert,
+			certificate.ManagedByLabel:  ControllerName + "-controller",
+		}
+		cert.Spec.SecretRef = &corev1.SecretReference{
+			Name:      cert.Name,
+			Namespace: cert.Namespace,
+		}
+		if cert.Annotations == nil {
+			cert.Annotations = map[string]string{}
+		}
+		cert.Annotations["cert.gardener.cloud/class"] = "seed"
+		if cert.Labels == nil {
+			cert.Labels = map[string]string{}
+		}
+		for k, v := range cert.Spec.SecretLabels {
+			cert.Labels[k] = v
+		}
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("failed to create or update certificate %s: %w", client.ObjectKeyFromObject(cert), err)
+	}
+
+	switch result {
+	case controllerutil.OperationResultCreated:
+		log.Info("Created certificate", "name", cert.Name)
+	case controllerutil.OperationResultUpdated:
+		log.Info("Updated certificate", "name", cert.Name)
+	case controllerutil.OperationResultNone:
+		log.Info("Certificate unchanged", "name", cert.Name)
+	}
+
+	return nil
 }
 
 func mergeServers(serversList ...string) string {
