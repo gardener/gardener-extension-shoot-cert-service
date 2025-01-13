@@ -73,7 +73,7 @@ func (r *Reconciler) reconcile(
 	reconcile.Result,
 	error,
 ) {
-	if cert.Status.State != "Ready" {
+	if cert.Status.State != "Ready" && cert.Annotations["service.cert.extensions.gardener.cloud/test-simulate-ready"] != "true" {
 		log.Info("Certificate is not ready yet")
 		return reconcile.Result{}, nil
 	}

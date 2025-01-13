@@ -8,7 +8,7 @@ import (
 	"context"
 	"time"
 
-	apisconfigv1alpha1 "github.com/gardener/gardener/extensions/pkg/apis/config/v1alpha1"
+	extensionsconfigv1alpha1 "github.com/gardener/gardener/extensions/pkg/apis/config/v1alpha1"
 	extensionscontroller "github.com/gardener/gardener/extensions/pkg/controller"
 	"github.com/gardener/gardener/extensions/pkg/controller/healthcheck"
 	"github.com/gardener/gardener/extensions/pkg/controller/healthcheck/general"
@@ -28,7 +28,7 @@ var (
 	defaultSyncPeriod = time.Second * 30
 	// DefaultAddOptions are the default DefaultAddArgs for AddToManager.
 	DefaultAddOptions = healthcheck.DefaultAddArgs{
-		HealthCheckConfig: apisconfigv1alpha1.HealthCheckConfig{SyncPeriod: metav1.Duration{Duration: defaultSyncPeriod}},
+		HealthCheckConfig: extensionsconfigv1alpha1.HealthCheckConfig{SyncPeriod: metav1.Duration{Duration: defaultSyncPeriod}},
 	}
 )
 

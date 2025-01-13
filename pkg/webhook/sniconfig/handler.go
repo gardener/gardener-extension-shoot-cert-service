@@ -14,7 +14,6 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/gardener/gardener/pkg/resourcemanager/apis/config"
 	"github.com/go-logr/logr"
 	admissionv1 "k8s.io/api/admission/v1"
 	appsv1 "k8s.io/api/apps/v1"
@@ -29,15 +28,10 @@ import (
 	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/controller/runtimecluster/certificate"
 )
 
-// Handler handles admission requests and sets the following fields based on the failure tolerance type and the
-// component type:
-// - `.spec.replicas`
-// - `.spec.template.spec.affinity`
-// - `.spec.template.spec.topologySpreadConstraints`
+// Handler handles admission requests for deployment of virtual-garden-kube-apiserver and configures the SNI command line arguments.
 type Handler struct {
 	Logger       logr.Logger
 	TargetClient client.Reader
-	Config       config.HighAvailabilityConfigWebhookConfig
 	Decoder      admission.Decoder
 }
 

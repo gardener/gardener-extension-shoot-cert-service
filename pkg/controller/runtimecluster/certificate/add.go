@@ -61,7 +61,7 @@ func (r *Reconciler) AddToManager(mgr manager.Manager) error {
 			extensionspredicate.IsInGardenNamespacePredicate,
 			predicate.NewPredicateFuncs(func(obj client.Object) bool {
 				return obj != nil &&
-					obj.GetLabels()[v1beta1constants.GardenRole] == v1beta1constants.GardenRoleControlPlaneWildcardCert &&
+					obj.GetLabels()[v1beta1constants.GardenRole] == v1beta1constants.GardenRoleGardenWildcardCert &&
 					obj.GetLabels()[ExtensionClassLabel] == string(extensionsv1alpha1.ExtensionClassGarden)
 			}),
 		)).

@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	certv1alpha1 "github.com/gardener/cert-management/pkg/apis/cert/v1alpha1"
+	"github.com/gardener/cert-management/pkg/cert/source"
 	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
 	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
 	operatorv1alpha1 "github.com/gardener/gardener/pkg/apis/operator/v1alpha1"
@@ -111,7 +112,7 @@ func (r *Reconciler) reconcile(
 	result, err := controllerutils.CreateOrGetAndMergePatch(ctx, r.RuntimeClientSet.Client(), cert, func() error {
 		cert.Spec.DNSNames = dnsNames
 		cert.Spec.SecretLabels = map[string]string{
-			v1beta1constants.GardenRole:     v1beta1constants.GardenRoleControlPlaneWildcardCert,
+			v1beta1constants.GardenRole:     v1beta1constants.GardenRoleGardenWildcardCert,
 			certificate.ManagedByLabel:      ControllerName + "-controller",
 			certificate.ExtensionClassLabel: string(extensionsv1alpha1.ExtensionClassGarden),
 		}
@@ -122,8 +123,13 @@ func (r *Reconciler) reconcile(
 		if cert.Annotations == nil {
 			cert.Annotations = map[string]string{}
 		}
-		cert.Annotations["cert.gardener.cloud/class"] = "garden"
+		cert.Annotations[source.AnnotClass] = "garden"
 		cert.Annotations[certificate.TLSCertAPIServerNamesAnnotation] = strings.Join(apiServerNames, ",")
+		if garden.Spec.DNS != nil {
+			cert.Annotations[source.AnnotDNSRecordProviderType] = garden.Spec.DNS.Providers[0].Type
+			cert.Annotations[source.AnnotDNSRecordSecretRef] = garden.Spec.DNS.Providers[0].SecretRef.Name
+			cert.Annotations[source.AnnotDNSRecordClass] = string(extensionsv1alpha1.ExtensionClassGarden)
+		}
 		if cert.Labels == nil {
 			cert.Labels = map[string]string{}
 		}

@@ -25,6 +25,9 @@ require (
 	sigs.k8s.io/controller-runtime v0.19.4
 )
 
+// TODO(MartinWeindel) remove if gardener v1.112.0 is released
+replace github.com/gardener/gardener => github.com/gardener/gardener v1.73.1-0.20250123102727-0d6120dbbb2d
+
 require (
 	dario.cat/mergo v1.0.1 // indirect
 	github.com/Azure/go-ntlmssp v0.0.0-20221128193559-754e69321358 // indirect

@@ -1,0 +1,68 @@
+apiVersion: skaffold/v4beta7
+kind: Config
+metadata:
+  name: shoot-cert-service
+build:
+  insecureRegistries:
+    - garden.local.gardener.cloud:5001
+  tagPolicy:
+    customTemplate:
+      template: "{{.version}}-{{.sha}}"
+      components:
+        - name: version
+          envTemplate:
+            template: "{{.EXTENSION_VERSION}}"
+        - name: sha
+          gitCommit:
+            variant: AbbrevCommitSha
+  artifacts:
+    - image: local-skaffold/gardener-extension-shoot-cert-service
+      ko:
+        dependencies:
+          paths:
+            - charts
+            - charts/internal
+            - cmd/gardener-extension-shoot-cert-service
+            - cmd/gardener-extension-shoot-cert-service/app
+            - imagevector
+            - imagevector/images.yaml
+            - pkg/apis/config
+            - pkg/apis/config/v1alpha1
+            - pkg/apis/config/validation
+            - pkg/apis/service
+            - pkg/apis/service/install
+            - pkg/apis/service/v1alpha1
+            - pkg/apis/service/validation
+            - pkg/cmd
+            - pkg/controller/config
+            - pkg/controller/healthcheck
+            - pkg/controller/runtimecluster/certificate
+            - pkg/controller/runtimecluster/garden
+            - pkg/controller/shootcertservice
+            - pkg/webhook/sniconfig
+            - VERSION
+        ldflags:
+          - '{{.LD_FLAGS}}'
+        main: ./cmd/gardener-extension-shoot-cert-service
+    - image: local-skaffold/gardener-extension-shoot-cert-service/charts/extension
+      custom:
+        buildCommand: |
+          bash {{.EXTENSION_GARDENER_HACK_DIR}}/push-helm.sh charts/gardener-extension-shoot-cert-service .skaffoldImage
+        dependencies:
+          paths:
+            - charts/gardener-extension-shoot-cert-service
+      requires:
+        - image: local-skaffold/gardener-extension-shoot-cert-service
+          alias: IMG
+resourceSelector:
+  allow:
+    # instruct skaffold to inject the built image reference into the image fields in our Extension object
+    - groupKind: Extension.operator.gardener.cloud
+      image:
+        - .spec.deployment.extension.helm.ociRepository.ref
+manifests:
+  kustomize:
+    paths:
+      - example/shoot-cert-service
+deploy:
+  kubectl: {}

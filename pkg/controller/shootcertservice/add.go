@@ -7,20 +7,16 @@ package shootcertservice
 import (
 	"context"
 	"fmt"
-	"os"
+	"strings"
 
-	extensionscontroller "github.com/gardener/gardener/extensions/pkg/controller"
 	"github.com/gardener/gardener/extensions/pkg/controller/extension"
-	extensionspredicate "github.com/gardener/gardener/extensions/pkg/predicate"
 	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
 	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
-	"github.com/gardener/gardener/pkg/extensions"
 	"github.com/go-logr/logr"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
-	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	controllerconfig "github.com/gardener/gardener-extension-shoot-cert-service/pkg/controller/config"
 )
@@ -32,6 +28,8 @@ const (
 	ControllerName = "shoot_cert_service"
 	// FinalizerSuffix is the finalizer suffix for the shoot cert service controller.
 	FinalizerSuffix = "shoot-cert-service"
+	// TriggerLabel is the label to trigger an extension on startup.
+	TriggerLabel = "shoot-cert-service.extensions.config.gardener.cloud/trigger"
 )
 
 var (
@@ -58,24 +56,12 @@ func AddToManager(ctx context.Context, mgr manager.Manager) error {
 
 // AddToManagerWithOptions adds a controller with the given Options to the given manager.
 func AddToManagerWithOptions(ctx context.Context, mgr manager.Manager, opts AddOptions) error {
-	extensionscontroller.GetCluster = func(ctx context.Context, reader client.Reader, namespace string) (*extensions.Cluster, error) {
-		if IsSpecialNamespace(namespace) {
-			return nil, nil
-		}
-		return extensions.GetCluster(ctx, reader, namespace)
-	}
-	predicates := extensionspredicate.DefaultControllerPredicates(DefaultAddOptions.IgnoreOperationAnnotation,
-		predicate.And(extensionspredicate.HasClass(opts.ExtensionClass),
-			predicate.Or(
-				predicate.NewPredicateFuncs(func(obj client.Object) bool {
-					return obj != nil && IsSpecialNamespace(obj.GetNamespace())
-				}),
-				extensionspredicate.ShootNotFailedPredicate(ctx, mgr))))
+	predicates := extension.DefaultPredicates(ctx, mgr, DefaultAddOptions.IgnoreOperationAnnotation)
 
 	// Trigger reconciliation for existing extensions in the deployment namespace on election.
 	go triggerReconcileSpecialExtensionOnElection(ctx, mgr, opts.ExtensionClass)
 
-	return extension.Add(ctx, mgr, extension.AddArgs{
+	return extension.Add(mgr, extension.AddArgs{
 		Actuator:          NewActuator(mgr, opts.ServiceConfig.Configuration, opts.ExtensionClass),
 		ControllerOptions: opts.ControllerOptions,
 		Name:              ControllerName,
@@ -87,9 +73,9 @@ func AddToManagerWithOptions(ctx context.Context, mgr manager.Manager, opts AddO
 	})
 }
 
-// IsSpecialNamespace returns true if the given namespace is either the garden namespace or the own namespace of the deployment.
+// IsSpecialNamespace returns true if the given namespace is either the garden namespace or an extension namespace.
 func IsSpecialNamespace(namespace string) bool {
-	return namespace == v1beta1constants.GardenNamespace || namespace == os.Getenv("LEADER_ELECTION_NAMESPACE")
+	return namespace == v1beta1constants.GardenNamespace || strings.HasPrefix(namespace, "extension-")
 }
 
 func triggerReconcileSpecialExtensionOnElection(ctx context.Context, mgr manager.Manager, class extensionsv1alpha1.ExtensionClass) {
@@ -106,13 +92,12 @@ func triggerReconcileSpecialExtensionOnElection(ctx context.Context, mgr manager
 	}
 }
 
-// triggerReconcileSpecialExtension triggers reconciliation for existing extensions in the deployment namespace.
+// triggerReconcileSpecialExtension triggers reconciliation for existing extension for seed in the garden namespace.
 func triggerReconcileSpecialExtension(ctx context.Context, log logr.Logger, cl client.Client, class extensionsv1alpha1.ExtensionClass) error {
-	namespace := os.Getenv("LEADER_ELECTION_NAMESPACE")
-	log.Info("Triggering reconciliation for extensions in namespace", "namespace", namespace)
+	log.Info("Triggering reconciliation for extensions with trigger label")
 	list := &extensionsv1alpha1.ExtensionList{}
-	if err := cl.List(ctx, list, client.InNamespace(namespace)); err != nil {
-		return fmt.Errorf("failed to list extensions for namespace %s: %w", namespace, err)
+	if err := cl.List(ctx, list, client.MatchingLabels{TriggerLabel: "true"}); err != nil {
+		return fmt.Errorf("failed to list extensions: %w", err)
 	}
 	if class == "" {
 		class = extensionsv1alpha1.ExtensionClassShoot
