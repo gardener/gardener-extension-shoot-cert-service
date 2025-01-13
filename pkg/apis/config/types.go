@@ -5,7 +5,7 @@
 package config
 
 import (
-	apisconfigv1alpha1 "github.com/gardener/gardener/extensions/pkg/apis/config/v1alpha1"
+	extensionsconfigv1alpha1 "github.com/gardener/gardener/extensions/pkg/apis/config/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -28,7 +28,7 @@ type Configuration struct {
 	// CA contains CA related configuration.
 	CA *CA
 	// HealthCheckConfig is the config for the health check controller.
-	HealthCheckConfig *apisconfigv1alpha1.HealthCheckConfig
+	HealthCheckConfig *extensionsconfigv1alpha1.HealthCheckConfig
 	// PrivateKeyDefaults default algorithm and sizes for certificate private keys.
 	PrivateKeyDefaults *PrivateKeyDefaults
 }

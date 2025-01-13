@@ -87,7 +87,7 @@ func NewOptions() *Options {
 				Mode:        mode,
 				URL:         url,
 				ServicePort: 443,
-				Namespace:   "garden",
+				Namespace:   os.Getenv("LEADER_ELECTION_NAMESPACE"),
 			},
 			certificateservicecmd.WebhookSwitches()),
 	}

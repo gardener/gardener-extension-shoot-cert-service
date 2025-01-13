@@ -1,0 +1,39 @@
+apiVersion: operator.gardener.cloud/v1alpha1
+kind: Extension
+metadata:
+  name: extension-shoot-cert-service
+  annotations:
+    security.gardener.cloud/pod-security-enforce: baseline
+spec:
+  resources:
+    - kind: Extension
+      globallyEnabled: true
+      type: shoot-cert-service
+      workerlessSupported: true
+  deployment:
+    extension:
+      runtimeClusterValues:
+        gardenerCertificates:
+          runtimeCluster:
+            enabled: true
+        certificateConfig:
+          defaultIssuer:
+            name: garden
+            acme:
+              server: https://acme-staging-v02.api.letsencrypt.org/directory
+              email: some.user@gardener.cloud
+      values:
+        gardenerCertificates:
+          seed:
+            enabled: true
+            dnsSecretRole: internal-domain
+        certificateConfig:
+          defaultIssuer:
+            name: garden
+            acme:
+              server: https://acme-staging-v02.api.letsencrypt.org/directory
+              email: some.user@gardener.cloud
+      helm:
+        ociRepository:
+          ref: local-skaffold/gardener-extension-shoot-cert-service/charts/extension:v0.0.0
+      policy: Always
