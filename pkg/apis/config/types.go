@@ -5,7 +5,7 @@
 package config
 
 import (
-	apisconfig "github.com/gardener/gardener/extensions/pkg/apis/config"
+	apisconfigv1alpha1 "github.com/gardener/gardener/extensions/pkg/apis/config/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -26,7 +26,7 @@ type Configuration struct {
 	// ACME contains ACME related configuration.
 	ACME ACME
 	// HealthCheckConfig is the config for the health check controller.
-	HealthCheckConfig *apisconfig.HealthCheckConfig
+	HealthCheckConfig *apisconfigv1alpha1.HealthCheckConfig
 	// PrivateKeyDefaults default algorithm and sizes for certificate private keys.
 	PrivateKeyDefaults *PrivateKeyDefaults
 }

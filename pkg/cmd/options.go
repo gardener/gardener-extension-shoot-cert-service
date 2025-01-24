@@ -8,7 +8,7 @@ import (
 	"errors"
 	"os"
 
-	extensionsapisconfig "github.com/gardener/gardener/extensions/pkg/apis/config"
+	extensionsapisconfigv1alpha1 "github.com/gardener/gardener/extensions/pkg/apis/config/v1alpha1"
 	"github.com/gardener/gardener/extensions/pkg/controller/cmd"
 	extensionshealthcheckcontroller "github.com/gardener/gardener/extensions/pkg/controller/healthcheck"
 	extensionsheartbeatcontroller "github.com/gardener/gardener/extensions/pkg/controller/heartbeat"
@@ -100,7 +100,7 @@ func ControllerSwitches() *cmd.SwitchOptions {
 	)
 }
 
-func (c *CertificateServiceConfig) ApplyHealthCheckConfig(config *extensionsapisconfig.HealthCheckConfig) {
+func (c *CertificateServiceConfig) ApplyHealthCheckConfig(config *extensionsapisconfigv1alpha1.HealthCheckConfig) {
 	if c.config.HealthCheckConfig != nil {
 		*config = *c.config.HealthCheckConfig
 	}
