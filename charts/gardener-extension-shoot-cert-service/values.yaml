@@ -12,6 +12,9 @@ metrics:
   # default metrics endpoint in controller-runtime
   port: 8080
 
+webhookConfig:
+  serverPort: 10250
+
 resources: {}
 
 vpa:
@@ -28,21 +31,35 @@ controllers:
   healthcheck:
     concurrentSyncs: 5
   heartbeat: 
-    renewIntervalSeconds: 30 
+    renewIntervalSeconds: 30
+# garden:
+#   concurrentSyncs: 1
+# certificate:
+#   concurrentSyncs: 1
 
 certificateConfig:
   # defaultRequestsPerDayQuota: 100
   defaultIssuer:
     restricted: true # restrict default issuer to any sub-domain of shoot.spec.dns.domain
     name: gardener
-    acme:
-      email: john.doe@example.com
-      server: https://acme-v02.api.letsencrypt.org/directory
-    # propagationTimeout: 60s # TTL for DNS01 challenges.
-    # privateKey: | # Optional key for Let's Encrypt account.
-    #   -----BEGIN BEGIN RSA PRIVATE KEY-----
-    #   ...
-    #   -----END RSA PRIVATE KEY-----
+  # acme:
+  #   email: john.doe@example.com
+  #   server: https://acme-v02.api.letsencrypt.org/directory
+  #   propagationTimeout: 60s # TTL for DNS01 challenges.
+  #   privateKey: | # Optional key for Let's Encrypt account.
+  #     -----BEGIN BEGIN RSA PRIVATE KEY-----
+  #     ...
+  #     -----END RSA PRIVATE KEY-----
+
+  # ca: # use own root or intermediate certifcate for a CA issuer as alternative to ACME issuer,
+  #   certificate: | # CA certificate
+  #    -----BEGIN CERTIFICATE-----
+  #    ...
+  #    -----END CERTIFICATE-----
+  #   certificateKey: | # CA certificate key
+  #    -----BEGIN PRIVATE KEY-----
+  #    ...
+  #    -----END PRIVATE KEY-----
 
   #precheckNameservers: 8.8.8.8,8.8.4.4
 
@@ -69,5 +86,18 @@ disableControllers: []
 #     repository: europe-docker.pkg.dev/gardener-project/cert-controller-manager
 #     tag: "0.2.9"
 
+gardenerCertificates:
+  seed:
+    enabled: false # if true, a special cert-controller-manager is deployed to provide the TLS certificate for the seed ingress domain
+  # dnsSecretRole: internal-domain # the "gardener.cloud/role" label to look up the DNS secret in the seed namespace on the virtual garden to be used for DNS challenges
+  runtimeCluster:
+    enabled: false # if true, a special cert-controller-manager is deployed to provide the TLS certificate for the virtual cluster kube-apiserver and garden ingress domain
+    virtualKubeAPIServerIncludePrimaryDomain: false # if false, the first domain name of the virtual cluster kube-apiserver is excluded from TLS SNI config
+
 gardener:
   version: ""
+  seed:
+  # ingressDomain:
+  runtimeCluster:
+    enabled: false
+  # priorityClassName: gardener-garden-system-200

@@ -101,7 +101,22 @@ ACME
 </em>
 </td>
 <td>
-<p>ACME contains ACME related configuration.</p>
+<em>(Optional)</em>
+<p>ACME contains the ACME default issuer related configuration. Either ACME or CA must be set.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>ca</code></br>
+<em>
+<a href="#shoot-cert-service.extensions.config.gardener.cloud/v1alpha1.CA">
+CA
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>CA contains the CA default issuer related configuration. Either ACME or CA must be set.</p>
 </td>
 </tr>
 <tr>
@@ -232,6 +247,58 @@ bool
 <td>
 <em>(Optional)</em>
 <p>DeactivateAuthorizations enables deactivation of authorizations after successful certificate request</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="shoot-cert-service.extensions.config.gardener.cloud/v1alpha1.CA">CA
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#shoot-cert-service.extensions.config.gardener.cloud/v1alpha1.Configuration">Configuration</a>)
+</p>
+<p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>certificate</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>Certificate is the public certificate of the CA in PEM format.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>certificateKey</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>CertificateKey is the private certificate key of the CA in PEM format.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>caCertificates</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>CACertificates are custom root certificates to be made available for the cert-controller-manager</p>
 </td>
 </tr>
 </tbody>

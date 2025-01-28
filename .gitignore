@@ -4,6 +4,7 @@
 /local
 **/dev
 /hack/tools/bin
+/gardener
 
 *.coverprofile
 *.html

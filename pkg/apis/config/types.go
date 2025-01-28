@@ -5,7 +5,7 @@
 package config
 
 import (
-	apisconfigv1alpha1 "github.com/gardener/gardener/extensions/pkg/apis/config/v1alpha1"
+	extensionsconfigv1alpha1 "github.com/gardener/gardener/extensions/pkg/apis/config/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -24,9 +24,11 @@ type Configuration struct {
 	// ShootIssuers contains enablement for issuers on shoot cluster
 	ShootIssuers *ShootIssuers
 	// ACME contains ACME related configuration.
-	ACME ACME
+	ACME *ACME
+	// CA contains CA related configuration.
+	CA *CA
 	// HealthCheckConfig is the config for the health check controller.
-	HealthCheckConfig *apisconfigv1alpha1.HealthCheckConfig
+	HealthCheckConfig *extensionsconfigv1alpha1.HealthCheckConfig
 	// PrivateKeyDefaults default algorithm and sizes for certificate private keys.
 	PrivateKeyDefaults *PrivateKeyDefaults
 }
@@ -63,4 +65,13 @@ type ACME struct {
 	CACertificates *string
 	// DeactivateAuthorizations enables deactivation of authorizations after successful certificate request
 	DeactivateAuthorizations *bool
+}
+
+type CA struct {
+	// Certificate is the public certificate of the CA in PEM format.
+	Certificate string
+	// CertificateKey is the private certificate key of the CA in PEM format.
+	CertificateKey string
+	// CACertificates are custom root certificates to be made available for the cert-controller-manager
+	CACertificates *string
 }

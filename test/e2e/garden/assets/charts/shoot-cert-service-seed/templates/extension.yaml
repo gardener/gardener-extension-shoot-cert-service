@@ -1,0 +1,11 @@
+apiVersion: extensions.gardener.cloud/v1alpha1
+kind: Extension
+metadata:
+  name: shoot-cert-service-seed
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    confirmation.gardener.cloud/deletion: "true"
+  labels:
+    shoot-cert-service.extensions.config.gardener.cloud/trigger: "true"
+spec:
+  type: shoot-cert-service
