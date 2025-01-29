@@ -27,6 +27,8 @@ spec:
       containers:
       - image: quay.io/coreos/etcd:v3.3.12
         name: etcd
+        securityContext:
+          allowPrivilegeEscalation: false
         command:
         - etcd
         - -advertise-client-urls=http://0.0.0.0:2379
@@ -172,6 +174,8 @@ spec:
         image: registry.k8s.io/kube-apiserver:v1.28.2
         imagePullPolicy: IfNotPresent
         name: kube-apiserver
+        securityContext:
+          allowPrivilegeEscalation: false
         ports:
         - containerPort: 443
           name: https

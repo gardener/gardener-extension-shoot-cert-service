@@ -40,6 +40,8 @@ spec:
       - name: gardener-extension-shoot-cert-service
         image: {{ include "image" . }}
         imagePullPolicy: {{ .Values.image.pullPolicy }}
+        securityContext:
+          allowPrivilegeEscalation: false
         command:
         - /gardener-extension-shoot-cert-service
         - --config=/etc/cert-service/config.yaml
