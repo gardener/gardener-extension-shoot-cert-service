@@ -39,6 +39,8 @@ spec:
       - name: {{ .Chart.Name }}
         image: {{ index .Values.images "cert-management" }}
         imagePullPolicy: IfNotPresent
+        securityContext:
+          allowPrivilegeEscalation: false
         volumeMounts:
         - mountPath: /var/run/secrets/gardener.cloud/shoot/generic-kubeconfig
           name: kubeconfig
