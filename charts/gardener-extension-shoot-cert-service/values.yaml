@@ -35,14 +35,24 @@ certificateConfig:
   defaultIssuer:
     restricted: true # restrict default issuer to any sub-domain of shoot.spec.dns.domain
     name: gardener
-    acme:
-      email: john.doe@example.com
-      server: https://acme-v02.api.letsencrypt.org/directory
-    # propagationTimeout: 60s # TTL for DNS01 challenges.
-    # privateKey: | # Optional key for Let's Encrypt account.
-    #   -----BEGIN BEGIN RSA PRIVATE KEY-----
-    #   ...
-    #   -----END RSA PRIVATE KEY-----
+  # acme:
+  #   email: john.doe@example.com
+  #   server: https://acme-v02.api.letsencrypt.org/directory
+  #   propagationTimeout: 60s # TTL for DNS01 challenges.
+  #   privateKey: | # Optional key for Let's Encrypt account.
+  #     -----BEGIN BEGIN RSA PRIVATE KEY-----
+  #     ...
+  #     -----END RSA PRIVATE KEY-----
+
+  # ca: # use own root or intermediate certifcate for a CA issuer as alternative to ACME issuer,
+  #   certificate: | # CA certificate
+  #    -----BEGIN CERTIFICATE-----
+  #    ...
+  #    -----END CERTIFICATE-----
+  #   certificateKey: | # CA certificate key
+  #    -----BEGIN PRIVATE KEY-----
+  #    ...
+  #    -----END PRIVATE KEY-----
 
   #precheckNameservers: 8.8.8.8,8.8.4.4
 
