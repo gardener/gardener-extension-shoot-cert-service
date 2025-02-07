@@ -28,6 +28,10 @@ gardener-extension-shoot-cert-service:
       component_descriptor:
         ocm_repository: europe-docker.pkg.dev/gardener-project/snapshots
       publish:
+        oci-builder: docker-buildx
+        platforms:
+        - linux/amd64
+        - linux/arm64
         dockerimages:
           gardener-extension-shoot-cert-service:
             image: europe-docker.pkg.dev/gardener-project/snapshots/gardener/extensions/shoot-cert-service
