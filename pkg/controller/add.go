@@ -11,7 +11,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
-	controllerconfig "github.com/gardener/gardener-extension-shoot-cert-service/pkg/controller/config"
+	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/config"
 )
 
 const (
@@ -33,7 +33,7 @@ type AddOptions struct {
 	// ControllerOptions contains options for the controller.
 	ControllerOptions controller.Options
 	// ServiceConfig contains configuration for the shoot cert service.
-	ServiceConfig controllerconfig.Config
+	ServiceConfig config.Configuration
 	// IgnoreOperationAnnotation specifies whether to ignore the operation annotation or not.
 	IgnoreOperationAnnotation bool
 }
@@ -47,7 +47,7 @@ func AddToManager(ctx context.Context, mgr manager.Manager) error {
 // The opts.Reconciler is being set with a newly instantiated actuator.
 func AddToManagerWithOptions(ctx context.Context, mgr manager.Manager, opts AddOptions) error {
 	return extension.Add(mgr, extension.AddArgs{
-		Actuator:          NewActuator(mgr, opts.ServiceConfig.Configuration),
+		Actuator:          NewActuator(mgr, opts.ServiceConfig),
 		ControllerOptions: opts.ControllerOptions,
 		Name:              ControllerName,
 		FinalizerSuffix:   FinalizerSuffix,

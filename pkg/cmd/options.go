@@ -17,11 +17,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 
-	apisconfig "github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/config"
+	config "github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/config"
 	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/config/v1alpha1"
 	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/config/validation"
 	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/controller"
-	controllerconfig "github.com/gardener/gardener-extension-shoot-cert-service/pkg/controller/config"
 	healthcheckcontroller "github.com/gardener/gardener-extension-shoot-cert-service/pkg/controller/healthcheck"
 )
 
@@ -32,7 +31,7 @@ var (
 
 func init() {
 	scheme = runtime.NewScheme()
-	utilruntime.Must(apisconfig.AddToScheme(scheme))
+	utilruntime.Must(config.AddToScheme(scheme))
 	utilruntime.Must(v1alpha1.AddToScheme(scheme))
 
 	decoder = serializer.NewCodecFactory(scheme).UniversalDecoder()
@@ -59,7 +58,7 @@ func (o *CertificateServiceOptions) Complete() error {
 		return err
 	}
 
-	config := apisconfig.Configuration{}
+	config := config.Configuration{}
 	_, _, err = decoder.Decode(data, nil, &config)
 	if err != nil {
 		return err
@@ -83,12 +82,12 @@ func (o *CertificateServiceOptions) Completed() *CertificateServiceConfig {
 
 // CertificateServiceConfig contains configuration information about the certificate service.
 type CertificateServiceConfig struct {
-	config apisconfig.Configuration
+	config config.Configuration
 }
 
 // Apply applies the CertificateServiceOptions to the passed ControllerOptions instance.
-func (c *CertificateServiceConfig) Apply(config *controllerconfig.Config) {
-	config.Configuration = c.config
+func (c *CertificateServiceConfig) Apply(config *config.Configuration) {
+	config = &c.config
 }
 
 // ControllerSwitches are the cmd.SwitchOptions for the provider controllers.
