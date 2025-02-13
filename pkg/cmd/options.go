@@ -87,7 +87,7 @@ type CertificateServiceConfig struct {
 
 // Apply applies the CertificateServiceOptions to the passed ControllerOptions instance.
 func (c *CertificateServiceConfig) Apply(config *config.Configuration) {
-	config = &c.config
+	*config = c.config
 }
 
 // ControllerSwitches are the cmd.SwitchOptions for the provider controllers.
