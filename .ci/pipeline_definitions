@@ -21,7 +21,7 @@ gardener-extension-shoot-cert-service:
             we use gosec for sast scanning. See attached log.
     steps:
       verify:
-        image: 'golang:1.23.2'
+        image: golang:1.24
     traits:
       version:
         preprocess: 'inject-commit-hash'
