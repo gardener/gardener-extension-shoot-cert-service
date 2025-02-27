@@ -14,7 +14,7 @@ const CertManagementResourceNameSeed = "extension-shoot-cert-service-seed"
 // CertManagementResourceNameShoot is the name for Cert-Management resources in the shoot.
 const CertManagementResourceNameShoot = "extension-shoot-cert-service-shoot"
 
-// CertManagementResourceNameInternal is the name for internal Cert-Management resources on runtime cluster or seeds..
+// CertManagementResourceNameInternal is the name for internal Cert-Management resources on runtime cluster or seeds.
 const CertManagementResourceNameInternal = "extension-shoot-cert-service-internal"
 
 // CertManagementImageName is the name of the Cert-Management image in the image vector.

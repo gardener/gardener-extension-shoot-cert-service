@@ -2,9 +2,9 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: {{ include "clusterRoleName" . }}
+  name: {{ include "name" . }}
   labels:
-    app.kubernetes.io/name: gardener-extension-shoot-cert-service
+    app.kubernetes.io/name: {{ include "name" . }}
     helm.sh/chart: gardener-extension-shoot-cert-service
     app.kubernetes.io/instance: {{ .Release.Name }}
 rules:
@@ -124,15 +124,15 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: {{ include "clusterRoleName" . }}
+  name: {{ include "name" . }}
   labels:
-    app.kubernetes.io/name: gardener-extension-shoot-cert-service
+    app.kubernetes.io/name: {{ include "name" . }}
     helm.sh/chart: gardener-extension-shoot-cert-service
     app.kubernetes.io/instance: {{ .Release.Name }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: {{ include "clusterRoleName" . }}
+  name: {{ include "name" . }}
 subjects:
 - kind: ServiceAccount
   name: gardener-extension-shoot-cert-service

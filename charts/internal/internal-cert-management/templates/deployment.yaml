@@ -56,14 +56,12 @@ spec:
         {{- end }}
         args:
         - --name={{ include "cert-management.fullname" . }}
-        {{- if not .Values.internalDeployment }}
-        - --namespace=kube-system
-        - --source=/var/run/secrets/gardener.cloud/shoot/generic-kubeconfig/kubeconfig
-        {{- else }}
+        {{- if .Values.internalDeployment }}
         - --namespace={{ .Release.Namespace }}
         - --issuer.cert-class={{ .Values.certClass }}
-        {{- end }}
-        {{- if .Values.configuration.defaultRequestsPerDayQuota }}
+        {{- else }}
+        - --namespace=kube-system
+        - --source=/var/run/secrets/gardener.cloud/shoot/generic-kubeconfig/kubeconfig
         {{- end }}
         - --issuer.issuer-namespace={{ .Release.Namespace }}
         - --issuer.default-issuer={{ .Values.defaultIssuer.name }}

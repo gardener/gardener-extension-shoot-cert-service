@@ -1,8 +1,4 @@
 {{- define "name" -}}
-gardener-extension-shoot-cert-service
-{{- end -}}
-
-{{- define "clusterRoleName" -}}
 {{- if .Values.gardener.runtimeCluster.enabled -}}
 gardener-extension-shoot-cert-service-runtime
 {{- else -}}
