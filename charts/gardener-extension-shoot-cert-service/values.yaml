@@ -28,7 +28,7 @@ controllers:
   healthcheck:
     concurrentSyncs: 5
   heartbeat: 
-    renewIntervalSeconds: 30 
+    renewIntervalSeconds: 30
 
 certificateConfig:
   # defaultRequestsPerDayQuota: 100
@@ -81,3 +81,6 @@ disableControllers: []
 
 gardener:
   version: ""
+  runtimeCluster:
+    enabled: false
+  # priorityClassName: gardener-garden-system-200
