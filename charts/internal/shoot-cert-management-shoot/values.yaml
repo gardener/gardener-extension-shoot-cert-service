@@ -6,3 +6,6 @@ dnsChallengeOnShoot:
   enabled: false
 
 shootAccessServiceAccountName: ""
+
+internalDeployment: false
+deployCRDs: true

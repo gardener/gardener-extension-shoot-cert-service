@@ -1,0 +1,90 @@
+# SPDX-FileCopyrightText: 2019 SAP SE or an SAP affiliate company and Gardener contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+nameOverride: ""
+fullnameOverride: cert-controller-manager
+
+replicaCount: 1
+
+images:
+  cert-management: any-repo:any-tag
+
+resources:
+  requests:
+   cpu: 5m
+   memory: 30Mi
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+podLabels: {}
+priorityClassName: gardener-garden-system-100
+
+shootIssuers:
+  enabled: false
+dnsChallengeOnShoot:
+  enabled: false
+
+certClass: garden # garden or seed
+internalDeployment: true
+deployCRDs: false
+
+defaultIssuer:
+  name: garden
+
+configuration:
+  # propagationTimeout: 60s # TTL for DNS01 challenges
+  serverPortHttp: 10258
+  ingressCertWorkers: 5
+  certWorkers: 5
+  issuerWorkers: 2
+  # defaultRequestsPerDayQuota: 50
+  # precheckNameservers: 8.8.8.8,8.8.4.4
+  # caCertificates: | # optional custom CA certificates when using private ACME provider
+  #   -----BEGIN CERTIFICATE-----
+  #   ...
+  #   -----END CERTIFICATE-----
+  #
+  #   -----BEGIN CERTIFICATE-----
+  #   ...
+  #   -----END CERTIFICATE-----
+  deactivateAuthorizations: true
+  certExpirationAlertDays: 15
+  privateKeyDefaults:
+    algorithm: RSA
+    sizeRSA: 3072
+    sizeECDSA: 384
+
+additionalConfiguration:
+  - --kubeconfig.disable-deploy-crds
+  - --source.disable-deploy-crds
+  - --target.disable-deploy-crds
+
+issuers:
+  - name: gardener
+    acme:
+      email: john.doe@example.com
+      server: https://acme-v02.api.letsencrypt.org/directory
+    # privateKey: | # Optional key for Let's Encrypt account.
+    #   -----BEGIN BEGIN RSA PRIVATE KEY-----
+    #   ...
+    #   -----END RSA PRIVATE KEY-----
+    # privateKeySecretName: my-private-key-secret # alternative to embedded key
+    # externalAccountBinding:
+    #   keyID: aabbccddeeff
+    #   keySecretName: my-eab-key-secret
+    # skipDNSChallengeValidation: true
+    # domains:
+    #   include:
+    #   - my.domain.com
+    #   exclude:
+    #   - private.my.domain.com
+# requestsPerDayQuota: 10
+
+vpa:
+  enabled: true
+  minAllowed:
+    memory: 20Mi
+  updatePolicy:
+    updateMode: "Auto"
