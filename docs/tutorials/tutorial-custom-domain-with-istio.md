@@ -69,9 +69,8 @@ Our [External DNS Manager](https://github.com/gardener/external-dns-management/)
 
 I now need to prepare the Gardener extensions `shoot-dns-service` and `shoot-cert-service` and set the parameters accordingly.
 
-{{% alert color="info" %}}
-Please note, that the availability of Gardener Extensions depends on how your administrator has configured the Gardener landscape. Please contact your Gardener administrator in case you experience any issues during activation.
-{{% /alert %}}
+> [!NOTE]
+> Please note, that the availability of Gardener Extensions depends on how your administrator has configured the Gardener landscape. Please contact your Gardener administrator in case you experience any issues during activation.
 
 The following snippet allows Gardener to manage my entire custom domain, whereas with the `include:` attribute I restrict all dynamic entries under the subdomain `gsicdc.mydomain.io`:
 
@@ -104,9 +103,8 @@ The next snipplet allows Gardener to manage certificates automatically from *[Le
             server: 'https://acme-staging-v02.api.letsencrypt.org/directory'
 ```
 
-{{% alert color="info" %}}
-Adjust the snipplets with your parameters (don't forget your email). And please use the mydomain-staging issuer while you are testing and learning. Otherwise, Let's Encrypt will rate limit your frequent requests and you can wait a week until you can continue.
-{{% /alert %}}
+> [!NOTE]
+> Adjust the snipplets with your parameters (don't forget your email). And please use the mydomain-staging issuer while you are testing and learning. Otherwise, Let's Encrypt will rate limit your frequent requests and you can wait a week until you can continue.
 
 References for [Let's Encrypt](https://letsencrypt.org):
 
@@ -238,9 +236,8 @@ With these annotations three things now happen automatically:
 1. The [Certificate Management](https://github.com/gardener/cert-management/blob/master/README.md) picks up the request as well and initiates a DNS01 protocol exchange with Let's Encrypt; using the staging environment referred to with the issuer behind `mydomain-staging`.
 1. After aproximately 70sec (give and take) you will receive the wildcard certificate in the `wildcard-tls` secret in the namespace `istio-system`.
 
-{{% alert color="info" %}}
-Notice, that the namespace for the certificate secret is often the cause of many troubleshooting sessions: the secret must reside in the same namespace of the gateway.
-{{% /alert %}}
+> [!NOTE]
+> Notice, that the namespace for the certificate secret is often the cause of many troubleshooting sessions: the secret must reside in the same namespace of the gateway.
 
 Here is the istio-install script:
 
@@ -309,9 +306,8 @@ brew install httpie
 
 ## Ingress at Your Service
 
-{{% alert color="info" %}}
-Networking is a central part of Kubernetes, but it can be challenging to understand exactly how it is expected to work. You should learn about Kubernetes networking, and first try to debug problems yourself. With a solid managed cluster from Gardener, it is always PEBCAK!
-{{% /alert %}}
+> [!NOTE]
+> Networking is a central part of Kubernetes, but it can be challenging to understand exactly how it is expected to work. You should learn about Kubernetes networking, and first try to debug problems yourself. With a solid managed cluster from Gardener, it is always PEBCAK!
 
 Kubernetes Ingress is a subject that is evolving to much broader standard. Please watch [Evolving the Kubernetes Ingress APIs to GA and Beyond](https://www.youtube.com/watch?v=cduG0FrjdJA) for a good introduction. In this example, I did not want to use the Kubernetes `Ingress` compatibility option of Istio. Instead, I used `VirtualService` and `Gateway` from the Istio's API group `networking.istio.io/v1` directly, and enabled istio-injection generically for the namespace.
 
