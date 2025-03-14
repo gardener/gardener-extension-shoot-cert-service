@@ -9,7 +9,8 @@
 *.coverprofile
 *.html
 .vscode
-.idea
+.idea/
+!.idea/copyright/
 .DS_Store
 *~
 
