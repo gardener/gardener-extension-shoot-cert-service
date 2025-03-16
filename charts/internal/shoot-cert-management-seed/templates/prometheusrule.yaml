@@ -1,4 +1,3 @@
-{{- if .Values.gep19Monitoring }}
 {{- if gt .Values.configuration.certExpirationAlertDays 0.0 }}
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
@@ -22,5 +21,4 @@ spec:
       annotations:
         description: Certificate in namespace {{ .Release.Namespace }} will expire in less than {{ .Values.configuration.certExpirationAlertDays }} days.
         summary: TLS certificate will expire in less than {{ .Values.configuration.certExpirationAlertDays }} days
-{{- end }}
 {{- end }}
