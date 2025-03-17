@@ -1,4 +1,3 @@
-{{- if .Values.gep19Monitoring }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -9,4 +8,3 @@ metadata:
 data:
   cert-controller-manager-dashboard.json: |-
 {{- .Files.Get "cert-dashboard.json" | nindent 4 }}
-{{- end }}
