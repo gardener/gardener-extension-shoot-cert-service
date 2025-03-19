@@ -25,13 +25,13 @@ const (
 )
 
 var (
-	//go:embed assets/cert.gardener.cloud_certificaterevocations.yaml
+	//go:embed assets/crd-cert.gardener.cloud_certificaterevocations.yaml
 	crdRevocations string
 
-	//go:embed assets/cert.gardener.cloud_certificates.yaml
+	//go:embed assets/crd-cert.gardener.cloud_certificates.yaml
 	crdCertificates string
 
-	//go:embed assets/cert.gardener.cloud_issuers.yaml
+	//go:embed assets/crd-cert.gardener.cloud_issuers.yaml
 	crdIssuers string
 )
 
