@@ -88,15 +88,17 @@ func (a *actuator) Reconcile(ctx context.Context, log logr.Logger, ex *extension
 		return err
 	}
 
-	if !internal && !controller.IsHibernated(cluster) {
-		if err := a.createShootResources(ctx, *values); err != nil {
-			return err
-		}
-		if err := a.createSeedResources(ctx, *values); err != nil {
+	if internal {
+		if err := a.createInternalResources(ctx, *values); err != nil {
 			return err
 		}
 	} else {
-		if err := a.createInternalResources(ctx, *values); err != nil {
+		if !controller.IsHibernated(cluster) {
+			if err := a.createShootResources(ctx, *values); err != nil {
+				return err
+			}
+		}
+		if err := a.createSeedResources(ctx, *values); err != nil {
 			return err
 		}
 	}
@@ -110,14 +112,14 @@ func (a *actuator) Delete(ctx context.Context, log logr.Logger, ex *extensionsv1
 	internal := !gutil.IsShootNamespace(namespace)
 
 	a.logger.Info("Component is being deleted", "component", "cert-management", "namespace", namespace)
-	if !internal {
-		if err := a.deleteShootResources(ctx, namespace); err != nil {
-			return err
-		}
-		return a.deleteSeedResources(ctx, namespace)
+	if internal {
+		return a.deleteInternalResources(ctx, namespace)
 	}
 
-	return a.deleteInternalResources(ctx, namespace)
+	if err := a.deleteShootResources(ctx, namespace); err != nil {
+		return err
+	}
+	return a.deleteSeedResources(ctx, namespace)
 }
 
 // ForceDelete the Extension resource.
