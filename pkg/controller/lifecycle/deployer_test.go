@@ -186,7 +186,7 @@ var _ = Describe("deployer", func() {
 			priorityClassName := "gardener-system-200"
 
 			if internal {
-				name = "internal-cert-management"
+				name = "cert-management-internal"
 				shootNamespace = namespace
 				priorityClassName = "gardener-garden-system-100"
 			}
@@ -370,7 +370,7 @@ var _ = Describe("deployer", func() {
 			}
 			if internal {
 				container := &obj.Spec.Template.Spec.Containers[0]
-				container.Name = "internal-cert-management"
+				container.Name = "cert-management-internal"
 				container.VolumeMounts = container.VolumeMounts[1:]
 				obj.Spec.Template.Spec.Volumes = obj.Spec.Template.Spec.Volumes[1:]
 			}
@@ -398,7 +398,7 @@ var _ = Describe("deployer", func() {
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "extensions.gardener.cloud:extension-shoot-cert-service:" + certClass,
 						Labels: map[string]string{
-							"app.kubernetes.io/instance": "internal-cert-management",
+							"app.kubernetes.io/instance": "cert-management-internal",
 						},
 					},
 					Rules: []rbacv1.PolicyRule{
@@ -448,7 +448,7 @@ var _ = Describe("deployer", func() {
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "extensions.gardener.cloud:extension-shoot-cert-service:" + certClass,
 						Labels: map[string]string{
-							"app.kubernetes.io/instance": "internal-cert-management",
+							"app.kubernetes.io/instance": "cert-management-internal",
 						},
 					},
 					RoleRef: rbacv1.RoleRef{
@@ -459,7 +459,7 @@ var _ = Describe("deployer", func() {
 					Subjects: []rbacv1.Subject{
 						{
 							Kind:      "ServiceAccount",
-							Name:      "internal-cert-management",
+							Name:      "cert-management-internal",
 							Namespace: namespace,
 						},
 					},
@@ -502,7 +502,7 @@ var _ = Describe("deployer", func() {
 					Subjects: []rbacv1.Subject{
 						{
 							Kind:      "ServiceAccount",
-							Name:      "internal-cert-management",
+							Name:      "cert-management-internal",
 							Namespace: namespace,
 						},
 					},
@@ -514,11 +514,11 @@ var _ = Describe("deployer", func() {
 				},
 				&corev1.ServiceAccount{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      "internal-cert-management",
+						Name:      "cert-management-internal",
 						Namespace: namespace,
 						Labels: map[string]string{
-							"app.kubernetes.io/name":     "internal-cert-management",
-							"app.kubernetes.io/instance": "internal-cert-management",
+							"app.kubernetes.io/name":     "cert-management-internal",
+							"app.kubernetes.io/instance": "cert-management-internal",
 						},
 					},
 					AutomountServiceAccountToken: ptr.To(false),
@@ -528,8 +528,8 @@ var _ = Describe("deployer", func() {
 						Name:      "cert-controller-manager-ca-certificates",
 						Namespace: namespace,
 						Labels: map[string]string{
-							"app.kubernetes.io/name":     "internal-cert-management",
-							"app.kubernetes.io/instance": "internal-cert-management",
+							"app.kubernetes.io/name":     "cert-management-internal",
+							"app.kubernetes.io/instance": "cert-management-internal",
 						},
 					},
 					Data: map[string]string{
@@ -541,8 +541,8 @@ var _ = Describe("deployer", func() {
 						Name:      "extensions.gardener.cloud:extension-shoot-cert-service",
 						Namespace: namespace,
 						Labels: map[string]string{
-							"app.kubernetes.io/name":     "internal-cert-management",
-							"app.kubernetes.io/instance": "internal-cert-management",
+							"app.kubernetes.io/name":     "cert-management-internal",
+							"app.kubernetes.io/instance": "cert-management-internal",
 						},
 					},
 					Rules: []rbacv1.PolicyRule{
@@ -581,11 +581,11 @@ var _ = Describe("deployer", func() {
 				},
 				&rbacv1.RoleBinding{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      "internal-cert-management",
+						Name:      "cert-management-internal",
 						Namespace: namespace,
 						Labels: map[string]string{
-							"app.kubernetes.io/name":     "internal-cert-management",
-							"app.kubernetes.io/instance": "internal-cert-management",
+							"app.kubernetes.io/name":     "cert-management-internal",
+							"app.kubernetes.io/instance": "cert-management-internal",
 						},
 					},
 					RoleRef: rbacv1.RoleRef{
@@ -596,7 +596,7 @@ var _ = Describe("deployer", func() {
 					Subjects: []rbacv1.Subject{
 						{
 							Kind:      "ServiceAccount",
-							Name:      "internal-cert-management",
+							Name:      "cert-management-internal",
 							Namespace: namespace,
 						},
 					},
@@ -609,8 +609,8 @@ var _ = Describe("deployer", func() {
 							"networking.resources.gardener.cloud/from-all-scrape-targets-allowed-ports": "[{\"port\":10258,\"protocol\":\"TCP\"}]",
 						},
 						Labels: map[string]string{
-							"app.kubernetes.io/name":     "internal-cert-management",
-							"app.kubernetes.io/instance": "internal-cert-management",
+							"app.kubernetes.io/name":     "cert-management-internal",
+							"app.kubernetes.io/instance": "cert-management-internal",
 						},
 					},
 					Spec: corev1.ServiceSpec{
@@ -624,8 +624,8 @@ var _ = Describe("deployer", func() {
 							},
 						},
 						Selector: map[string]string{
-							"app.kubernetes.io/name":     "internal-cert-management",
-							"app.kubernetes.io/instance": "internal-cert-management",
+							"app.kubernetes.io/name":     "cert-management-internal",
+							"app.kubernetes.io/instance": "cert-management-internal",
 						},
 					},
 				},
