@@ -33,7 +33,7 @@ const CertManagementChartNameSeed = "shoot-cert-management-seed"
 const CertManagementChartNameShoot = "shoot-cert-management-shoot"
 
 // CertManagementChartNameInternal is the name of the chart for internal Cert-Management deployment on runtime cluster or seeds.
-const CertManagementChartNameInternal = "internal-cert-management"
+const CertManagementChartNameInternal = "cert-management-internal"
 
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

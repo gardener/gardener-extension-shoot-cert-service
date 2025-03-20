@@ -37,58 +37,60 @@ func (d *deployer) collectIssuers() ([]model.Issuer, error) {
 
 	issuerList := []model.Issuer{gardenIssuer}
 
-	if !d.values.InternalDeployment {
-		for _, issuer := range d.values.CertConfig.Issuers {
-			if issuer.Name == d.values.ExtensionConfig.IssuerName {
-				continue
-			}
+	if d.values.InternalDeployment {
+		return issuerList, nil
+	}
 
-			acme := &model.ACME{
-				Email:  issuer.Email,
-				Server: issuer.Server,
-			}
-			if issuer.PrivateKeySecretName != nil {
-				var err error
-				acme.PrivateKeySecretName, err = d.lookupReferencedSecret(*issuer.PrivateKeySecretName)
-				if err != nil {
-					return nil, fmt.Errorf("failed to lookup referenced private key secret for issuer %s: %w", issuer.Name, err)
-				}
-			}
-			if issuer.ExternalAccountBinding != nil {
-				secretName, err := d.lookupReferencedSecret(issuer.ExternalAccountBinding.KeySecretName)
-				if err != nil {
-					return nil, fmt.Errorf("failed to lookup referenced private key secret for issuer %s: %w", issuer.Name, err)
-				}
-				acme.ExternalAccountBinding = &model.ExternalAccountBinding{
-					KeyID:         issuer.ExternalAccountBinding.KeyID,
-					KeySecretName: secretName,
-				}
-			}
-			if issuer.SkipDNSChallengeValidation != nil && *issuer.SkipDNSChallengeValidation {
-				acme.SkipDNSChallengeValidation = true
-			}
-			if issuer.Domains != nil && len(issuer.Domains.Include)+len(issuer.Domains.Exclude) > 0 {
-				acme.Domains = &model.Domains{}
-				if issuer.Domains.Include != nil {
-					acme.Domains.Include = issuer.Domains.Include
-				}
-				if issuer.Domains.Exclude != nil {
-					acme.Domains.Exclude = issuer.Domains.Exclude
-				}
-			}
-
-			modelIssuer := model.Issuer{
-				Name: issuer.Name,
-				ACME: acme,
-			}
-			if issuer.RequestsPerDayQuota != nil {
-				modelIssuer.RequestsPerDayQuota = *issuer.RequestsPerDayQuota
-			}
-			if len(issuer.PrecheckNameservers) > 0 {
-				modelIssuer.PrecheckNameservers = issuer.PrecheckNameservers
-			}
-			issuerList = append(issuerList, modelIssuer)
+	for _, issuer := range d.values.CertConfig.Issuers {
+		if issuer.Name == d.values.ExtensionConfig.IssuerName {
+			continue
 		}
+
+		acme := &model.ACME{
+			Email:  issuer.Email,
+			Server: issuer.Server,
+		}
+		if issuer.PrivateKeySecretName != nil {
+			var err error
+			acme.PrivateKeySecretName, err = d.lookupReferencedSecret(*issuer.PrivateKeySecretName)
+			if err != nil {
+				return nil, fmt.Errorf("failed to lookup referenced private key secret for issuer %s: %w", issuer.Name, err)
+			}
+		}
+		if issuer.ExternalAccountBinding != nil {
+			secretName, err := d.lookupReferencedSecret(issuer.ExternalAccountBinding.KeySecretName)
+			if err != nil {
+				return nil, fmt.Errorf("failed to lookup referenced private key secret for issuer %s: %w", issuer.Name, err)
+			}
+			acme.ExternalAccountBinding = &model.ExternalAccountBinding{
+				KeyID:         issuer.ExternalAccountBinding.KeyID,
+				KeySecretName: secretName,
+			}
+		}
+		if issuer.SkipDNSChallengeValidation != nil && *issuer.SkipDNSChallengeValidation {
+			acme.SkipDNSChallengeValidation = true
+		}
+		if issuer.Domains != nil && len(issuer.Domains.Include)+len(issuer.Domains.Exclude) > 0 {
+			acme.Domains = &model.Domains{}
+			if issuer.Domains.Include != nil {
+				acme.Domains.Include = issuer.Domains.Include
+			}
+			if issuer.Domains.Exclude != nil {
+				acme.Domains.Exclude = issuer.Domains.Exclude
+			}
+		}
+
+		modelIssuer := model.Issuer{
+			Name: issuer.Name,
+			ACME: acme,
+		}
+		if issuer.RequestsPerDayQuota != nil {
+			modelIssuer.RequestsPerDayQuota = *issuer.RequestsPerDayQuota
+		}
+		if len(issuer.PrecheckNameservers) > 0 {
+			modelIssuer.PrecheckNameservers = issuer.PrecheckNameservers
+		}
+		issuerList = append(issuerList, modelIssuer)
 	}
 
 	return issuerList, nil

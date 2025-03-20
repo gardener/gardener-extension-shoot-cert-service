@@ -209,7 +209,7 @@ func (d *deployer) getServiceAccount() rbacv1.Subject {
 	subjectName := v1alpha1.ShootAccessServiceAccountName
 	subjectNamespace := "kube-system"
 	if d.values.InternalDeployment {
-		subjectName = "internal-cert-management"
+		subjectName = "cert-management-internal"
 		subjectNamespace = d.values.Namespace
 	}
 

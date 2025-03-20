@@ -26,7 +26,7 @@ func ValidateCertConfig(config *service.CertConfig, cluster *controller.Cluster)
 
 	if cluster == nil {
 		if len(config.Issuers) > 0 {
-			allErrs = append(allErrs, field.Forbidden(field.NewPath("issuers"), "issuers are not allowed in extension on runtime cluster. Please add issuer in the Helm values of the gardener-extension-shoot-cert-service extension"))
+			allErrs = append(allErrs, field.Forbidden(field.NewPath("issuers"), "issuers are not allowed in extension on runtime cluster. You can only specify the default issuer in the 'runtimeClusterValues' of the gardener-extension-shoot-cert-service extension"))
 		}
 		if config.PrecheckNameservers != nil {
 			allErrs = append(allErrs, field.Forbidden(field.NewPath("precheckNameservers"), "precheckNameservers are not allowed in extension on runtime cluster."))
