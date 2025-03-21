@@ -11,17 +11,21 @@ require (
 	github.com/go-logr/logr v1.4.2
 	github.com/onsi/ginkgo/v2 v2.22.1
 	github.com/onsi/gomega v1.36.2
+	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.80.1
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/pflag v1.0.6
 	go.uber.org/mock v0.5.0
 	golang.org/x/tools v0.30.0
 	k8s.io/api v0.32.2
+	k8s.io/apiextensions-apiserver v0.32.2
 	k8s.io/apimachinery v0.32.2
+	k8s.io/autoscaler/vertical-pod-autoscaler v1.2.2
 	k8s.io/client-go v0.32.2
 	k8s.io/code-generator v0.32.2
 	k8s.io/component-base v0.32.2
 	k8s.io/utils v0.0.0-20241210054802-24370beab758
 	sigs.k8s.io/controller-runtime v0.20.2
+	sigs.k8s.io/yaml v1.4.0
 )
 
 require (
@@ -87,7 +91,6 @@ require (
 	github.com/mxk/go-flowrate v0.0.0-20140419014527-cca7078d478f // indirect
 	github.com/pelletier/go-toml/v2 v2.2.2 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
-	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.80.1 // indirect
 	github.com/prometheus/client_golang v1.21.0 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/common v0.62.0 // indirect
@@ -130,9 +133,7 @@ require (
 	helm.sh/helm/v3 v3.17.1 // indirect
 	istio.io/api v1.24.3 // indirect
 	istio.io/client-go v1.24.2 // indirect
-	k8s.io/apiextensions-apiserver v0.32.2 // indirect
 	k8s.io/apiserver v0.32.2 // indirect
-	k8s.io/autoscaler/vertical-pod-autoscaler v1.2.2 // indirect
 	k8s.io/cluster-bootstrap v0.32.2 // indirect
 	k8s.io/component-helpers v0.32.2 // indirect
 	k8s.io/gengo v0.0.0-20230829151522-9cce18d56c01 // indirect
@@ -147,5 +148,4 @@ require (
 	sigs.k8s.io/controller-tools v0.17.2 // indirect
 	sigs.k8s.io/json v0.0.0-20241014173422-cfa47c3a1cc8 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.5.0 // indirect
-	sigs.k8s.io/yaml v1.4.0 // indirect
 )
