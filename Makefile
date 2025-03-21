@@ -91,6 +91,7 @@ generate: $(CONTROLLER_GEN) $(GEN_CRD_API_REFERENCE_DOCS) $(HELM) $(MOCKGEN) $(Y
 
 .PHONY: format
 format: $(GOIMPORTS) $(GOIMPORTSREVISER)
+	@go fmt ./...
 	@bash $(GARDENER_HACK_DIR)/format.sh ./cmd ./pkg ./test
 
 .PHONY: sast
