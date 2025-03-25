@@ -32,7 +32,13 @@ rules:
   resources:
   - managedresources
   verbs:
-  - "*"
+  - delete
+  - get
+  - list
+  - patch
+  - create
+  - update
+  - watch
 - apiGroups:
   - ""
   resources:
@@ -70,7 +76,12 @@ rules:
   - "events"
   - "configmaps"
   verbs:
-  - "*"
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
 - apiGroups:
   - "apps"
   resources:
