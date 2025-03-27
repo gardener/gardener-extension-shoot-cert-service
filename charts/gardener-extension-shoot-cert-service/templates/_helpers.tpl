@@ -1,5 +1,9 @@
 {{- define "name" -}}
+{{- if .Values.gardener.runtimeCluster.enabled -}}
+gardener-extension-shoot-cert-service-runtime
+{{- else -}}
 gardener-extension-shoot-cert-service
+{{- end -}}
 {{- end -}}
 
 {{- define "certconfig" -}}
