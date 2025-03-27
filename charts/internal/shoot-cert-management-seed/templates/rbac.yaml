@@ -51,7 +51,12 @@ rules:
   resources:
     - "secrets"
   verbs:
-    - "*"
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
 - apiGroups:
     - ""
     - events.k8s.io
