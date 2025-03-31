@@ -1,8 +1,8 @@
-// SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company and Gardener contributors
+// SPDX-FileCopyrightText: 2025 SAP SE or an SAP affiliate company and Gardener contributors
 //
 // SPDX-License-Identifier: Apache-2.0
 
-package lifecycle
+package extension
 
 import (
 	"context"
@@ -61,12 +61,14 @@ type actuator struct {
 
 // Reconcile the Extension resource.
 func (a *actuator) Reconcile(ctx context.Context, log logr.Logger, ex *extensionsv1alpha1.Extension) error {
-	namespace := ex.GetNamespace()
-	internal := !gutil.IsShootNamespace(namespace)
+	var (
+		namespace         = ex.GetNamespace()
+		isShootDeployment = gutil.IsShootNamespace(namespace)
+		cluster           *extensions.Cluster
+		err               error
+	)
 
-	var cluster *extensions.Cluster
-	var err error
-	if !internal {
+	if isShootDeployment {
 		cluster, err = controller.GetCluster(ctx, a.client, namespace)
 		if err != nil {
 			return err
@@ -88,17 +90,17 @@ func (a *actuator) Reconcile(ctx context.Context, log logr.Logger, ex *extension
 		return err
 	}
 
-	if internal {
-		if err := a.createInternalResources(ctx, *values); err != nil {
-			return err
-		}
-	} else {
+	if isShootDeployment {
 		if !controller.IsHibernated(cluster) {
 			if err := a.createShootResources(ctx, *values); err != nil {
 				return err
 			}
 		}
 		if err := a.createSeedResources(ctx, *values); err != nil {
+			return err
+		}
+	} else {
+		if err := a.createInternalResources(ctx, *values); err != nil {
 			return err
 		}
 	}
@@ -109,10 +111,9 @@ func (a *actuator) Reconcile(ctx context.Context, log logr.Logger, ex *extension
 // Delete the Extension resource.
 func (a *actuator) Delete(ctx context.Context, log logr.Logger, ex *extensionsv1alpha1.Extension) error {
 	namespace := ex.GetNamespace()
-	internal := !gutil.IsShootNamespace(namespace)
 
 	a.logger.Info("Component is being deleted", "component", "cert-management", "namespace", namespace)
-	if internal {
+	if !gutil.IsShootNamespace(namespace) {
 		return a.deleteInternalResources(ctx, namespace)
 	}
 

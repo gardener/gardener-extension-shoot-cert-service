@@ -20,8 +20,8 @@ import (
 	config "github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/config"
 	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/config/v1alpha1"
 	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/config/validation"
+	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/controller/extension"
 	healthcheckcontroller "github.com/gardener/gardener-extension-shoot-cert-service/pkg/controller/healthcheck"
-	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/controller/lifecycle"
 )
 
 var (
@@ -93,7 +93,7 @@ func (c *CertificateServiceConfig) Apply(config *config.Configuration) {
 // ControllerSwitches are the cmd.SwitchOptions for the provider controllers.
 func ControllerSwitches() *cmd.SwitchOptions {
 	return cmd.NewSwitchOptions(
-		cmd.Switch(lifecycle.ControllerName, lifecycle.AddToManager),
+		cmd.Switch(extension.ControllerName, extension.AddToManager),
 		cmd.Switch(extensionshealthcheckcontroller.ControllerName, healthcheckcontroller.AddToManager),
 		cmd.Switch(extensionsheartbeatcontroller.ControllerName, extensionsheartbeatcontroller.AddToManager),
 	)

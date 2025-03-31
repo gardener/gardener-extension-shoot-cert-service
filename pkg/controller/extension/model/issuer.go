@@ -4,6 +4,7 @@
 
 package model
 
+// Issuer is the configuration model for an ACME or CA issuer.
 type Issuer struct {
 	Name                string
 	ACME                *ACME
@@ -12,6 +13,7 @@ type Issuer struct {
 	PrecheckNameservers []string
 }
 
+// ACME is the model for ACME configuration.
 type ACME struct {
 	Email                      string
 	PrivateKey                 *string
@@ -22,16 +24,19 @@ type ACME struct {
 	Domains                    *Domains
 }
 
+// ExternalAccountBinding is the configuration model for ExternalAccountBinding.
 type ExternalAccountBinding struct {
 	KeyID         string
 	KeySecretName string
 }
 
+// Domains is the configuration model for Domains.
 type Domains struct {
 	Include []string
 	Exclude []string
 }
 
+// CA is the model for CA configuration.
 type CA struct {
 	Certificate    string
 	CertificateKey string

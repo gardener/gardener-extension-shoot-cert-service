@@ -1,4 +1,4 @@
-package lifecycle
+package extension
 
 import (
 	"testing"
@@ -9,5 +9,5 @@ import (
 
 func TestDNSManagement(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Lifecycle Controller Suite")
+	RunSpecs(t, "Extension Controller Suite")
 }

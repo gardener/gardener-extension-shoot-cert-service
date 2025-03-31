@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-package lifecycle
+package extension
 
 import (
 	"crypto/sha256"
@@ -16,7 +16,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 
-	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/controller/lifecycle/model"
+	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/controller/extension/model"
 )
 
 func (d *deployer) collectIssuers() ([]model.Issuer, error) {
