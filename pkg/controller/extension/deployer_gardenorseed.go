@@ -14,13 +14,11 @@ import (
 	resourcesv1alpha1 "github.com/gardener/gardener/pkg/apis/resources/v1alpha1"
 	"github.com/gardener/gardener/pkg/utils/managedresources"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/service/v1alpha1"
 )
 
-func (d *deployer) DeployInternalManagedResource(ctx context.Context, c client.Client) error {
-	if !d.values.InternalDeployment {
-		return fmt.Errorf("only supported for internal deployment")
+func (d *deployer) DeployGardenOrSeedManagedResource(ctx context.Context, c client.Client) error {
+	if d.values.ShootDeployment {
+		return fmt.Errorf("not supported for shoot deployment")
 	}
 
 	var objects []client.Object
@@ -64,15 +62,15 @@ func (d *deployer) DeployInternalManagedResource(ctx context.Context, c client.C
 
 	keepObjects := false
 	forceOverwriteAnnotations := false
-	return managedresources.Create(ctx, c, d.values.Namespace, v1alpha1.CertManagementResourceNameInternal, nil, false, v1beta1constants.SeedResourceManagerClass, data, &keepObjects, nil, &forceOverwriteAnnotations)
+	return managedresources.Create(ctx, c, d.values.Namespace, d.values.resourceNameGardenOrSeed(), nil, false, v1beta1constants.SeedResourceManagerClass, data, &keepObjects, nil, &forceOverwriteAnnotations)
 }
 
-func (d *deployer) DeleteInternalManagedResourceAndWait(ctx context.Context, c client.Client, timeout time.Duration) error {
-	if err := managedresources.Delete(ctx, c, d.values.Namespace, v1alpha1.CertManagementResourceNameInternal, false); err != nil {
+func (d *deployer) DeleteGardenOrSeedManagedResourceAndWait(ctx context.Context, c client.Client, timeout time.Duration) error {
+	if err := managedresources.Delete(ctx, c, d.values.Namespace, d.values.resourceNameGardenOrSeed(), false); err != nil {
 		return err
 	}
 
 	timeoutCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
-	return managedresources.WaitUntilDeleted(timeoutCtx, c, d.values.Namespace, v1alpha1.CertManagementResourceNameInternal)
+	return managedresources.WaitUntilDeleted(timeoutCtx, c, d.values.Namespace, d.values.resourceNameGardenOrSeed())
 }

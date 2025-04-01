@@ -17,6 +17,7 @@ import (
 	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/client"
 )
 
+// Values holds the configuration and settings for the certificate service extension deployment.
 type Values struct {
 	ExtensionConfig                  config.Configuration
 	CertConfig                       service.CertConfig
@@ -26,8 +27,8 @@ type Values struct {
 	RestrictedDomains                string
 	Resources                        []core.NamedResourceReference
 
-	InternalDeployment bool
-	CertClass          string
+	ShootDeployment bool
+	CertClass       string
 }
 
 func (v Values) getLabels() map[string]string {
@@ -45,34 +46,52 @@ func (v Values) getSelectLabels() map[string]string {
 }
 
 func (v Values) shootClusterRoleName() string {
-	if v.InternalDeployment {
-		return "extensions.gardener.cloud:extension-shoot-cert-service:" + v.CertClass
+	if v.ShootDeployment {
+		return "extensions.gardener.cloud:extension-shoot-cert-service:shoot"
 	}
 
-	return "extensions.gardener.cloud:extension-shoot-cert-service:shoot"
+	return "extensions.gardener.cloud:extension-shoot-cert-service:" + v.CertClass
 }
 
 func (v Values) chartNameShoot() string {
-	if v.InternalDeployment {
-		return certv1alpha1.CertManagementChartNameInternal
+	if v.ShootDeployment {
+		return certv1alpha1.CertManagementChartNameShootShoot
 	}
 
-	return certv1alpha1.CertManagementChartNameShoot
-}
-
-func (v Values) chartNameSeed() string {
-	if v.InternalDeployment {
-		return certv1alpha1.CertManagementChartNameInternal
+	if v.CertClass == "garden" {
+		return certv1alpha1.CertManagementChartNameGarden
 	}
-
 	return certv1alpha1.CertManagementChartNameSeed
 }
 
-func (v Values) shootNamespace() string {
-	if v.InternalDeployment {
-		return v.Namespace
+func (v Values) chartNameSeed() string {
+	if v.ShootDeployment {
+		return certv1alpha1.CertManagementChartNameShootSeed
 	}
-	return "kube-system"
+
+	if v.CertClass == "garden" {
+		return certv1alpha1.CertManagementChartNameGarden
+	}
+	return certv1alpha1.CertManagementChartNameSeed
+}
+
+func (v Values) resourceNameGardenOrSeed() string {
+	if v.CertClass == "garden" {
+		return certv1alpha1.CertManagementResourceNameGarden
+	}
+	return certv1alpha1.CertManagementResourceNameSeed
+}
+
+func (v Values) instanceNameGardenOrSeed() string {
+	return "cert-management-" + v.CertClass
+}
+
+func (v Values) shootNamespace() string {
+	if v.ShootDeployment {
+		return "kube-system"
+	}
+
+	return v.Namespace
 }
 
 func (v Values) fullName() string {
@@ -126,14 +145,14 @@ func (v Values) propagationTimeout() string {
 }
 
 func (v Values) priorityClassName() string {
-	if v.InternalDeployment {
-		return "gardener-garden-system-100"
+	if v.ShootDeployment {
+		return "gardener-system-200"
 	}
-	return "gardener-system-200"
+	return "gardener-garden-system-100"
 }
 
 func (v Values) shootIssuersEnabled() bool {
-	if v.InternalDeployment {
+	if !v.ShootDeployment {
 		return false
 	}
 	if v.CertConfig.ShootIssuers != nil {
@@ -143,7 +162,7 @@ func (v Values) shootIssuersEnabled() bool {
 }
 
 func (v Values) dnsChallengeOnShootEnabled() bool {
-	return !v.InternalDeployment && v.CertConfig.DNSChallengeOnShoot != nil && v.CertConfig.DNSChallengeOnShoot.Enabled
+	return v.ShootDeployment && v.CertConfig.DNSChallengeOnShoot != nil && v.CertConfig.DNSChallengeOnShoot.Enabled
 }
 
 type deployer struct {

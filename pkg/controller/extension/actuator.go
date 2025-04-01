@@ -85,22 +85,22 @@ func (a *actuator) Reconcile(ctx context.Context, log logr.Logger, ex *extension
 		}
 	}
 
-	values, err := a.createValues(ctx, certConfig, cluster, namespace)
+	values, err := a.createValues(ctx, certConfig, cluster, namespace, isShootDeployment)
 	if err != nil {
 		return err
 	}
 
 	if isShootDeployment {
 		if !controller.IsHibernated(cluster) {
-			if err := a.createShootResources(ctx, *values); err != nil {
+			if err := a.createShootResourcesForShoot(ctx, *values); err != nil {
 				return err
 			}
 		}
-		if err := a.createSeedResources(ctx, *values); err != nil {
+		if err := a.createSeedResourcesForShoot(ctx, *values); err != nil {
 			return err
 		}
 	} else {
-		if err := a.createInternalResources(ctx, *values); err != nil {
+		if err := a.createResourcesForGardenOrSeed(ctx, *values); err != nil {
 			return err
 		}
 	}
@@ -114,13 +114,13 @@ func (a *actuator) Delete(ctx context.Context, log logr.Logger, ex *extensionsv1
 
 	a.logger.Info("Component is being deleted", "component", "cert-management", "namespace", namespace)
 	if !gutil.IsShootNamespace(namespace) {
-		return a.deleteInternalResources(ctx, namespace)
+		return a.deleteResourcesForGardenOrSeed(ctx, namespace)
 	}
 
-	if err := a.deleteShootResources(ctx, namespace); err != nil {
+	if err := a.deleteShootResourcesForShoot(ctx, namespace); err != nil {
 		return err
 	}
-	return a.deleteSeedResources(ctx, namespace)
+	return a.deleteSeedResourcesForShoot(ctx, namespace)
 }
 
 // ForceDelete the Extension resource.
@@ -143,21 +143,16 @@ func (a *actuator) Migrate(ctx context.Context, log logr.Logger, ex *extensionsv
 	return a.Delete(ctx, log, ex)
 }
 
-func (a *actuator) createValues(ctx context.Context, certConfig *service.CertConfig, cluster *controller.Cluster, namespace string) (*Values, error) {
+func (a *actuator) createValues(ctx context.Context, certConfig *service.CertConfig, cluster *controller.Cluster, namespace string, isShootDeployment bool) (*Values, error) {
 	values := Values{
-		ExtensionConfig:    a.serviceConfig,
-		CertConfig:         *certConfig,
-		Namespace:          namespace,
-		Resources:          nil,
-		InternalDeployment: !gutil.IsShootNamespace(namespace),
+		ExtensionConfig: a.serviceConfig,
+		CertConfig:      *certConfig,
+		Namespace:       namespace,
+		Resources:       nil,
+		ShootDeployment: isShootDeployment,
 	}
 
-	if values.InternalDeployment {
-		values.CertClass = "seed"
-		if a.extensionClass == extensionsv1alpha1.ExtensionClassGarden {
-			values.CertClass = "garden"
-		}
-	} else {
+	if values.ShootDeployment {
 		if values.restrictedIssuer() {
 			if cluster.Shoot.Spec.DNS == nil || cluster.Shoot.Spec.DNS.Domain == nil {
 				a.logger.Info("no domain given for shoot %s/%s - aborting", cluster.Shoot.Name, cluster.Shoot.Namespace)
@@ -170,6 +165,11 @@ func (a *actuator) createValues(ctx context.Context, certConfig *service.CertCon
 			return nil, err
 		}
 		values.GenericTokenKubeconfigSecretName = extensions.GenericTokenKubeconfigSecretNameFromCluster(cluster)
+	} else {
+		values.CertClass = "seed"
+		if a.extensionClass == extensionsv1alpha1.ExtensionClassGarden {
+			values.CertClass = "garden"
+		}
 	}
 
 	images, err := utilsimagevector.FindImages(imagevector.ImageVector(), []string{v1alpha1.CertManagementImageName})
@@ -185,35 +185,35 @@ func (a *actuator) createValues(ctx context.Context, certConfig *service.CertCon
 	return &values, nil
 }
 
-func (a *actuator) createSeedResources(ctx context.Context, values Values) error {
+func (a *actuator) createSeedResourcesForShoot(ctx context.Context, values Values) error {
 	a.logger.Info("Component is being applied", "component", "cert-management", "namespace", values.Namespace)
 	return newDeployer(values).DeploySeedManagedResource(ctx, a.client)
 }
 
-func (a *actuator) createInternalResources(ctx context.Context, values Values) error {
+func (a *actuator) createResourcesForGardenOrSeed(ctx context.Context, values Values) error {
 	a.logger.Info("Component is being applied", "component", "cert-management", "namespace", values.Namespace)
-	return newDeployer(values).DeployInternalManagedResource(ctx, a.client)
+	return newDeployer(values).DeployGardenOrSeedManagedResource(ctx, a.client)
 }
 
-func (a *actuator) createShootResources(ctx context.Context, values Values) error {
-	if values.InternalDeployment {
+func (a *actuator) createShootResourcesForShoot(ctx context.Context, values Values) error {
+	if !values.ShootDeployment {
 		return nil
 	}
 	return newDeployer(values).DeployShootManagedResource(ctx, a.client)
 }
 
-func (a *actuator) deleteInternalResources(ctx context.Context, namespace string) error {
-	return newDeployer(Values{Namespace: namespace, InternalDeployment: true}).DeleteInternalManagedResourceAndWait(ctx, a.client, 2*time.Minute)
+func (a *actuator) deleteResourcesForGardenOrSeed(ctx context.Context, namespace string) error {
+	return newDeployer(Values{Namespace: namespace, ShootDeployment: false}).DeleteGardenOrSeedManagedResourceAndWait(ctx, a.client, 2*time.Minute)
 }
 
-func (a *actuator) deleteSeedResources(ctx context.Context, namespace string) error {
+func (a *actuator) deleteSeedResourcesForShoot(ctx context.Context, namespace string) error {
 	a.logger.Info("Deleting managed resource for seed", "namespace", namespace)
-	return newDeployer(Values{Namespace: namespace}).DeleteSeedManagedResourceAndWait(ctx, a.client, 2*time.Minute)
+	return newDeployer(Values{Namespace: namespace, ShootDeployment: true}).DeleteSeedManagedResourceAndWait(ctx, a.client, 2*time.Minute)
 }
 
-func (a *actuator) deleteShootResources(ctx context.Context, namespace string) error {
+func (a *actuator) deleteShootResourcesForShoot(ctx context.Context, namespace string) error {
 	a.logger.Info("Deleting managed resource for shoot", "namespace", namespace)
-	return newDeployer(Values{Namespace: namespace}).DeleteShootManagedResourceAndWait(ctx, a.client, 2*time.Minute)
+	return newDeployer(Values{Namespace: namespace, ShootDeployment: true}).DeleteShootManagedResourceAndWait(ctx, a.client, 2*time.Minute)
 }
 
 func (a *actuator) updateStatus(ctx context.Context, ex *extensionsv1alpha1.Extension, certConfig *service.CertConfig) error {

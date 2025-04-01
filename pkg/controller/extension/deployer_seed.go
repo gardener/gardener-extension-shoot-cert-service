@@ -53,8 +53,8 @@ var (
 var certDashboardJSON string
 
 func (d *deployer) DeploySeedManagedResource(ctx context.Context, c client.Client) error {
-	if d.values.InternalDeployment {
-		return fmt.Errorf("not supported for internal deployment")
+	if !d.values.ShootDeployment {
+		return fmt.Errorf("only supported for shoot deployment")
 	}
 
 	var objects []client.Object
@@ -140,7 +140,7 @@ func (d *deployer) createDashboardsConfigMap() *corev1.ConfigMap {
 
 func (d *deployer) createDeployment() (*appsv1.Deployment, error) {
 	labels := d.values.getLabels()
-	if !d.values.InternalDeployment {
+	if d.values.ShootDeployment {
 		labels["high-availability-config.resources.gardener.cloud/type"] = "controller"
 	}
 	podLabels := map[string]string{
@@ -305,16 +305,16 @@ func (d *deployer) createRole() *rbacv1.Role {
 		},
 	}
 
-	if d.values.InternalDeployment {
+	if d.values.ShootDeployment {
 		role.Rules = append(role.Rules, rbacv1.PolicyRule{
-			APIGroups: []string{"extensions.gardener.cloud"},
-			Resources: []string{"dnsrecords"},
+			APIGroups: []string{"dns.gardener.cloud"},
+			Resources: []string{"dnsentries"},
 			Verbs:     []string{"get", "list", "update", "patch", "watch", "create", "delete"},
 		})
 	} else {
 		role.Rules = append(role.Rules, rbacv1.PolicyRule{
-			APIGroups: []string{"dns.gardener.cloud"},
-			Resources: []string{"dnsentries"},
+			APIGroups: []string{"extensions.gardener.cloud"},
+			Resources: []string{"dnsrecords"},
 			Verbs:     []string{"get", "list", "update", "patch", "watch", "create", "delete"},
 		})
 	}
@@ -435,7 +435,7 @@ func (d *deployer) createServiceMonitor() *monitoringv1.ServiceMonitor {
 }
 
 func (d *deployer) createVPA() *vpaautoscalingv1.VerticalPodAutoscaler {
-	if d.values.InternalDeployment {
+	if !d.values.ShootDeployment {
 		return nil
 	}
 
@@ -487,16 +487,16 @@ func (d *deployer) env() []corev1.EnvVar {
 
 func (d *deployer) args() []string {
 	args := []string{fmt.Sprintf("--name=%s", d.values.fullName())}
-	if d.values.InternalDeployment {
+	if d.values.ShootDeployment {
+		args = append(args,
+			"--namespace=kube-system",
+			"--source=/var/run/secrets/gardener.cloud/shoot/generic-kubeconfig/kubeconfig")
+	} else {
 		args = append(args,
 			fmt.Sprintf("--namespace=%s", d.values.Namespace),
 			fmt.Sprintf("--issuer.cert-class=%s", d.values.CertClass),
 			"--use-dnsrecords=true",
 		)
-	} else {
-		args = append(args,
-			"--namespace=kube-system",
-			"--source=/var/run/secrets/gardener.cloud/shoot/generic-kubeconfig/kubeconfig")
 	}
 	args = append(args,
 		fmt.Sprintf("--issuer.issuer-namespace=%s", d.values.Namespace),
@@ -560,7 +560,7 @@ func (d *deployer) args() []string {
 
 func (d *deployer) volumeMounts() []corev1.VolumeMount {
 	var mounts []corev1.VolumeMount
-	if !d.values.InternalDeployment {
+	if d.values.ShootDeployment {
 		mounts = append(mounts, corev1.VolumeMount{
 			Name:      "kubeconfig",
 			MountPath: "/var/run/secrets/gardener.cloud/shoot/generic-kubeconfig",
@@ -579,7 +579,7 @@ func (d *deployer) volumeMounts() []corev1.VolumeMount {
 
 func (d *deployer) volumes() []corev1.Volume {
 	var volumes []corev1.Volume
-	if !d.values.InternalDeployment {
+	if d.values.ShootDeployment {
 		volumes = append(volumes, corev1.Volume{
 			Name: "kubeconfig",
 			VolumeSource: corev1.VolumeSource{

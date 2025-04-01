@@ -14,8 +14,8 @@ const CertManagementResourceNameSeed = "extension-shoot-cert-service-seed"
 // CertManagementResourceNameShoot is the name for Cert-Management resources in the shoot.
 const CertManagementResourceNameShoot = "extension-shoot-cert-service-shoot"
 
-// CertManagementResourceNameInternal is the name for internal Cert-Management resources on runtime cluster or seeds.
-const CertManagementResourceNameInternal = "extension-shoot-cert-service-internal"
+// CertManagementResourceNameGarden is the name for Cert-Management resources on the Garden runtime cluster.
+const CertManagementResourceNameGarden = "extension-shoot-cert-service-garden"
 
 // CertManagementImageName is the name of the Cert-Management image in the image vector.
 const CertManagementImageName = "cert-management"
@@ -26,14 +26,17 @@ const ShootAccessSecretName = "extension-shoot-cert-service"
 // ShootAccessServiceAccountName is the name of the service account used for accessing the shoot.
 const ShootAccessServiceAccountName = ShootAccessSecretName
 
-// CertManagementChartNameSeed is the name of the chart for Cert-Management in the seed.
-const CertManagementChartNameSeed = "shoot-cert-management-seed"
+// CertManagementChartNameShootSeed is the name of the chart for Cert-Management in the seed.
+const CertManagementChartNameShootSeed = "shoot-cert-management-seed"
 
-// CertManagementChartNameShoot is the name of the chart for Cert-Management in the shoot.
-const CertManagementChartNameShoot = "shoot-cert-management-shoot"
+// CertManagementChartNameShootShoot is the name of the chart for Cert-Management in the shoot.
+const CertManagementChartNameShootShoot = "shoot-cert-management-shoot"
 
-// CertManagementChartNameInternal is the name of the chart for internal Cert-Management deployment on runtime cluster or seeds.
-const CertManagementChartNameInternal = "cert-management-internal"
+// CertManagementChartNameGarden is the name of the chart for Cert-Management deployment on the Garden runtime cluster.
+const CertManagementChartNameGarden = "cert-management-garden"
+
+// CertManagementChartNameSeed is the name of the chart for Cert-Management deployment on the seed cluster.
+const CertManagementChartNameSeed = "cert-management-seed"
 
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

@@ -36,8 +36,8 @@ var (
 )
 
 func (d *deployer) DeployShootManagedResource(ctx context.Context, c client.Client) error {
-	if d.values.InternalDeployment {
-		return fmt.Errorf("not supported for internal deployment")
+	if !d.values.ShootDeployment {
+		return fmt.Errorf("only supported for shoot deployment")
 	}
 
 	var objects []client.Object
@@ -65,8 +65,8 @@ func (d *deployer) DeployShootManagedResource(ctx context.Context, c client.Clie
 }
 
 func (d *deployer) DeleteShootManagedResourceAndWait(ctx context.Context, c client.Client, timeout time.Duration) error {
-	if d.values.InternalDeployment {
-		return fmt.Errorf("not supported for internal deployment")
+	if !d.values.ShootDeployment {
+		return fmt.Errorf("only supported for shoot deployment")
 	}
 
 	if err := managedresources.Delete(ctx, c, d.values.Namespace, v1alpha1.CertManagementResourceNameShoot, false); err != nil {
@@ -208,8 +208,8 @@ func (d *deployer) createShootClusterRoleBinding() *rbacv1.ClusterRoleBinding {
 func (d *deployer) getServiceAccount() rbacv1.Subject {
 	subjectName := v1alpha1.ShootAccessServiceAccountName
 	subjectNamespace := "kube-system"
-	if d.values.InternalDeployment {
-		subjectName = "cert-management-internal"
+	if !d.values.ShootDeployment {
+		subjectName = d.values.instanceNameGardenOrSeed()
 		subjectNamespace = d.values.Namespace
 	}
 
@@ -225,7 +225,7 @@ func (d *deployer) getShootCRDs() ([]client.Object, error) {
 	var crds []client.Object
 
 	items := []string{crdCertificates, crdRevocations}
-	if d.values.shootIssuersEnabled() || d.values.InternalDeployment {
+	if d.values.shootIssuersEnabled() || !d.values.ShootDeployment {
 		items = append(items, crdIssuers)
 	}
 	for _, data := range items {

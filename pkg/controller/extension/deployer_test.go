@@ -186,7 +186,7 @@ var _ = Describe("deployer", func() {
 			priorityClassName := "gardener-system-200"
 
 			if internal {
-				name = "cert-management-internal"
+				name = "cert-management-" + certClass
 				shootNamespace = namespace
 				priorityClassName = "gardener-garden-system-100"
 			}
@@ -370,7 +370,7 @@ var _ = Describe("deployer", func() {
 			}
 			if internal {
 				container := &obj.Spec.Template.Spec.Containers[0]
-				container.Name = "cert-management-internal"
+				container.Name = "cert-management-" + certClass
 				container.VolumeMounts = container.VolumeMounts[1:]
 				obj.Spec.Template.Spec.Volumes = obj.Spec.Template.Spec.Volumes[1:]
 			}
@@ -378,6 +378,8 @@ var _ = Describe("deployer", func() {
 		}
 
 		standardInternalResources = func(namespace, certClass string) []client.Object {
+			instance := "cert-management-" + certClass
+
 			return []client.Object{
 				&apiextensionsv1.CustomResourceDefinition{
 					ObjectMeta: metav1.ObjectMeta{
@@ -398,7 +400,7 @@ var _ = Describe("deployer", func() {
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "extensions.gardener.cloud:extension-shoot-cert-service:" + certClass,
 						Labels: map[string]string{
-							"app.kubernetes.io/instance": "cert-management-internal",
+							"app.kubernetes.io/instance": instance,
 						},
 					},
 					Rules: []rbacv1.PolicyRule{
@@ -448,7 +450,7 @@ var _ = Describe("deployer", func() {
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "extensions.gardener.cloud:extension-shoot-cert-service:" + certClass,
 						Labels: map[string]string{
-							"app.kubernetes.io/instance": "cert-management-internal",
+							"app.kubernetes.io/instance": instance,
 						},
 					},
 					RoleRef: rbacv1.RoleRef{
@@ -459,7 +461,7 @@ var _ = Describe("deployer", func() {
 					Subjects: []rbacv1.Subject{
 						{
 							Kind:      "ServiceAccount",
-							Name:      "cert-management-internal",
+							Name:      instance,
 							Namespace: namespace,
 						},
 					},
@@ -502,7 +504,7 @@ var _ = Describe("deployer", func() {
 					Subjects: []rbacv1.Subject{
 						{
 							Kind:      "ServiceAccount",
-							Name:      "cert-management-internal",
+							Name:      instance,
 							Namespace: namespace,
 						},
 					},
@@ -514,11 +516,11 @@ var _ = Describe("deployer", func() {
 				},
 				&corev1.ServiceAccount{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      "cert-management-internal",
+						Name:      instance,
 						Namespace: namespace,
 						Labels: map[string]string{
-							"app.kubernetes.io/name":     "cert-management-internal",
-							"app.kubernetes.io/instance": "cert-management-internal",
+							"app.kubernetes.io/name":     instance,
+							"app.kubernetes.io/instance": instance,
 						},
 					},
 					AutomountServiceAccountToken: ptr.To(false),
@@ -528,8 +530,8 @@ var _ = Describe("deployer", func() {
 						Name:      "cert-controller-manager-ca-certificates",
 						Namespace: namespace,
 						Labels: map[string]string{
-							"app.kubernetes.io/name":     "cert-management-internal",
-							"app.kubernetes.io/instance": "cert-management-internal",
+							"app.kubernetes.io/name":     instance,
+							"app.kubernetes.io/instance": instance,
 						},
 					},
 					Data: map[string]string{
@@ -541,8 +543,8 @@ var _ = Describe("deployer", func() {
 						Name:      "extensions.gardener.cloud:extension-shoot-cert-service",
 						Namespace: namespace,
 						Labels: map[string]string{
-							"app.kubernetes.io/name":     "cert-management-internal",
-							"app.kubernetes.io/instance": "cert-management-internal",
+							"app.kubernetes.io/name":     instance,
+							"app.kubernetes.io/instance": instance,
 						},
 					},
 					Rules: []rbacv1.PolicyRule{
@@ -581,11 +583,11 @@ var _ = Describe("deployer", func() {
 				},
 				&rbacv1.RoleBinding{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      "cert-management-internal",
+						Name:      instance,
 						Namespace: namespace,
 						Labels: map[string]string{
-							"app.kubernetes.io/name":     "cert-management-internal",
-							"app.kubernetes.io/instance": "cert-management-internal",
+							"app.kubernetes.io/name":     instance,
+							"app.kubernetes.io/instance": instance,
 						},
 					},
 					RoleRef: rbacv1.RoleRef{
@@ -596,7 +598,7 @@ var _ = Describe("deployer", func() {
 					Subjects: []rbacv1.Subject{
 						{
 							Kind:      "ServiceAccount",
-							Name:      "cert-management-internal",
+							Name:      instance,
 							Namespace: namespace,
 						},
 					},
@@ -609,8 +611,8 @@ var _ = Describe("deployer", func() {
 							"networking.resources.gardener.cloud/from-all-scrape-targets-allowed-ports": "[{\"port\":10258,\"protocol\":\"TCP\"}]",
 						},
 						Labels: map[string]string{
-							"app.kubernetes.io/name":     "cert-management-internal",
-							"app.kubernetes.io/instance": "cert-management-internal",
+							"app.kubernetes.io/name":     instance,
+							"app.kubernetes.io/instance": instance,
 						},
 					},
 					Spec: corev1.ServiceSpec{
@@ -624,8 +626,8 @@ var _ = Describe("deployer", func() {
 							},
 						},
 						Selector: map[string]string{
-							"app.kubernetes.io/name":     "cert-management-internal",
-							"app.kubernetes.io/instance": "cert-management-internal",
+							"app.kubernetes.io/name":     instance,
+							"app.kubernetes.io/instance": instance,
 						},
 					},
 				},
@@ -943,12 +945,16 @@ var _ = Describe("deployer", func() {
 			ExpectWithOffset(1, errors.IsNotFound(c.Get(ctx, client.ObjectKeyFromObject(mr), mr))).To(BeTrue())
 		}
 
-		testInternalManagedResource = func(resources []client.Object, modifyDeployment func(*appsv1.Deployment)) {
+		testInternalManagedResource = func(resources []client.Object, isGarden bool, modifyDeployment func(*appsv1.Deployment)) {
 			deployer := newDeployer(values)
-			ExpectWithOffset(1, deployer.DeployInternalManagedResource(ctx, c)).To(Succeed())
+			ExpectWithOffset(1, deployer.DeployGardenOrSeedManagedResource(ctx, c)).To(Succeed())
+			name := servicev1alpha1.CertManagementResourceNameSeed
+			if isGarden {
+				name = servicev1alpha1.CertManagementResourceNameGarden
+			}
 			mr := &resourcesv1alpha1.ManagedResource{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      servicev1alpha1.CertManagementResourceNameInternal,
+					Name:      name,
 					Namespace: values.Namespace,
 				},
 			}
@@ -967,7 +973,7 @@ var _ = Describe("deployer", func() {
 
 			ExpectWithOffset(1, mr).To(consistOf(resources...))
 
-			ExpectWithOffset(1, deployer.DeleteInternalManagedResourceAndWait(ctx, c, 5*time.Second))
+			ExpectWithOffset(1, deployer.DeleteGardenOrSeedManagedResourceAndWait(ctx, c, 5*time.Second))
 			ExpectWithOffset(1, errors.IsNotFound(c.Get(ctx, client.ObjectKeyFromObject(mr), mr))).To(BeTrue())
 		}
 
@@ -1012,6 +1018,7 @@ var _ = Describe("deployer", func() {
 					DeactivateAuthorizations: ptr.To(true),
 				},
 			},
+			ShootDeployment: true,
 
 			Image:                            "example.com/gardener-project/releases/cert-controller-manager:v0.0.0",
 			GenericTokenKubeconfigSecretName: "generic-token-kubeconfig-71a3f1a4",
@@ -1240,9 +1247,9 @@ var _ = Describe("deployer", func() {
 		})
 	})
 
-	Describe("DeployInternalManagedResource", func() {
+	Describe("DeployGardenOrSeedManagedResource", func() {
 		It("should deploy it for the runtime cluster with self-signed root CA", func() {
-			values.InternalDeployment = true
+			values.ShootDeployment = false
 			values.Namespace = "garden"
 			values.CertClass = "garden"
 			values.ExtensionConfig.CA = &config.CA{
@@ -1278,7 +1285,7 @@ var _ = Describe("deployer", func() {
 						"tls.key": []byte("cert-key"),
 					},
 				})
-			testInternalManagedResource(resources, func(deployment *appsv1.Deployment) {
+			testInternalManagedResource(resources, true, func(deployment *appsv1.Deployment) {
 				deployment.Spec.Template.ObjectMeta.Annotations = map[string]string{
 					"checksum/issuers": "4eb1941a6e4f4d326b96278513c50d462df6c24d9566c0f126d34f40eeb6a506",
 				}
@@ -1287,7 +1294,7 @@ var _ = Describe("deployer", func() {
 		})
 
 		It("should deploy it for a seed cluster", func() {
-			values.InternalDeployment = true
+			values.ShootDeployment = false
 			values.Namespace = "seed-foo"
 			values.CertClass = "seed"
 			resources := standardInternalResources(values.Namespace, values.CertClass)
@@ -1319,7 +1326,7 @@ var _ = Describe("deployer", func() {
 						"privateKey": []byte("<private-key>"),
 					},
 				})
-			testInternalManagedResource(resources, nil)
+			testInternalManagedResource(resources, false, nil)
 		})
 	})
 })

@@ -37,7 +37,7 @@ func (d *deployer) collectIssuers() ([]model.Issuer, error) {
 
 	issuerList := []model.Issuer{gardenIssuer}
 
-	if d.values.InternalDeployment {
+	if !d.values.ShootDeployment {
 		return issuerList, nil
 	}
 
@@ -227,8 +227,8 @@ func (d *deployer) createCASpec(issuer model.Issuer) *certv1alpha1.CASpec {
 }
 
 func (d *deployer) lookupReferencedSecret(refname string) (string, error) {
-	if d.values.InternalDeployment {
-		return "invalid", fmt.Errorf("internal deployment does not support additional issuers")
+	if !d.values.ShootDeployment {
+		return "invalid", fmt.Errorf("only shoot deployment supports additional issuers")
 	}
 	for _, ref := range d.values.Resources {
 		if ref.Name == refname {
