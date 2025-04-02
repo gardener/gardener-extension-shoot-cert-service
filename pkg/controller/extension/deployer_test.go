@@ -13,6 +13,7 @@ import (
 
 	certv1alpha1 "github.com/gardener/cert-management/pkg/apis/cert/v1alpha1"
 	"github.com/gardener/gardener/pkg/apis/core"
+	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
 	resourcesv1alpha1 "github.com/gardener/gardener/pkg/apis/resources/v1alpha1"
 	"github.com/gardener/gardener/pkg/utils/test/matchers"
 	. "github.com/onsi/ginkgo/v2"
@@ -1354,6 +1355,7 @@ func completeCRDs(objects []client.Object, keepObject bool) (int, error) {
 		if keepObject {
 			crd.GetAnnotations()[resourcesv1alpha1.KeepObject] = "true"
 		}
+		crd.SetLabels(map[string]string{v1beta1constants.ShootNoCleanup: "true"})
 		objects[i] = crd
 	}
 	return count, nil

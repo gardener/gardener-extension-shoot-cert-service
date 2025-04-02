@@ -7,12 +7,8 @@ package extension
 import (
 	"context"
 
-	extensionscontroller "github.com/gardener/gardener/extensions/pkg/controller"
 	"github.com/gardener/gardener/extensions/pkg/controller/extension"
-	extensionspredicate "github.com/gardener/gardener/extensions/pkg/predicate"
 	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
-	"github.com/gardener/gardener/pkg/extensions"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
@@ -54,12 +50,6 @@ func AddToManager(ctx context.Context, mgr manager.Manager) error {
 // The opts.Reconciler is being set with a newly instantiated actuator.
 func AddToManagerWithOptions(ctx context.Context, mgr manager.Manager, opts AddOptions) error {
 	predicates := extension.DefaultPredicates(ctx, mgr, DefaultAddOptions.IgnoreOperationAnnotation)
-	if opts.ExtensionClass == extensionsv1alpha1.ExtensionClassGarden {
-		predicates = extensionspredicate.DefaultControllerPredicates(DefaultAddOptions.IgnoreOperationAnnotation, extensionspredicate.IsInGardenNamespacePredicate)
-		extensionscontroller.GetCluster = func(context.Context, client.Reader, string) (*extensions.Cluster, error) {
-			return nil, nil
-		}
-	}
 	return extension.Add(mgr, extension.AddArgs{
 		Actuator:          NewActuator(mgr, opts.ServiceConfig, opts.ExtensionClass),
 		ControllerOptions: opts.ControllerOptions,

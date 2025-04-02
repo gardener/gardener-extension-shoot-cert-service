@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"time"
 
+	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
 	"github.com/gardener/gardener/pkg/utils/managedresources"
 	rbacv1 "k8s.io/api/rbac/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -233,6 +234,7 @@ func (d *deployer) getShootCRDs() ([]client.Object, error) {
 		if err != nil {
 			return nil, err
 		}
+		crd.SetLabels(map[string]string{v1beta1constants.ShootNoCleanup: "true"})
 		crds = append(crds, crd)
 	}
 	return crds, nil

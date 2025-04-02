@@ -62,7 +62,8 @@ type actuator struct {
 // Reconcile the Extension resource.
 func (a *actuator) Reconcile(ctx context.Context, log logr.Logger, ex *extensionsv1alpha1.Extension) error {
 	var (
-		namespace         = ex.GetNamespace()
+		namespace = ex.GetNamespace()
+		// TODO(martinweindel) Use `extensionsv1alpha1helper.GetExtensionClassOrDefault(ex.Spec.ExtensionClass)` once the method is available with gardener v1.116.0
 		isShootDeployment = gutil.IsShootNamespace(namespace)
 		cluster           *extensions.Cluster
 		err               error
