@@ -168,7 +168,7 @@ func (d *deployer) createDeployment() (*appsv1.Deployment, error) {
 		},
 		Spec: appsv1.DeploymentSpec{
 			RevisionHistoryLimit: ptr.To[int32](2),
-			Replicas:             ptr.To[int32](1),
+			Replicas:             ptr.To(d.values.Replicas),
 			Selector: &metav1.LabelSelector{
 				MatchLabels: d.values.getSelectLabels(),
 			},

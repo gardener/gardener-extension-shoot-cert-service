@@ -151,9 +151,11 @@ func (a *actuator) createValues(ctx context.Context, certConfig *service.CertCon
 		Namespace:       namespace,
 		Resources:       nil,
 		ShootDeployment: isShootDeployment,
+		Replicas:        1,
 	}
 
 	if values.ShootDeployment {
+		values.Replicas = int32(controller.GetReplicas(cluster, 1))
 		if values.restrictedIssuer() {
 			if cluster.Shoot.Spec.DNS == nil || cluster.Shoot.Spec.DNS.Domain == nil {
 				a.logger.Info("no domain given for shoot %s/%s - aborting", cluster.Shoot.Name, cluster.Shoot.Namespace)

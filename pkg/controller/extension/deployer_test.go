@@ -1020,6 +1020,7 @@ var _ = Describe("deployer", func() {
 				},
 			},
 			ShootDeployment: true,
+			Replicas:        1,
 
 			Image:                            "example.com/gardener-project/releases/cert-controller-manager:v0.0.0",
 			GenericTokenKubeconfigSecretName: "generic-token-kubeconfig-71a3f1a4",
@@ -1068,6 +1069,13 @@ var _ = Describe("deployer", func() {
 	Describe("DeploySeedManagedResource", func() {
 		It("should deploy it", func() {
 			testSeedManagedResource(standardSeedResources(), nil)
+		})
+
+		It("should deploy with no replicas on hibernation", func() {
+			values.Replicas = 0
+			testSeedManagedResource(standardSeedResources(), func(deployment *appsv1.Deployment) {
+				deployment.Spec.Replicas = ptr.To[int32](0)
+			})
 		})
 
 		It("should deploy it with restricted default issuer", func() {

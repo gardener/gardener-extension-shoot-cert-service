@@ -29,6 +29,7 @@ type Values struct {
 
 	ShootDeployment bool
 	CertClass       string
+	Replicas        int32
 }
 
 func (v Values) getLabels() map[string]string {
