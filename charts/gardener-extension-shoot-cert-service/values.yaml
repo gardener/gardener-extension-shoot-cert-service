@@ -81,3 +81,5 @@ disableControllers: []
 
 gardener:
   version: ""
+  runtimeCluster:
+    enabled: false

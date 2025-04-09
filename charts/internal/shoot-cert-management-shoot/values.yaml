@@ -1,8 +1,0 @@
-
-shootIssuers:
-  enabled: true
-
-dnsChallengeOnShoot:
-  enabled: false
-
-shootAccessServiceAccountName: ""
