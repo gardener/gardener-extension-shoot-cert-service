@@ -88,6 +88,7 @@ rules:
   - patch
   - update
   - get
+  - patch
 - apiGroups:
   - "cert.gardener.cloud"
   resources:
@@ -109,6 +110,44 @@ rules:
   - patch
   - update
   - delete
+{{- if or .Values.gardener.runtimeCluster.enabled .Values.gardenerCertificates.seed.enabled }}
+- apiGroups:
+  - cert.gardener.cloud
+  resources:
+  - certificates
+  verbs:
+  - create
+  - get
+  - list
+  - watch
+  - patch
+  - update
+  - delete
+{{- end }}
+{{- if .Values.gardener.runtimeCluster.enabled }}
+- apiGroups:
+  - operator.gardener.cloud
+  resources:
+  - gardens
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - admissionregistration.k8s.io
+  resources:
+  - mutatingwebhookconfigurations
+  verbs:
+  - '*'
+{{- end }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding

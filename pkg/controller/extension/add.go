@@ -37,7 +37,7 @@ type AddOptions struct {
 	ServiceConfig config.Configuration
 	// IgnoreOperationAnnotation specifies whether to ignore the operation annotation or not.
 	IgnoreOperationAnnotation bool
-	// ExtensionClass defines the extension class this extension is responsible for.
+	// ExtensionClass defines the main extension class this extension is responsible for.
 	ExtensionClass extensionsv1alpha1.ExtensionClass
 }
 
@@ -50,14 +50,18 @@ func AddToManager(ctx context.Context, mgr manager.Manager) error {
 // The opts.Reconciler is being set with a newly instantiated actuator.
 func AddToManagerWithOptions(ctx context.Context, mgr manager.Manager, opts AddOptions) error {
 	predicates := extension.DefaultPredicates(ctx, mgr, DefaultAddOptions.IgnoreOperationAnnotation)
+	extensionClasses := []extensionsv1alpha1.ExtensionClass{extensionsv1alpha1.ExtensionClassShoot, extensionsv1alpha1.ExtensionClassSeed}
+	if opts.ExtensionClass == extensionsv1alpha1.ExtensionClassGarden {
+		extensionClasses = []extensionsv1alpha1.ExtensionClass{extensionsv1alpha1.ExtensionClassGarden}
+	}
 	return extension.Add(mgr, extension.AddArgs{
-		Actuator:          NewActuator(mgr, opts.ServiceConfig, opts.ExtensionClass),
+		Actuator:          NewActuator(mgr, opts.ServiceConfig, extensionClasses),
 		ControllerOptions: opts.ControllerOptions,
 		Name:              ControllerName,
 		FinalizerSuffix:   FinalizerSuffix,
 		Resync:            0,
 		Predicates:        predicates,
 		Type:              Type,
-		ExtensionClasses:  []extensionsv1alpha1.ExtensionClass{opts.ExtensionClass},
+		ExtensionClasses:  extensionClasses,
 	})
 }

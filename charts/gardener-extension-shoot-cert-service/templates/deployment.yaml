@@ -33,6 +33,7 @@ spec:
         app.kubernetes.io/instance: {{ .Release.Name }}
         networking.gardener.cloud/to-runtime-apiserver: allowed
         networking.gardener.cloud/to-dns: allowed
+        networking.resources.gardener.cloud/to-all-istio-ingresses-istio-ingressgateway-tcp-9443: allowed
     spec:
       priorityClassName: gardener-system-900
       serviceAccountName: gardener-extension-shoot-cert-service
@@ -42,8 +43,7 @@ spec:
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         securityContext:
           allowPrivilegeEscalation: false
-        command:
-        - /gardener-extension-shoot-cert-service
+        args:
         - --config=/etc/cert-service/config.yaml
         - --max-concurrent-reconciles={{ .Values.controllers.concurrentSyncs }}
         - --healthcheck-max-concurrent-reconciles={{ .Values.controllers.healthcheck.concurrentSyncs }}
@@ -51,7 +51,15 @@ spec:
         - --heartbeat-renew-interval-seconds={{ .Values.controllers.heartbeat.renewIntervalSeconds }}
         {{- if .Values.gardener.runtimeCluster.enabled }}
         - --extension-class=garden
+        {{- if .Values.gardenerCertificates.runtimeCluster.enabled }}
+        - --controllers=shoot_cert_service,garden,certificate
+        {{- else }}
         - --controllers=shoot_cert_service
+        - --disable-webhooks=sni-config
+        {{- end }}
+        {{- else }}
+        - --controllers=shoot_cert_service,healthcheck,heartbeat
+        - --disable-webhooks=sni-config
         {{- end }}
         - --disable-controllers={{ .Values.disableControllers | join "," }}
         - --ignore-operation-annotation={{ .Values.controllers.ignoreOperationAnnotation }}
@@ -62,6 +70,18 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.namespace
+        {{- if .Values.gardenerCertificates.runtimeCluster.virtualKubeAPIServerIncludePrimaryDomain }}
+        - name: VIRTUAL_KUBE_API_SERVER_SNI_INCLUDE_PRIMARY_DOMAIN
+          value: "true"
+        {{- end }}
+        {{- if .Values.gardenerCertificates.seed.enabled }}
+        - name: SEED_NAME
+          value: {{ .Values.gardener.seed.name }}
+        - name: SEED_INGRESS_DNS_DOMAIN
+          value: {{ .Values.gardener.seed.ingressDomain }}
+        - name: SEED_DNS_SECRET_ROLE
+          value: {{ .Values.gardenerCertificates.seed.dnsSecretRole }}
+        {{- end }}
         {{- if .Values.imageVectorOverwrite }}
         - name: IMAGEVECTOR_OVERWRITE
           value: /charts_overwrite/images_overwrite.yaml

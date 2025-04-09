@@ -12,6 +12,7 @@ import (
 	"github.com/gardener/gardener/extensions/pkg/controller/cmd"
 	extensionshealthcheckcontroller "github.com/gardener/gardener/extensions/pkg/controller/healthcheck"
 	extensionsheartbeatcontroller "github.com/gardener/gardener/extensions/pkg/controller/heartbeat"
+	webhookcmd "github.com/gardener/gardener/extensions/pkg/webhook/cmd"
 	"github.com/spf13/pflag"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
@@ -22,6 +23,9 @@ import (
 	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/config/validation"
 	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/controller/extension"
 	healthcheckcontroller "github.com/gardener/gardener-extension-shoot-cert-service/pkg/controller/healthcheck"
+	certificatecontroller "github.com/gardener/gardener-extension-shoot-cert-service/pkg/controller/runtimecluster/certificate"
+	gardencontroller "github.com/gardener/gardener-extension-shoot-cert-service/pkg/controller/runtimecluster/garden"
+	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/webhook/sniconfig"
 )
 
 var (
@@ -96,6 +100,8 @@ func ControllerSwitches() *cmd.SwitchOptions {
 		cmd.Switch(extension.ControllerName, extension.AddToManager),
 		cmd.Switch(extensionshealthcheckcontroller.ControllerName, healthcheckcontroller.AddToManager),
 		cmd.Switch(extensionsheartbeatcontroller.ControllerName, extensionsheartbeatcontroller.AddToManager),
+		cmd.Switch(gardencontroller.ControllerName, gardencontroller.AddToManager),
+		cmd.Switch(certificatecontroller.ControllerName, certificatecontroller.AddToManager),
 	)
 }
 
@@ -103,4 +109,10 @@ func (c *CertificateServiceConfig) ApplyHealthCheckConfig(config *extensionsapis
 	if c.config.HealthCheckConfig != nil {
 		*config = *c.config.HealthCheckConfig
 	}
+}
+
+func WebhookSwitches() *webhookcmd.SwitchOptions {
+	return webhookcmd.NewSwitchOptions(
+		webhookcmd.Switch(sniconfig.HandlerName, sniconfig.AddToManager),
+	)
 }
