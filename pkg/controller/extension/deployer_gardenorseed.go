@@ -10,13 +10,24 @@ import (
 	"fmt"
 	"time"
 
+	certv1alpha1 "github.com/gardener/cert-management/pkg/apis/cert/v1alpha1"
+	"github.com/gardener/cert-management/pkg/cert/source"
 	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
 	resourcesv1alpha1 "github.com/gardener/gardener/pkg/apis/resources/v1alpha1"
+	gardenerutils "github.com/gardener/gardener/pkg/utils/gardener"
 	"github.com/gardener/gardener/pkg/utils/managedresources"
+	"github.com/go-logr/logr"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/controller/runtimecluster/certificate"
 )
 
-func (d *deployer) DeployGardenOrSeedManagedResource(ctx context.Context, c client.Client) error {
+type getSecretFromVirtualGardenByRole func(ctx context.Context, gardenRole string) (*corev1.Secret, error)
+
+func (d *deployer) DeployGardenOrSeedManagedResource(ctx context.Context, log logr.Logger, c client.Client, getter getSecretFromVirtualGardenByRole) error {
 	if d.values.ShootDeployment {
 		return fmt.Errorf("not supported for shoot deployment")
 	}
@@ -52,6 +63,11 @@ func (d *deployer) DeployGardenOrSeedManagedResource(ctx context.Context, c clie
 		crd.GetAnnotations()[resourcesv1alpha1.KeepObject] = "true"
 	}
 	objects = append(objects, crds...)
+	cert, secret, err := d.createIngressWildcardCertAndSecret(ctx, log, getter)
+	if err != nil {
+		return err
+	}
+	objects = append(objects, cert, secret)
 
 	objects = removeNilObjects(objects)
 	registry := newManagedResourceRegistry()
@@ -73,4 +89,68 @@ func (d *deployer) DeleteGardenOrSeedManagedResourceAndWait(ctx context.Context,
 	timeoutCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 	return managedresources.WaitUntilDeleted(timeoutCtx, c, d.values.Namespace, d.values.resourceNameGardenOrSeed())
+}
+
+func (d *deployer) createIngressWildcardCertAndSecret(ctx context.Context, log logr.Logger, getter getSecretFromVirtualGardenByRole) (*certv1alpha1.Certificate, *corev1.Secret, error) {
+	if d.values.CertClass != "seed" || d.values.SeedIngressDNSDomain == "" {
+		return nil, nil, nil
+	}
+
+	labels := map[string]string{
+		v1beta1constants.GardenRole: v1beta1constants.GardenRoleControlPlaneWildcardCert,
+		certificate.ManagedByLabel:  ControllerName + "-controller",
+	}
+
+	secret, err := d.createSecretForSeedIngressWildcardCertDNSChallenge(ctx, log, getter)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to lookup secret name for seed ingress wildcard cert DNS challenge: %w", err)
+	}
+
+	annotations := map[string]string{
+		source.AnnotClass: "seed",
+	}
+	if secret != nil {
+		annotations[source.AnnotDNSRecordProviderType] = secret.Annotations[gardenerutils.DNSProvider]
+		annotations[source.AnnotDNSRecordSecretRef] = secret.Namespace + "/" + secret.Name
+	}
+	cert := &certv1alpha1.Certificate{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        "ingress-wildcard-cert",
+			Namespace:   v1beta1constants.GardenNamespace,
+			Annotations: annotations,
+			Labels:      labels,
+		},
+		Spec: certv1alpha1.CertificateSpec{
+			CommonName:   ptr.To("*." + d.values.SeedIngressDNSDomain),
+			SecretLabels: labels,
+			SecretRef: &corev1.SecretReference{
+				Name:      "ingress-wildcard-cert",
+				Namespace: v1beta1constants.GardenNamespace,
+			},
+		},
+	}
+	return cert, secret, nil
+}
+
+func (d *deployer) createSecretForSeedIngressWildcardCertDNSChallenge(ctx context.Context, log logr.Logger, getter getSecretFromVirtualGardenByRole) (*corev1.Secret, error) {
+	if d.values.DNSSecretRole == "" {
+		// assuming not configured, as no DNSChallenges needed
+		log.Info("Warning: No DNS challenge secret configured for seed ingress wildcard cert. This may be ok if a CA issuer is used.")
+		return nil, nil
+	}
+
+	secret, err := getter(ctx, d.values.DNSSecretRole)
+	if err != nil {
+		return nil, err
+	}
+	return &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "dns-challenge-secret",
+			Namespace: d.values.Namespace,
+			Annotations: map[string]string{
+				gardenerutils.DNSProvider: secret.Annotations[gardenerutils.DNSProvider],
+			},
+		},
+		Data: secret.Data,
+	}, nil
 }

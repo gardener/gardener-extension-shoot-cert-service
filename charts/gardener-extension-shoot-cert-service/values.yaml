@@ -12,6 +12,9 @@ metrics:
   # default metrics endpoint in controller-runtime
   port: 8080
 
+webhookConfig:
+  serverPort: 10250
+
 resources: {}
 
 vpa:
@@ -28,7 +31,11 @@ controllers:
   healthcheck:
     concurrentSyncs: 5
   heartbeat: 
-    renewIntervalSeconds: 30 
+    renewIntervalSeconds: 30
+# garden:
+#   concurrentSyncs: 1
+# certificate:
+#   concurrentSyncs: 1
 
 certificateConfig:
   # defaultRequestsPerDayQuota: 100
@@ -79,7 +86,17 @@ disableControllers: []
 #     repository: europe-docker.pkg.dev/gardener-project/cert-controller-manager
 #     tag: "0.2.9"
 
+gardenerCertificates:
+  seed:
+    enabled: false # if true, a special cert-controller-manager is deployed to provide the TLS certificate for the seed ingress domain
+  # dnsSecretRole: internal-domain # the "gardener.cloud/role" label to select the DNS secret in the seed namespace on the virtual garden to be used for DNS challenges
+  runtimeCluster:
+    enabled: false # if true, a special cert-controller-manager is deployed to provide the TLS certificate for the virtual cluster kube-apiserver and garden ingress domain
+    virtualKubeAPIServerIncludePrimaryDomain: false # if false, the first domain name of the virtual cluster kube-apiserver is excluded from TLS SNI config
+
 gardener:
   version: ""
+  seed:
+  # ingressDomain:
   runtimeCluster:
     enabled: false

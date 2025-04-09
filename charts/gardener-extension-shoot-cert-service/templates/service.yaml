@@ -1,11 +1,13 @@
-{{- if .Values.metrics.enableScraping }}
+{{- if or .Values.metrics.enableScraping .Values.gardener.runtimeCluster.enabled }}
 apiVersion: v1
 kind: Service
 metadata:
   name: gardener-extension-shoot-cert-service
   namespace: {{ .Release.Namespace }}
   annotations:
+    networking.resources.gardener.cloud/from-world-to-ports: '[{"protocol":"TCP","port":{{ .Values.webhookConfig.serverPort }}}]'
     networking.resources.gardener.cloud/from-all-seed-scrape-targets-allowed-ports: '[{"port":{{ .Values.metrics.port }},"protocol":"TCP"}]'
+    networking.resources.gardener.cloud/from-all-webhook-targets-allowed-ports: '[{"protocol":"TCP","port":{{ .Values.webhookConfig.serverPort }}}]'
     networking.resources.gardener.cloud/namespace-selectors: '[{"matchLabels":{"kubernetes.io/metadata.name":"garden"}}]'
     networking.resources.gardener.cloud/pod-label-selector-namespace-alias: extensions
   labels:
@@ -14,11 +16,16 @@ metadata:
     app.kubernetes.io/instance: {{ .Release.Name }}
 spec:
   type: ClusterIP
-  clusterIP: None
   ports:
   - name: metrics
     port: {{ .Values.metrics.port }}
     protocol: TCP
+{{- if .Values.gardener.runtimeCluster.enabled }}
+  - name: server
+    port: 443
+    targetPort: {{ required ".Values.config.server.webhooks.port is required" .Values.webhookConfig.serverPort }}
+    protocol: TCP
+{{- end }}
   selector:
     app.kubernetes.io/name: gardener-extension-shoot-cert-service
     app.kubernetes.io/instance: {{ .Release.Name }}
