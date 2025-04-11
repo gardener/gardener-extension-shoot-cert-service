@@ -31,6 +31,9 @@ type Configuration struct {
 	HealthCheckConfig *extensionsconfigv1alpha1.HealthCheckConfig
 	// PrivateKeyDefaults default algorithm and sizes for certificate private keys.
 	PrivateKeyDefaults *PrivateKeyDefaults
+	// InClusterACMEServerNamespaceMatchLabel is the match label used to create a network policy to allow egress from the "cert-controller-manager" to a namespace with these labels.
+	// It can be set to allow access to an in-cluster ACME server from the cert-controller-manager.
+	InClusterACMEServerNamespaceMatchLabel map[string]string
 }
 
 // PrivateKeyDefaults default algorithm and sizes for certificate private keys.
@@ -65,6 +68,8 @@ type ACME struct {
 	CACertificates *string
 	// DeactivateAuthorizations enables deactivation of authorizations after successful certificate request
 	DeactivateAuthorizations *bool
+	// SkipDNSChallengeValidation skips the DNS challenge validation
+	SkipDNSChallengeValidation *bool
 }
 
 type CA struct {
@@ -72,6 +77,4 @@ type CA struct {
 	Certificate string
 	// CertificateKey is the private certificate key of the CA in PEM format.
 	CertificateKey string
-	// CACertificates are custom root certificates to be made available for the cert-controller-manager
-	CACertificates *string
 }

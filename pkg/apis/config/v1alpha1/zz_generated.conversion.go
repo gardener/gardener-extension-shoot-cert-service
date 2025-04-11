@@ -87,6 +87,7 @@ func autoConvert_v1alpha1_ACME_To_config_ACME(in *ACME, out *config.ACME, s conv
 	out.PrecheckNameservers = (*string)(unsafe.Pointer(in.PrecheckNameservers))
 	out.CACertificates = (*string)(unsafe.Pointer(in.CACertificates))
 	out.DeactivateAuthorizations = (*bool)(unsafe.Pointer(in.DeactivateAuthorizations))
+	out.SkipDNSChallengeValidation = (*bool)(unsafe.Pointer(in.SkipDNSChallengeValidation))
 	return nil
 }
 
@@ -103,6 +104,7 @@ func autoConvert_config_ACME_To_v1alpha1_ACME(in *config.ACME, out *ACME, s conv
 	out.PrecheckNameservers = (*string)(unsafe.Pointer(in.PrecheckNameservers))
 	out.CACertificates = (*string)(unsafe.Pointer(in.CACertificates))
 	out.DeactivateAuthorizations = (*bool)(unsafe.Pointer(in.DeactivateAuthorizations))
+	out.SkipDNSChallengeValidation = (*bool)(unsafe.Pointer(in.SkipDNSChallengeValidation))
 	return nil
 }
 
@@ -114,7 +116,6 @@ func Convert_config_ACME_To_v1alpha1_ACME(in *config.ACME, out *ACME, s conversi
 func autoConvert_v1alpha1_CA_To_config_CA(in *CA, out *config.CA, s conversion.Scope) error {
 	out.Certificate = in.Certificate
 	out.CertificateKey = in.CertificateKey
-	out.CACertificates = (*string)(unsafe.Pointer(in.CACertificates))
 	return nil
 }
 
@@ -126,7 +127,6 @@ func Convert_v1alpha1_CA_To_config_CA(in *CA, out *config.CA, s conversion.Scope
 func autoConvert_config_CA_To_v1alpha1_CA(in *config.CA, out *CA, s conversion.Scope) error {
 	out.Certificate = in.Certificate
 	out.CertificateKey = in.CertificateKey
-	out.CACertificates = (*string)(unsafe.Pointer(in.CACertificates))
 	return nil
 }
 
@@ -144,6 +144,7 @@ func autoConvert_v1alpha1_Configuration_To_config_Configuration(in *Configuratio
 	out.CA = (*config.CA)(unsafe.Pointer(in.CA))
 	out.HealthCheckConfig = (*configv1alpha1.HealthCheckConfig)(unsafe.Pointer(in.HealthCheckConfig))
 	out.PrivateKeyDefaults = (*config.PrivateKeyDefaults)(unsafe.Pointer(in.PrivateKeyDefaults))
+	out.InClusterACMEServerNamespaceMatchLabel = *(*map[string]string)(unsafe.Pointer(&in.InClusterACMEServerNamespaceMatchLabel))
 	return nil
 }
 
@@ -161,6 +162,7 @@ func autoConvert_config_Configuration_To_v1alpha1_Configuration(in *config.Confi
 	out.CA = (*CA)(unsafe.Pointer(in.CA))
 	out.HealthCheckConfig = (*configv1alpha1.HealthCheckConfig)(unsafe.Pointer(in.HealthCheckConfig))
 	out.PrivateKeyDefaults = (*PrivateKeyDefaults)(unsafe.Pointer(in.PrivateKeyDefaults))
+	out.InClusterACMEServerNamespaceMatchLabel = *(*map[string]string)(unsafe.Pointer(&in.InClusterACMEServerNamespaceMatchLabel))
 	return nil
 }
 

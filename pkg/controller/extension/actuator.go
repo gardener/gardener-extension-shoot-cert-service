@@ -124,7 +124,7 @@ func (a *actuator) Delete(ctx context.Context, log logr.Logger, ex *extensionsv1
 
 	log.Info("Component is being deleted", "component", "cert-management", "namespace", namespace)
 	if !isShootDeployment(ex) {
-		return a.deleteResourcesForGardenOrSeed(ctx, namespace)
+		return a.deleteResourcesForGardenOrSeed(ctx, log, ex)
 	}
 
 	if err := a.deleteShootResourcesForShoot(ctx, log, namespace); err != nil {
@@ -185,15 +185,7 @@ func (a *actuator) createValues(
 		}
 		values.GenericTokenKubeconfigSecretName = extensions.GenericTokenKubeconfigSecretNameFromCluster(cluster)
 	} else {
-		if isGardenDeployment(ex) {
-			values.CertClass = "garden"
-		} else {
-			values.CertClass = "seed"
-			values.SeedIngressDNSDomain = os.Getenv(EnvSeedIngressDNSDomain)
-			values.DNSSecretRole = os.Getenv(EnvSeedDNSDomainSecretRole)
-			// use the extension namespace for deployment of cert-manager-controller
-			values.Namespace = os.Getenv("LEADER_ELECTION_NAMESPACE")
-		}
+		setValuesForGardenOrSeed(ex, &values)
 	}
 
 	images, err := utilsimagevector.FindImages(imagevector.ImageVector(), []string{v1alpha1.CertManagementImageName})
@@ -227,8 +219,11 @@ func (a *actuator) createShootResourcesForShoot(ctx context.Context, log logr.Lo
 	return newDeployer(values).DeployShootManagedResource(ctx, a.client)
 }
 
-func (a *actuator) deleteResourcesForGardenOrSeed(ctx context.Context, namespace string) error {
-	return newDeployer(Values{Namespace: namespace, ShootDeployment: false}).DeleteGardenOrSeedManagedResourceAndWait(ctx, a.client, 2*time.Minute)
+func (a *actuator) deleteResourcesForGardenOrSeed(ctx context.Context, log logr.Logger, ex *extensionsv1alpha1.Extension) error {
+	values := Values{Namespace: ex.GetNamespace(), ShootDeployment: false}
+	setValuesForGardenOrSeed(ex, &values)
+	log.Info("Deleting managed resource for garden or seed", "namespace", values.Namespace, "certclass", values.CertClass)
+	return newDeployer(values).DeleteGardenOrSeedManagedResourceAndWait(ctx, a.client, 2*time.Minute)
 }
 
 func (a *actuator) deleteSeedResourcesForShoot(ctx context.Context, log logr.Logger, namespace string) error {
@@ -312,4 +307,16 @@ func isShootDeployment(ex *extensionsv1alpha1.Extension) bool {
 
 func isGardenDeployment(ex *extensionsv1alpha1.Extension) bool {
 	return extensionsv1alpha1helper.GetExtensionClassOrDefault(ex.Spec.Class) == extensionsv1alpha1.ExtensionClassGarden
+}
+
+func setValuesForGardenOrSeed(ex *extensionsv1alpha1.Extension, values *Values) {
+	if isGardenDeployment(ex) {
+		values.CertClass = "garden"
+	} else {
+		values.CertClass = "seed"
+		values.SeedIngressDNSDomain = os.Getenv(EnvSeedIngressDNSDomain)
+		values.DNSSecretRole = os.Getenv(EnvSeedDNSDomainSecretRole)
+		// use the extension namespace for deployment of cert-manager-controller
+		values.Namespace = os.Getenv("LEADER_ELECTION_NAMESPACE")
+	}
 }

@@ -120,9 +120,6 @@ func (v Values) caCertificates() string {
 	if v.ExtensionConfig.ACME != nil {
 		return ptr.Deref(v.ExtensionConfig.ACME.CACertificates, "")
 	}
-	if v.ExtensionConfig.CA.CACertificates != nil {
-		return ptr.Deref(v.ExtensionConfig.CA.CACertificates, "")
-	}
 	return ""
 }
 
