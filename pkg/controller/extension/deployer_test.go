@@ -25,6 +25,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv1 "k8s.io/api/autoscaling/v1"
 	corev1 "k8s.io/api/core/v1"
+	networkingv1 "k8s.io/api/networking/v1"
 	policyv1 "k8s.io/api/policy/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -202,7 +203,7 @@ var _ = Describe("deployer", func() {
 			}
 		}
 
-		deployment = func(namespace, certClass string, internal bool) *appsv1.Deployment {
+		deployment = func(namespace, certClass string, internal, withCACertificates bool) *appsv1.Deployment {
 			name := "shoot-cert-management-seed"
 			shootNamespace := "kube-system"
 			priorityClassName := "gardener-system-200"
@@ -244,6 +245,20 @@ var _ = Describe("deployer", func() {
 				"--default-rsa-private-key-size=3072",
 				"--default-ecdsa-private-key-size=384",
 			)
+
+			var envs []corev1.EnvVar
+			if withCACertificates {
+				envs = []corev1.EnvVar{
+					{
+						Name:  "LEGO_CA_SYSTEM_CERT_POOL",
+						Value: "true",
+					},
+					{
+						Name:  "LEGO_CA_CERTIFICATES",
+						Value: "/var/run/cert-manager/certs/certs.pem",
+					},
+				}
+			}
 
 			obj := &appsv1.Deployment{
 				ObjectMeta: metav1.ObjectMeta{
@@ -295,23 +310,9 @@ var _ = Describe("deployer", func() {
 											Name:      "kubeconfig",
 											ReadOnly:  true,
 										},
-										{
-											Name:      "ca-certificates",
-											MountPath: "/var/run/cert-manager/certs",
-											ReadOnly:  true,
-										},
 									},
 									Args: args,
-									Env: []corev1.EnvVar{
-										{
-											Name:  "LEGO_CA_SYSTEM_CERT_POOL",
-											Value: "true",
-										},
-										{
-											Name:  "LEGO_CA_CERTIFICATES",
-											Value: "/var/run/cert-manager/certs/certs.pem",
-										},
-									},
+									Env:  envs,
 									Ports: []corev1.ContainerPort{
 										{
 											Name:          "metrics",
@@ -373,14 +374,6 @@ var _ = Describe("deployer", func() {
 										},
 									},
 								},
-								{
-									Name: "ca-certificates",
-									VolumeSource: corev1.VolumeSource{
-										ConfigMap: &corev1.ConfigMapVolumeSource{
-											LocalObjectReference: corev1.LocalObjectReference{Name: "cert-controller-manager-ca-certificates"},
-										},
-									},
-								},
 							},
 							ServiceAccountName: name,
 						},
@@ -396,13 +389,28 @@ var _ = Describe("deployer", func() {
 				container.VolumeMounts = container.VolumeMounts[1:]
 				obj.Spec.Template.Spec.Volumes = obj.Spec.Template.Spec.Volumes[1:]
 			}
+			if withCACertificates {
+				obj.Spec.Template.Spec.Containers[0].VolumeMounts = append(obj.Spec.Template.Spec.Containers[0].VolumeMounts, corev1.VolumeMount{
+					Name:      "ca-certificates",
+					MountPath: "/var/run/cert-manager/certs",
+					ReadOnly:  true,
+				})
+				obj.Spec.Template.Spec.Volumes = append(obj.Spec.Template.Spec.Volumes, corev1.Volume{
+					Name: "ca-certificates",
+					VolumeSource: corev1.VolumeSource{
+						ConfigMap: &corev1.ConfigMapVolumeSource{
+							LocalObjectReference: corev1.LocalObjectReference{Name: "cert-controller-manager-ca-certificates"},
+						},
+					},
+				})
+			}
 			return obj
 		}
 
-		standardInternalResources = func(namespace, certClass string) []client.Object {
+		standardInternalResources = func(namespace, certClass string, withCACertificates bool) []client.Object {
 			instance := "cert-management-" + certClass
 
-			return []client.Object{
+			objs := []client.Object{
 				&apiextensionsv1.CustomResourceDefinition{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "certificates.cert.gardener.cloud",
@@ -547,19 +555,6 @@ var _ = Describe("deployer", func() {
 					},
 					AutomountServiceAccountToken: ptr.To(false),
 				},
-				&corev1.ConfigMap{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "cert-controller-manager-ca-certificates",
-						Namespace: namespace,
-						Labels: map[string]string{
-							"app.kubernetes.io/name":     instance,
-							"app.kubernetes.io/instance": instance,
-						},
-					},
-					Data: map[string]string{
-						"certs.pem": "cert1\ncert2\n",
-					},
-				},
 				&rbacv1.Role{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "extensions.gardener.cloud:extension-shoot-cert-service",
@@ -653,8 +648,26 @@ var _ = Describe("deployer", func() {
 						},
 					},
 				},
-				deployment(namespace, certClass, true),
+				deployment(namespace, certClass, true, withCACertificates),
 			}
+
+			if withCACertificates {
+				objs = append(objs, &corev1.ConfigMap{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "cert-controller-manager-ca-certificates",
+						Namespace: namespace,
+						Labels: map[string]string{
+							"app.kubernetes.io/name":     instance,
+							"app.kubernetes.io/instance": instance,
+						},
+					},
+					Data: map[string]string{
+						"certs.pem": "cert1\ncert2\n",
+					},
+				})
+			}
+
+			return objs
 		}
 
 		standardSeedResources = func() []client.Object {
@@ -823,7 +836,7 @@ var _ = Describe("deployer", func() {
 						},
 					},
 				},
-				deployment("shoot--foo--bar", "", false),
+				deployment("shoot--foo--bar", "", false, true),
 				&vpaautoscalingv1.VerticalPodAutoscaler{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "cert-controller-manager-vpa",
@@ -1285,10 +1298,10 @@ var _ = Describe("deployer", func() {
 			values.ExtensionConfig.CA = &config.CA{
 				Certificate:    "certificate",
 				CertificateKey: "cert-key",
-				CACertificates: values.ExtensionConfig.ACME.CACertificates,
 			}
 			values.ExtensionConfig.ACME = nil
-			resources := standardInternalResources(values.Namespace, values.CertClass)
+			values.ExtensionConfig.InClusterACMEServerNamespaceMatchLabel = map[string]string{"in-cluster-acme-server": "allow"}
+			resources := standardInternalResources(values.Namespace, values.CertClass, false)
 			resources = append(resources,
 				&certv1alpha1.Issuer{
 					ObjectMeta: metav1.ObjectMeta{
@@ -1314,7 +1327,31 @@ var _ = Describe("deployer", func() {
 						"tls.crt": []byte("certificate"),
 						"tls.key": []byte("cert-key"),
 					},
-				})
+				},
+				&networkingv1.NetworkPolicy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "egress-from-cert-controller-manager-to-labelled-namespaces",
+						Namespace: "garden",
+						Annotations: map[string]string{
+							"configured-by": "certificateConfig.inClusterACMEServerNamespaceMatchLabel",
+						},
+					},
+					Spec: networkingv1.NetworkPolicySpec{
+						PodSelector: metav1.LabelSelector{},
+						Egress: []networkingv1.NetworkPolicyEgressRule{
+							{
+								To: []networkingv1.NetworkPolicyPeer{
+									{
+										NamespaceSelector: &metav1.LabelSelector{
+											MatchLabels: values.ExtensionConfig.InClusterACMEServerNamespaceMatchLabel,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			)
 			testInternalManagedResource(resources, true, func(deployment *appsv1.Deployment) {
 				deployment.Spec.Template.Annotations = map[string]string{
 					"checksum/issuers": "4eb1941a6e4f4d326b96278513c50d462df6c24d9566c0f126d34f40eeb6a506",
@@ -1329,7 +1366,7 @@ var _ = Describe("deployer", func() {
 			values.CertClass = "seed"
 			values.SeedIngressDNSDomain = "ingress.seed.example.com"
 			values.DNSSecretRole = "controlplane-cert"
-			resources := standardInternalResources(values.Namespace, values.CertClass)
+			resources := standardInternalResources(values.Namespace, values.CertClass, true)
 			resources = append(resources,
 				&certv1alpha1.Issuer{
 					ObjectMeta: metav1.ObjectMeta{

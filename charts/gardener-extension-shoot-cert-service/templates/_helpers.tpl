@@ -31,6 +31,10 @@ privateKeyDefaults:
   sizeECDSA: {{ .Values.certificateConfig.privateKeyDefaults.sizeECDSA }}
 {{- end }}
 {{- end }}
+{{- if .Values.certificateConfig.inClusterACMEServerNamespaceMatchLabel }}
+inClusterACMEServerNamespaceMatchLabel:
+{{ toYaml .Values.certificateConfig.inClusterACMEServerNamespaceMatchLabel | indent 2 }}
+{{- end }}
 {{- if .Values.certificateConfig.defaultIssuer.acme }}
 acme:
   email: {{ required ".Values.certificateConfig.defaultIssuer.acme.email is required" .Values.certificateConfig.defaultIssuer.acme.email }}
@@ -51,14 +55,14 @@ acme:
   {{- if .Values.certificateConfig.deactivateAuthorizations }}
   deactivateAuthorizations: true
   {{- end }}
+  {{- if .Values.certificateConfig.defaultIssuer.acme.skipDNSChallengeValidation }}
+  skipDNSChallengeValidation: true
+  {{- end }}
 {{- end }}
 {{- if .Values.certificateConfig.defaultIssuer.ca }}
 ca:
   certificate: {{- toYaml (required ".Values.certificateConfig.defaultIssuer.ca.certificate is required" .Values.certificateConfig.defaultIssuer.ca.certificate) | indent 2 }}
   certificateKey: {{- toYaml (required ".Values.certificateConfig.defaultIssuer.ca.certificateKey is required" .Values.certificateConfig.defaultIssuer.ca.certificateKey) | indent 2 }}
-  {{- if .Values.certificateConfig.caCertificates }}
-  caCertificates: {{- toYaml .Values.certificateConfig.caCertificates | indent 2 }}
-  {{- end }}
 {{- end }}
 {{- end }}
 

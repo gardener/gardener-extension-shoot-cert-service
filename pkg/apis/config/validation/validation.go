@@ -89,11 +89,6 @@ func validateCA(ca *config.CA, fldPath *field.Path) field.ErrorList {
 	if err := validateCertificateKey(fldPath.Child("certificateKey"), []byte(strings.TrimSpace(ca.CertificateKey))); err != nil {
 		allErrs = append(allErrs, err)
 	}
-	if ca.CACertificates != nil {
-		if err := validateCACertificates(fldPath.Child("caCertificates"), *ca.CACertificates); err != nil {
-			allErrs = append(allErrs, err)
-		}
-	}
 
 	return allErrs
 }

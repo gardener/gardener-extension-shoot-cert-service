@@ -145,6 +145,19 @@ PrivateKeyDefaults
 <p>PrivateKeyDefaults default algorithm and sizes for certificate private keys.</p>
 </td>
 </tr>
+<tr>
+<td>
+<code>inClusterACMEServerNamespaceMatchLabel</code></br>
+<em>
+map[string]string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>InClusterACMEServerNamespaceMatchLabel is the match label used to create a network policy to allow egress from the &ldquo;cert-controller-manager&rdquo; to a namespace with these labels.
+It can be set to allow access to an in-cluster ACME server from the cert-controller-manager.</p>
+</td>
+</tr>
 </tbody>
 </table>
 <h3 id="shoot-cert-service.extensions.config.gardener.cloud/v1alpha1.ACME">ACME
@@ -249,6 +262,18 @@ bool
 <p>DeactivateAuthorizations enables deactivation of authorizations after successful certificate request</p>
 </td>
 </tr>
+<tr>
+<td>
+<code>skipDNSChallengeValidation</code></br>
+<em>
+bool
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>SkipDNSChallengeValidation skips the DNS challenge validation</p>
+</td>
+</tr>
 </tbody>
 </table>
 <h3 id="shoot-cert-service.extensions.config.gardener.cloud/v1alpha1.CA">CA
@@ -287,18 +312,6 @@ string
 </td>
 <td>
 <p>CertificateKey is the private certificate key of the CA in PEM format.</p>
-</td>
-</tr>
-<tr>
-<td>
-<code>caCertificates</code></br>
-<em>
-string
-</em>
-</td>
-<td>
-<em>(Optional)</em>
-<p>CACertificates are custom root certificates to be made available for the cert-controller-manager</p>
 </td>
 </tr>
 </tbody>
