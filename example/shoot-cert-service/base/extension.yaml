@@ -2,43 +2,12 @@ apiVersion: operator.gardener.cloud/v1alpha1
 kind: Extension
 metadata:
   name: extension-shoot-cert-service
-  annotations:
-    security.gardener.cloud/pod-security-enforce: baseline
 spec:
-  resources:
-    - kind: Extension
-      globallyEnabled: true
-      type: shoot-cert-service
-      workerlessSupported: true
   deployment:
     extension:
-      runtimeClusterValues:
-        gardenerCertificates:
-          runtimeCluster:
-            enabled: true
-        certificateConfig:
-          caCertificates: null
-          defaultIssuer:
-            name: garden
-            acme:
-              server: https://acme.pebble.svc.cluster.local/dir
-              email: some.user@gardener.cloud
-          inClusterACMEServerNamespaceMatchLabel: null
-      values:
-        gardenerCertificates:
-          seed:
-            enabled: true
-            dnsSecretRole: internal-domain
-        certificateConfig:
-          caCertificates: null
-          defaultIssuer:
-            name: garden
-            acme:
-              server: https://acme.pebble.svc.cluster.local/dir
-              email: some.user@gardener.cloud
-          inClusterACMEServerNamespaceMatchLabel: null
       helm:
         ociRepository:
           ref: local-skaffold/gardener-extension-shoot-cert-service/charts/extension:v0.0.0
-      injectGardenKubeconfig: true
-      policy: Always
+  resources:
+  - kind: Extension
+    type: shoot-cert-service

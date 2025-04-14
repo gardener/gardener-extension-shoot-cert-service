@@ -3,3 +3,19 @@ kind: Kustomization
 
 resources:
 - extension.yaml
+
+patches:
+- path: extension-patch.yaml
+- target:
+    version: v1alpha1
+    group: operator.gardener.cloud
+    kind: Extension
+    name: extension-shoot-cert-service
+  patch: |
+    - op: replace
+      path: /spec/resources/0
+      value:
+        kind: Extension
+        type: shoot-cert-service
+        workerlessSupported: true
+        globallyEnabled: true
