@@ -1,0 +1,32 @@
+apiVersion: operator.gardener.cloud/v1alpha1
+kind: Extension
+metadata:
+  name: extension-shoot-cert-service
+  annotations:
+    security.gardener.cloud/pod-security-enforce: baseline
+spec:
+  deployment:
+    extension:
+      injectGardenKubeconfig: true
+      policy: Always
+      runtimeClusterValues:
+        gardenerCertificates:
+          runtimeCluster:
+            enabled: true
+        certificateConfig:
+          defaultIssuer:
+            name: garden
+            acme:
+              server: https://acme-v02.api.letsencrypt.org/directory
+              email: some.user@example.com
+      values:
+        gardenerCertificates:
+          seed:
+            enabled: true
+            dnsSecretRole: internal-domain
+        certificateConfig:
+          defaultIssuer:
+            name: garden
+            acme:
+              server: https://acme-v02.api.letsencrypt.org/directory
+              email: some.user@example.com
