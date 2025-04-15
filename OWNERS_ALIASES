@@ -1,0 +1,9 @@
+# See the OWNERS docs at https://go.k8s.io/owners
+
+aliases:
+  shoot-cert-service-reviewers:
+  - MartinWeindel
+  - marc1404
+  shoot-cert-service-approvers:
+  - MartinWeindel
+  - marc1404
