@@ -68,7 +68,7 @@ gardener-extension-shoot-cert-service:
           release_callback: '.ci/prepare_release'
           assets:
           - type: build-step-log
-            step_name: pull-extension-shoot-cert-service-unit
+            step_name: verify
             purposes:
             - lint
             - sast
