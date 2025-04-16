@@ -1,4 +1,16 @@
 #!/bin/bash
 
-# TODO(martinweindel): remove this script once the CI pipeline is updated
-echo "obsolete"
+set -o errexit
+set -o nounset
+set -o pipefail
+
+cd "$(dirname $0)/.."
+
+git config --global user.email "gardener@sap.com"
+git config --global user.name "Gardener CI/CD"
+
+export GOTOOLCHAIN=auto
+make verify-extended
+
+# Note: the verify step is needed on releases to run the gosec linter.
+# The report is extracted and added to the release as SAST evidence.
