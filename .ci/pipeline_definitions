@@ -60,6 +60,9 @@ gardener-extension-shoot-cert-service:
           helmcharts:
           - *shoot-cert-service
     release:
+      steps:
+        verify:
+          image: 'golang:1.24.2'
       traits:
         version:
           preprocess: 'finalize'
