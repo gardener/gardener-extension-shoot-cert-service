@@ -47,9 +47,6 @@ echo "☯️ Found ${#common_dependencies[@]} common dependencies."
 
 ignore_deps=$(printf ',"%s"' "${common_dependencies[@]}") # Add a comma to the beginning of each element and concatenate them.
 ignore_deps="[${ignore_deps:1}]" # Remove the leading comma and wrap the string in square brackets to format it as a JSON array.
-echo "$ignore_deps" | jq > /tmp/generate-renovate-ignore-deps.tmp  # Format the JSON array as a string and t
 
 # Use sed to replace the lines between the markers
-echo "$ignore_deps" | jq '.[]' | sed 's/^/    /; s/$/,/' | sed -i -e '  /  ignoreDeps: \[/,  /\]/{//!d;}' -e '  /  ignoreDeps: \[/r /dev/stdin' renovate.json5
-
-rm /tmp/generate-renovate-ignore-deps.tmp
+echo "$ignore_deps" | yq -o json '.[]' | sed 's/^/    /; s/$/,/' | sed -i -e '  /  ignoreDeps: \[/,  /\]/{//!d;}' -e '  /  ignoreDeps: \[/r /dev/stdin' renovate.json5
