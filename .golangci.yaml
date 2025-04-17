@@ -1,10 +1,24 @@
+version: "2"
 run:
   concurrency: 4
-  deadline: 10m
-
-skip-files:
-  - "zz_generated\\..*\\.go$"
-
 linters:
   disable:
-  - unused
+    - unused
+  exclusions:
+    generated: lax
+    rules:
+      - linters:
+          - staticcheck
+        text: 'ST1001:' # should not use dot imports
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    paths:
+      - zz_generated\..*\.go$
+formatters:
+  exclusions:
+    generated: lax
+    paths:
+      - zz_generated\..*\.go$

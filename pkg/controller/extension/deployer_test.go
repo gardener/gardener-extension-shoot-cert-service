@@ -1251,7 +1251,7 @@ var _ = Describe("deployer", func() {
 				},
 			)
 			testSeedManagedResource(resources, func(deployment *appsv1.Deployment) {
-				deployment.Spec.Template.ObjectMeta.Annotations = map[string]string{"checksum/issuers": "51971e0765b20445e8208abb457f19126570c241cc303c6a37faf82d3f6d79b4"}
+				deployment.Spec.Template.Annotations = map[string]string{"checksum/issuers": "51971e0765b20445e8208abb457f19126570c241cc303c6a37faf82d3f6d79b4"}
 			})
 		})
 	})
@@ -1295,7 +1295,7 @@ var _ = Describe("deployer", func() {
 					},
 				})
 			testInternalManagedResource(resources, true, func(deployment *appsv1.Deployment) {
-				deployment.Spec.Template.ObjectMeta.Annotations = map[string]string{
+				deployment.Spec.Template.Annotations = map[string]string{
 					"checksum/issuers": "4eb1941a6e4f4d326b96278513c50d462df6c24d9566c0f126d34f40eeb6a506",
 				}
 				deployment.Spec.Template.Spec.Containers[0].Args = removeArgs(deployment.Spec.Template.Spec.Containers[0].Args, "--acme-deactivate-authorizations")
