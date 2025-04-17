@@ -12,6 +12,7 @@ REPO_ROOT                   := $(shell dirname $(realpath $(lastword $(MAKEFILE_
 HACK_DIR                    := $(REPO_ROOT)/hack
 VERSION                     := $(shell cat "$(REPO_ROOT)/VERSION")
 EFFECTIVE_VERSION           := $(VERSION)-$(shell git rev-parse HEAD)
+BUILD_DATE                  := $(shell date '+%Y-%m-%dT%H:%M:%S%z' | sed 's/\([0-9][0-9]\)$$/:\1/g')
 LD_FLAGS                    := "-w $(shell bash $(GARDENER_HACK_DIR)/get-build-ld-flags.sh k8s.io/component-base $(REPO_ROOT)/VERSION $(EXTENSION_PREFIX))"
 LEADER_ELECTION             := false
 IGNORE_OPERATION_ANNOTATION := true
@@ -83,10 +84,11 @@ check-generate:
 check: $(GOIMPORTS) $(GOLANGCI_LINT) $(HELM)
 	@bash $(GARDENER_HACK_DIR)/check.sh --golangci-lint-config=./.golangci.yaml ./cmd/... ./pkg/... ./test/...
 	@bash $(GARDENER_HACK_DIR)/check-charts.sh ./charts
+	@GARDENER_HACK_DIR=$(GARDENER_HACK_DIR) $(REPO_ROOT)/hack/check-skaffold-deps.sh
 
 .PHONY: generate
-generate: $(CONTROLLER_GEN) $(GEN_CRD_API_REFERENCE_DOCS) $(HELM) $(MOCKGEN) $(YQ) $(VGOPATH)
-	@VGOPATH=$(VGOPATH) REPO_ROOT=$(REPO_ROOT) CONTROLLER_GEN=$(CONTROLLER_GEN) GARDENER_HACK_DIR=$(GARDENER_HACK_DIR) bash $(GARDENER_HACK_DIR)/generate-sequential.sh ./charts/... ./cmd/... ./pkg/... ./test/...
+generate: $(CONTROLLER_GEN) $(GEN_CRD_API_REFERENCE_DOCS) $(HELM) $(MOCKGEN) $(YQ) $(VGOPATH) $(EXTENSION_GEN)
+	@VGOPATH=$(VGOPATH) REPO_ROOT=$(REPO_ROOT) CONTROLLER_GEN=$(CONTROLLER_GEN) GARDENER_HACK_DIR=$(GARDENER_HACK_DIR) bash $(GARDENER_HACK_DIR)/generate-sequential.sh ./charts/... ./cmd/... ./pkg/... ./test/... ./example/...
 	$(MAKE) format
 	@./hack/generate-renovate-ignore-deps.sh
 
@@ -119,3 +121,22 @@ verify: check format test sast
 
 .PHONY: verify-extended
 verify-extended: check-generate check format test-cov test-clean sast-report
+
+.PHONY: test-e2e-local
+test-e2e-local: $(KIND) $(YQ) $(GINKGO)
+	@$(REPO_ROOT)/hack/test-e2e-provider-local.sh --procs=3
+
+.PHONY: extension-up
+extension-up: export EXTENSION_VERSION = $(VERSION)
+extension-up: export SKAFFOLD_DEFAULT_REPO = garden.local.gardener.cloud:5001
+extension-up: export SKAFFOLD_PUSH = true
+extension-up: export SOURCE_DATE_EPOCH = $(shell date -d $(BUILD_DATE) +%s)
+extension-up: export LD_FLAGS = $(shell bash $(GARDENER_HACK_DIR)/get-build-ld-flags.sh k8s.io/component-base $(REPO_ROOT)/VERSION gardener-extension-shoot-cert-service $(BUILD_DATE))
+extension-up: export EXTENSION_GARDENER_HACK_DIR = $(GARDENER_HACK_DIR)
+extension-up: $(SKAFFOLD) $(HELM) $(KUBECTL)
+	$(REPO_ROOT)/hack/pebble-up.sh
+	$(SKAFFOLD) run --cache-artifacts=true
+
+extension-down:
+	$(SKAFFOLD) delete
+	$(REPO_ROOT)/hack/pebble-down.sh

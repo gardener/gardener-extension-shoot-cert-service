@@ -23,9 +23,10 @@ func (d *deployer) collectIssuers() ([]model.Issuer, error) {
 	gardenIssuer := model.Issuer{Name: d.values.ExtensionConfig.IssuerName}
 	if acme := d.values.ExtensionConfig.ACME; acme != nil {
 		gardenIssuer.ACME = &model.ACME{
-			Email:      acme.Email,
-			Server:     acme.Server,
-			PrivateKey: acme.PrivateKey,
+			Email:                      acme.Email,
+			Server:                     acme.Server,
+			PrivateKey:                 acme.PrivateKey,
+			SkipDNSChallengeValidation: ptr.Deref(acme.SkipDNSChallengeValidation, false),
 		}
 	}
 	if ca := d.values.ExtensionConfig.CA; ca != nil {

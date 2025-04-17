@@ -12,6 +12,7 @@ import (
 	extensionscontroller "github.com/gardener/gardener/extensions/pkg/controller"
 	"github.com/gardener/gardener/extensions/pkg/controller/heartbeat"
 	"github.com/gardener/gardener/extensions/pkg/util"
+	operatorv1alpha1 "github.com/gardener/gardener/pkg/apis/operator/v1alpha1"
 	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
 	componentbaseconfigv1alpha1 "k8s.io/component-base/config/v1alpha1"
@@ -22,6 +23,8 @@ import (
 	serviceinstall "github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/service/install"
 	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/controller/extension"
 	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/controller/healthcheck"
+	certificatecontroller "github.com/gardener/gardener-extension-shoot-cert-service/pkg/controller/runtimecluster/certificate"
+	gardencontroller "github.com/gardener/gardener-extension-shoot-cert-service/pkg/controller/runtimecluster/garden"
 )
 
 // NewServiceControllerCommand creates a new command that is used to start the Certificate Service controller.
@@ -88,6 +91,10 @@ func (o *Options) run(ctx context.Context) error {
 		return fmt.Errorf("could not update manager scheme: %s", err)
 	}
 
+	if err := operatorv1alpha1.AddToScheme(mgr.GetScheme()); err != nil {
+		return fmt.Errorf("could not update manager scheme: %s", err)
+	}
+
 	ctrlConfig := o.certOptions.Completed()
 	ctrlConfig.ApplyHealthCheckConfig(&healthcheck.DefaultAddOptions.HealthCheckConfig)
 	ctrlConfig.Apply(&extension.DefaultAddOptions.ServiceConfig)
@@ -95,9 +102,17 @@ func (o *Options) run(ctx context.Context) error {
 	o.healthOptions.Completed().Apply(&healthcheck.DefaultAddOptions.Controller)
 	o.reconcileOptions.Completed().Apply(&extension.DefaultAddOptions.IgnoreOperationAnnotation, &extension.DefaultAddOptions.ExtensionClass)
 	o.heartbeatOptions.Completed().Apply(&heartbeat.DefaultAddOptions)
+	o.gardenControllerOptions.Completed().Apply(&gardencontroller.DefaultAddOptions)
+	o.certificateControllerOptions.Completed().Apply(&certificatecontroller.DefaultAddOptions)
 
 	if err := o.controllerSwitches.Completed().AddToManager(ctx, mgr); err != nil {
 		return fmt.Errorf("could not add controllers to manager: %s", err)
+	}
+
+	if config := o.webhookOptions.Completed(); !config.Switch.Disabled {
+		if _, err := config.AddToManager(ctx, mgr, mgr); err != nil {
+			return fmt.Errorf("could not add webhooks to manager: %s", err)
+		}
 	}
 
 	if err := mgr.Start(ctx); err != nil {

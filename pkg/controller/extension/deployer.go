@@ -27,9 +27,11 @@ type Values struct {
 	RestrictedDomains                string
 	Resources                        []core.NamedResourceReference
 
-	ShootDeployment bool
-	CertClass       string
-	Replicas        int32
+	ShootDeployment      bool
+	CertClass            string
+	Replicas             int32
+	SeedIngressDNSDomain string
+	DNSSecretRole        string
 }
 
 func (v Values) getLabels() map[string]string {
@@ -117,9 +119,6 @@ func (v Values) precheckNameservers() string {
 func (v Values) caCertificates() string {
 	if v.ExtensionConfig.ACME != nil {
 		return ptr.Deref(v.ExtensionConfig.ACME.CACertificates, "")
-	}
-	if v.ExtensionConfig.CA.CACertificates != nil {
-		return ptr.Deref(v.ExtensionConfig.CA.CACertificates, "")
 	}
 	return ""
 }

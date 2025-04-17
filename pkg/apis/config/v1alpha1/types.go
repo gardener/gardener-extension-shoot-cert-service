@@ -39,6 +39,10 @@ type Configuration struct {
 	// PrivateKeyDefaults default algorithm and sizes for certificate private keys.
 	// +optional
 	PrivateKeyDefaults *PrivateKeyDefaults `json:"privateKeyDefaults,omitempty"`
+	// InClusterACMEServerNamespaceMatchLabel is the match label used to create a network policy to allow egress from the "cert-controller-manager" to a namespace with these labels.
+	// It can be set to allow access to an in-cluster ACME server from the cert-controller-manager.
+	// +optional
+	InClusterACMEServerNamespaceMatchLabel map[string]string `json:"inClusterACMEServerNamespaceMatchLabel,omitempty"`
 }
 
 // PrivateKeyDefaults default algorithm and sizes for certificate private keys.
@@ -81,6 +85,9 @@ type ACME struct {
 	// DeactivateAuthorizations enables deactivation of authorizations after successful certificate request
 	// +optional
 	DeactivateAuthorizations *bool `json:"deactivateAuthorizations,omitempty"`
+	// SkipDNSChallengeValidation skips the DNS challenge validation
+	// +optional
+	SkipDNSChallengeValidation *bool `json:"skipDNSChallengeValidation,omitempty"`
 }
 
 type CA struct {
@@ -88,7 +95,4 @@ type CA struct {
 	Certificate string `json:"certificate"`
 	// CertificateKey is the private certificate key of the CA in PEM format.
 	CertificateKey string `json:"certificateKey"`
-	// CACertificates are custom root certificates to be made available for the cert-controller-manager
-	// +optional
-	CACertificates *string `json:"caCertificates,omitempty"`
 }
