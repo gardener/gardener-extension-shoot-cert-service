@@ -7,13 +7,13 @@ package app
 import (
 	"os"
 
-	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/controller/extension"
 	controllercmd "github.com/gardener/gardener/extensions/pkg/controller/cmd"
 	heartbeatcmd "github.com/gardener/gardener/extensions/pkg/controller/heartbeat/cmd"
 	extensionswebhook "github.com/gardener/gardener/extensions/pkg/webhook"
 	extensionscmdwebhook "github.com/gardener/gardener/extensions/pkg/webhook/cmd"
 
 	certificateservicecmd "github.com/gardener/gardener-extension-shoot-cert-service/pkg/cmd"
+	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/controller/extension"
 )
 
 // ExtensionName is the name of the extension.
