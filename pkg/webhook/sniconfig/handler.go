@@ -28,6 +28,12 @@ import (
 	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/controller/runtimecluster/certificate"
 )
 
+const (
+	// EnvVirtualKubeAPIServerSNIIncludePrimaryDomain is the environment variable that can be set to `"true"` to include the primary domain in the SNI list.
+	// The default is to not include the primary domain, as it uses the self-signed certificate managed by Gardener.
+	EnvVirtualKubeAPIServerSNIIncludePrimaryDomain = "VIRTUAL_KUBE_API_SERVER_SNI_INCLUDE_PRIMARY_DOMAIN"
+)
+
 // Handler handles admission requests for deployment of virtual-garden-kube-apiserver and configures the SNI command line arguments.
 type Handler struct {
 	Logger       logr.Logger
@@ -96,7 +102,7 @@ func mutateTLSCertSNI(log logr.Logger, deployment *appsv1.Deployment) error {
 	if deployment.Annotations[certificate.TLSCertAPIServerNamesAnnotation] != "" {
 		apiServerNames = strings.Split(deployment.Annotations[certificate.TLSCertAPIServerNamesAnnotation], ",")
 	}
-	if len(apiServerNames) > 0 && os.Getenv("VIRTUAL_KUBE_API_SERVER_SNI_INCLUDE_PRIMARY_DOMAIN") != "true" {
+	if len(apiServerNames) > 0 && os.Getenv(EnvVirtualKubeAPIServerSNIIncludePrimaryDomain) != "true" {
 		apiServerNames = apiServerNames[1:]
 	}
 	for i := range deployment.Spec.Template.Spec.Containers {

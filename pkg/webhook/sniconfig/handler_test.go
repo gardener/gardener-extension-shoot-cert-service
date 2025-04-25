@@ -53,7 +53,7 @@ var _ = Describe("handler", func() {
 
 		BeforeEach(func() {
 			format.MaxLength = 4000
-			os.Setenv("VIRTUAL_KUBE_API_SERVER_SNI_INCLUDE_PRIMARY_DOMAIN", "true")
+			os.Setenv(EnvVirtualKubeAPIServerSNIIncludePrimaryDomain, "true")
 			log = logger.MustNewZapLogger(logger.DebugLevel, logger.FormatJSON, logzap.WriteTo(GinkgoWriter))
 
 			ctrl = gomock.NewController(GinkgoT())

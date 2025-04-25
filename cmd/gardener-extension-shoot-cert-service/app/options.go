@@ -7,6 +7,7 @@ package app
 import (
 	"os"
 
+	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/controller/extension"
 	controllercmd "github.com/gardener/gardener/extensions/pkg/controller/cmd"
 	heartbeatcmd "github.com/gardener/gardener/extensions/pkg/controller/heartbeat/cmd"
 	extensionswebhook "github.com/gardener/gardener/extensions/pkg/webhook"
@@ -50,7 +51,7 @@ func NewOptions() *Options {
 			// These are default values.
 			LeaderElection:          true,
 			LeaderElectionID:        controllercmd.LeaderElectionNameID(ExtensionName),
-			LeaderElectionNamespace: os.Getenv("LEADER_ELECTION_NAMESPACE"),
+			LeaderElectionNamespace: os.Getenv(extension.EnvLeaderElectionNamespace),
 
 			// These are default values.
 			WebhookServerPort: 10250,
@@ -75,7 +76,7 @@ func NewOptions() *Options {
 			// This is a default value.
 			ExtensionName:        ExtensionName,
 			RenewIntervalSeconds: 30,
-			Namespace:            os.Getenv("LEADER_ELECTION_NAMESPACE"),
+			Namespace:            os.Getenv(extension.EnvLeaderElectionNamespace),
 		},
 		controllerSwitches: certificateservicecmd.ControllerSwitches(),
 		reconcileOptions:   &controllercmd.ReconcilerOptions{},
@@ -87,7 +88,7 @@ func NewOptions() *Options {
 				Mode:        mode,
 				URL:         url,
 				ServicePort: 443,
-				Namespace:   os.Getenv("LEADER_ELECTION_NAMESPACE"),
+				Namespace:   os.Getenv(extension.EnvLeaderElectionNamespace),
 			},
 			certificateservicecmd.WebhookSwitches()),
 	}

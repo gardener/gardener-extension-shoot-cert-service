@@ -130,7 +130,6 @@ test-e2e-local: $(KIND) $(YQ) $(GINKGO)
 extension-up: export EXTENSION_VERSION = $(VERSION)
 extension-up: export SKAFFOLD_DEFAULT_REPO = garden.local.gardener.cloud:5001
 extension-up: export SKAFFOLD_PUSH = true
-extension-up: export SOURCE_DATE_EPOCH = $(shell date -d $(BUILD_DATE) +%s)
 extension-up: export LD_FLAGS = $(shell bash $(GARDENER_HACK_DIR)/get-build-ld-flags.sh k8s.io/component-base $(REPO_ROOT)/VERSION gardener-extension-shoot-cert-service $(BUILD_DATE))
 extension-up: export EXTENSION_GARDENER_HACK_DIR = $(GARDENER_HACK_DIR)
 extension-up: $(SKAFFOLD) $(HELM) $(KUBECTL)

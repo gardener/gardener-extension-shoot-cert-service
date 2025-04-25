@@ -45,6 +45,8 @@ const (
 	// EnvSeedDNSDomainSecretRole is the environment variable for the seed DNS domain secret role.
 	// This role is used to look up the DNS secret in the seed namespace on the virtual garden used for DNS Challenges
 	EnvSeedDNSDomainSecretRole = "SEED_DNS_SECRET_ROLE" // #nosec G101 -- false positive
+	// EnvLeaderElectionNamespace is the environment variable name set in the deployment for providing the pod namespace.
+	EnvLeaderElectionNamespace = "LEADER_ELECTION_NAMESPACE"
 )
 
 // NewActuator returns an actuator responsible for Extension resources.
@@ -317,6 +319,6 @@ func setValuesForGardenOrSeed(ex *extensionsv1alpha1.Extension, values *Values) 
 		values.SeedIngressDNSDomain = os.Getenv(EnvSeedIngressDNSDomain)
 		values.DNSSecretRole = os.Getenv(EnvSeedDNSDomainSecretRole)
 		// use the extension namespace for deployment of cert-manager-controller
-		values.Namespace = os.Getenv("LEADER_ELECTION_NAMESPACE")
+		values.Namespace = os.Getenv(EnvLeaderElectionNamespace)
 	}
 }
