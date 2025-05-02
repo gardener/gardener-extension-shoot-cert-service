@@ -11,7 +11,191 @@ To let the `Shoot-Cert-Service` operate properly, you need to have:
 - a [DNS service](https://github.com/gardener/external-dns-management) in your seed
 - contact details and optionally a private key for a pre-existing [Let's Encrypt](https://letsencrypt.org/) account
 
+### Operator Extension
+
+Using an operator extension resource (`extension.operator.gardener.cloud`) is the recommended way to deploy the `shoot-cert-service` extension.
+
+An example of an `operator` extension resource can be found at [extension-shoot-cert-service.yaml](../../example/extension-shoot-cert-service.yaml).
+
+The `ControllerRegistration` contains a reference to the Helm chart which eventually deploy the `Shoot-Cert-Service` to seed clusters.
+It offers some configuration options, mainly to set up a default issuer for shoot clusters.
+With a default issuer, pre-existing Let's Encrypt accounts can be used and shared with shoot clusters (See "One Account or Many?" of the [Integration Guide](https://letsencrypt.org/docs/integration-guide/)).
+
+> Please keep the Let's Encrypt [Rate Limits](https://letsencrypt.org/docs/rate-limits/) in mind when using this shared account model. Depending on the amount of shoots and domains it is recommended to use an account with increased rate limits.
+
+```yaml
+apiVersion: operator.gardener.cloud/v1alpha1
+kind: Extension
+metadata:
+  annotations:
+    security.gardener.cloud/pod-security-enforce: baseline
+  name: extension-shoot-cert-service
+spec:
+  deployment:
+    extension:
+      helm:
+        ociRepository:
+          ref: ... # OCI reference to the Helm chart
+      injectGardenKubeconfig: true
+      policy: Always
+
+      values:
+        certificateConfig:
+          defaultIssuer:
+            name: default-issuer
+            acme:
+              email: some.user@example.com
+              # optional private key for the Let's Encrypt account
+              #privateKey: |-
+              #-----BEGIN RSA PRIVATE KEY-----
+              #...
+              #-----END RSA PRIVATE KEY-----
+              server: https://acme-v02.api.letsencrypt.org/directory
+            # altenatively to `acme`, you can use a self-signed root or intermediate certificate for providing self-signed certificates
+#           ca:
+#             certificate: |
+#               -----BEGIN CERTIFICATE-----
+#               ...
+#               -----END CERTIFICATE-----
+#             certificateKey: |
+#               -----BEGIN PRIVATE KEY-----
+#               ...
+#               -----END PRIVATE KEY-----
+
+#          defaultRequestsPerDayQuota: 50
+
+#          precheckNameservers: 8.8.8.8,8.8.4.4
+
+#          caCertificates: | # optional custom CA certificates when using private ACME provider
+#            -----BEGIN CERTIFICATE-----
+#            ...
+#            -----END CERTIFICATE-----
+#            -----BEGIN CERTIFICATE-----
+#            ...
+#            -----END CERTIFICATE-----
+
+        shootIssuers:
+          enabled: false # if true, allows to specify issuers in the shoot clusters
+
+        deactivateAuthorizations: true # if true, enables flag --acme-deactivate-authorizations in cert-controller-manager
+        skipDNSChallengeValidation: false # if true, enables skipping dns-challenges in cert-controller-manager
+
+        gardenerCertificates:
+          seed:
+            dnsSecretRole: internal-domain # secret role for the DNS provider, used to lookup the DNS secret in the `garden` namespace
+            enabled: true # if true, the extension creates a certificate in the `garden` namespace on the runtime cluster to provide the TLS secret with the label `gardener.cloud/role: garden-cert`
+
+      # The following values are only needed if the extension should be deployed on the runtime cluster. 
+      runtimeClusterValues:
+        certificateConfig:
+          defaultIssuer:
+            # typically the same values as at .spec.deployment.values.certificateConfig.defaultIssuer
+            ...
+        gardenerCertificates:
+          runtimeCluster:
+            enabled: true # if true, the extension creates a certificate in the `garden` namespace on the seeds to provide the TLS secret with the label `gardener.cloud/role: controlplane-cert`
+  resources:
+  - globallyEnabled: true # if true, the extension is enabled for all shoots by default
+    kind: Extension
+    type: shoot-cert-service
+    workerlessSupported: true
+```
+
+#### Providing Trusted TLS Certificate for Garden Runtime Cluster
+
+The `Shoot-Cert-Service` can provide the TLS secret labeled with `gardener.cloud/role: garden-cert` in the `garden` namespace to be used by the Gardener API server.
+See [Trusted TLS Certificate for Garden Runtime Cluster](https://gardener.cloud/docs/gardener/trusted-tls-for-garden-runtime/) for more information.
+
+For this purpose, the extension must be deployed on the runtime cluster. Several configuration steps are needed:
+
+1. Add the extension to the `garden` resource on the Garden runtime cluster.
+    ```yaml
+    apiVersion: operator.gardener.cloud/v1alpha1
+    kind: Garden
+    metadata:
+      name: ...
+    spec:
+      extensions:
+      - type: shoot-cert-service
+    ```
+2. Provide the `spec.runtimeClusterValues` values in the `extension.operator.gardener.cloud` resource.
+3. The `.spec.runtimeClusterValues.gardenerCertificates.runtimeCluster.enabled` value must be set to `true`.
+
+Steps 1 and 2 are needed to deploy the extension on the runtime cluster.
+It will result in a `cert-controller-manager` deployment in the `garden` namespace.
+
+Step 3 is needed to enable the controller watching the `garden` resource and to create the certificate in the `garden` namespace.
+This controller extracts the current values `spec.virtualCluster.dns.domains` and `spec.runtimeCluster.ingress.domains` from the `garden` resource and creates/updates a certificate in the `garden` namespace.
+The certificate will be reconciled by the `cert-controller-manager` to provide the TLS secret with the label `gardener.cloud/role: garden-cert` in the `garden` namespace.
+Additionally, the extension provides a webhook to mutate the `virtual-garden-kube-apiserver` deployment in the `garden` namespace.
+It will manage the `--tls-sni-cert-key` command line arguments and patches the volume/volume mount with the TLS secret.
+Only the secondary domain names will be used for the SNI certificate, as the self-signed certificate of the first domain name is provided by the Gardener operator.
+
+*Example for resulting domains of the certificate*
+
+If the `garden` resource contains the following values:
+```yaml
+apiVersion: operator.gardener.cloud/v1alpha1
+kind: Garden
+spec:
+  runtimeCluster:
+    ingress:
+      domains:
+      - name: "ingress.garden.example.com"
+        provider: gardener-dns
+  virtualCluster:
+    dns:
+      domains:
+      - name: "primary.garden.example.com"
+        provider: gardener-dns
+      - name: "secondary.foo.example.com"
+        provider: gardener-dns
+```
+
+then the `Certificate` will be created with these wildcard domain names:
+- `*.primary.garden.example.com`
+- `*.secondary.foo.example.com`
+- `*.ingress.garden.example.com`
+
+The deployment of the `virtual-garden-kube-apiserver` will be patched with the following command line argument (and additional patches for the volume and volume mount):
+```yaml
+spec:
+  template:
+    spec:
+      containers:
+      - args:
+        - --tls-sni-cert-key=/srv/kubernetes/tls-sni/shoot-cert-service-injected/tls.crt,/srv/kubernetes/tls-sni/shoot-cert-service-injected/tls.key:api.secondary.foo.example.com
+```
+
+#### Providing Trusted TLS Certificate for Shoot Control Planes
+
+The `Shoot-Cert-Service` can provide the TLS secret labeled with `gardener.cloud/role: controlplane-cert` in the `garden` namespace on the seeds.
+See [Trusted TLS Certificate for Shoot Control Planes](https://gardener.cloud/docs/gardener/trusted-tls-for-control-planes/) for more information.
+
+For this purpose, the extension must be enabled for the seed(s). Two configuration steps are needed:
+
+1. Add the extension to the `Seed` manifest.
+    ```yaml
+    apiVersion: core.gardener.cloud/v1beta1
+    kind: Seed
+    metadata:
+      name: ...
+    spec:
+      extensions:
+      - type: shoot-cert-service
+    ```
+3. The `.spec.values.gardenerCertificates.seed.enabled` value must be set to `true`.
+   If an `ACME` issuer is used, the `.spec.values.gardenerCertificates.seed.dnsSecretRole` value must be set to the secret role for the DNS provider, used to look up the DNS secret in the `garden` namespace.
+   It is used by the `cert-controller-manager` to create the DNS challenge records.
+
+The certificate will contain the wildcard domain name using the base domain name from the `.spec.ingress.domain` value of the `Seed` resource.
+
 ### ControllerRegistration
+
+> *Note*: Using a `ControllerRegistration` / `ControllerDeployment` directly is not recommended if your Gardener landscape has a virtual Garden cluster.
+In this case, please use an `extension.operator.gardener.cloud` resource as described above.
+The Gardener operator will then take care of the `ControllerRegistration` and `ControllerDeployment` for you.
+
 An example of a `ControllerRegistration` for the `Shoot-Cert-Service` can be found at [controller-registration.yaml](../../example/controller-registration.yaml).
 
 The `ControllerRegistration` contains a Helm chart which eventually deploy the `Shoot-Cert-Service` to seed clusters. It offers some configuration options, mainly to set up a default issuer for shoot clusters. With a default issuer, pre-existing Let's Encrypt accounts can be used and shared with shoot clusters (See "One Account or Many?" of the [Integration Guide](https://letsencrypt.org/docs/integration-guide/)).
@@ -28,9 +212,9 @@ kind: ControllerRegistration
         acme:
             email: foo@example.com
             privateKey: |-
-            -----BEGIN RSA PRIVATE KEY-----
-            ...
-            -----END RSA PRIVATE KEY-----
+              -----BEGIN RSA PRIVATE KEY-----
+              ...
+              -----END RSA PRIVATE KEY-----
             server: https://acme-v02.api.letsencrypt.org/directory
         name: default-issuer
 #       restricted: true # restrict default issuer to any sub-domain of shoot.spec.dns.domain
