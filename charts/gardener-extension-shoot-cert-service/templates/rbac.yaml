@@ -69,6 +69,10 @@ rules:
   - update
   - patch
   - delete
+  {{- if and .Values.gardener.runtimeCluster.enabled .Values.gardenerCertificates.runtimeCluster.enabled }}
+  - list
+  - watch
+  {{- end }}
 - apiGroups:
   - coordination.k8s.io
   resources:
@@ -141,6 +145,8 @@ rules:
   - get
   - list
   - watch
+  - patch
+  - update
 - apiGroups:
   - admissionregistration.k8s.io
   resources:

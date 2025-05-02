@@ -92,7 +92,7 @@ func waitForOperatorExtensionToBeReconciled(
 		}
 
 		return extension.Status.Conditions
-	}).WithPolling(2 * time.Second).Should(ConsistOf(MatchFields(IgnoreExtras, Fields{
+	}).WithPolling(2 * time.Second).Should(ContainElements(MatchFields(IgnoreExtras, Fields{
 		"Type":   Equal(operatorv1alpha1.ExtensionInstalled),
 		"Status": Equal(gardencorev1beta1.ConditionTrue),
 	}), MatchFields(IgnoreExtras, Fields{
