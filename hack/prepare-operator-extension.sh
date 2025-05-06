@@ -3,7 +3,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-set -eu
+set -euo pipefail
 
 repo_root="$(readlink -f $(dirname ${0})/..)"
 version=$(cat "${repo_root}/VERSION")

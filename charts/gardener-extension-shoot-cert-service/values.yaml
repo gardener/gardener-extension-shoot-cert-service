@@ -76,11 +76,11 @@ certificateConfig:
   # cert.gardener.cloud/cluster-acme-server: "true" # label to select the in-cluster ACME server namespace
 
   shootIssuers:
-    enabled: false # if true, allows to specify issuers in the shoot clusters
+    enabled: false # if true, allows specifying issuers in the shoot clusters
 
   deactivateAuthorizations: true # if true, enables flag --acme-deactivate-authorizations in cert-controller-manager
 
-  skipDNSChallengeValidation: false # if true, enables skipping dns-challenges in cert-controller-manager
+  skipDNSChallengeValidation: false # if true, skips dns-challenges in cert-controller-manager
 
 disableControllers: []
 
@@ -97,7 +97,7 @@ gardenerCertificates:
   # dnsSecretRole: internal-domain # the "gardener.cloud/role" label to select the DNS secret in the seed namespace on the virtual garden to be used for DNS challenges
   runtimeCluster:
     enabled: false # if true, a special cert-controller-manager is deployed to provide the TLS certificate for the virtual cluster kube-apiserver and garden ingress domain
-    virtualKubeAPIServerIncludePrimaryDomain: false # if true, the first domain name of the virtual cluster kube-apiserver is included for TLS SNI config
+    virtualKubeAPIServerIncludePrimaryDomain: false # if true, the first domain name of the virtual cluster kube-apiserver is included in the TLS SNI config
 
 gardener:
   version: ""
