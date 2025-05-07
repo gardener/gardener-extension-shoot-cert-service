@@ -19,9 +19,6 @@ spec:
               email: some.user@example.com
               server: https://acme-v02.api.letsencrypt.org/directory
             name: garden
-        gardenerCertificates:
-          runtimeCluster:
-            enabled: true
       values:
         certificateConfig:
           defaultIssuer:
@@ -29,10 +26,6 @@ spec:
               email: some.user@example.com
               server: https://acme-v02.api.letsencrypt.org/directory
             name: garden
-        gardenerCertificates:
-          seed:
-            dnsSecretRole: internal-domain
-            enabled: true
   resources:
   - globallyEnabled: true
     kind: Extension

@@ -7,7 +7,6 @@ package sniconfig_test
 import (
 	"context"
 	"encoding/json"
-	"os"
 	"sort"
 
 	"github.com/gardener/gardener/pkg/client/kubernetes"
@@ -29,7 +28,7 @@ import (
 	logzap "sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
-	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/controller/runtimecluster/certificate"
+	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/controller/extension"
 	. "github.com/gardener/gardener-extension-shoot-cert-service/pkg/webhook/sniconfig"
 )
 
@@ -53,7 +52,6 @@ var _ = Describe("handler", func() {
 
 		BeforeEach(func() {
 			format.MaxLength = 4000
-			os.Setenv(EnvVirtualKubeAPIServerSNIIncludePrimaryDomain, "true")
 			log = logger.MustNewZapLogger(logger.DebugLevel, logger.FormatJSON, logzap.WriteTo(GinkgoWriter))
 
 			ctrl = gomock.NewController(GinkgoT())
@@ -74,9 +72,9 @@ var _ = Describe("handler", func() {
 					Name:      "virtual-garden-kube-apiserver",
 					Namespace: "garden",
 					Annotations: map[string]string{
-						certificate.TLSCertAPIServerNamesAnnotation: "foo.example.com",
-						certificate.TLSCertHashAnnotation:           "1234",
-						certificate.TLSCertRequestedAtAnnotation:    "2000-01-01T00:00:00Z",
+						extension.TLSCertAPIServerNamesAnnotation: "api.example.com,foo.example.com",
+						extension.TLSCertHashAnnotation:           "1234",
+						extension.TLSCertRequestedAtAnnotation:    "2000-01-01T00:00:00Z",
 					},
 				},
 				Spec: appsv1.DeploymentSpec{
@@ -100,8 +98,8 @@ var _ = Describe("handler", func() {
 					Operation: "add",
 					Path:      "/spec/template/metadata/annotations",
 					Value: map[string]any{
-						certificate.TLSCertRequestedAtAnnotation: "2000-01-01T00:00:00Z",
-						certificate.TLSCertHashAnnotation:        "1234",
+						extension.TLSCertRequestedAtAnnotation: "2000-01-01T00:00:00Z",
+						extension.TLSCertHashAnnotation:        "1234",
 					},
 				},
 				{
@@ -244,8 +242,8 @@ func prepareRequest(request *admission.Request, obj *appsv1.Deployment) {
 
 func patchDeployment(deployment *appsv1.Deployment) {
 	deployment.Spec.Template.Annotations = map[string]string{
-		certificate.TLSCertHashAnnotation:        "1234",
-		certificate.TLSCertRequestedAtAnnotation: "2000-01-01T00:00:00Z",
+		extension.TLSCertHashAnnotation:        "1234",
+		extension.TLSCertRequestedAtAnnotation: "2000-01-01T00:00:00Z",
 	}
 	deployment.Spec.Template.Spec.Containers[0].Args = append(deployment.Spec.Template.Spec.Containers[0].Args,
 		"--tls-sni-cert-key=/srv/kubernetes/tls-sni/shoot-cert-service-injected/tls.crt,/srv/kubernetes/tls-sni/shoot-cert-service-injected/tls.key:foo.example.com",

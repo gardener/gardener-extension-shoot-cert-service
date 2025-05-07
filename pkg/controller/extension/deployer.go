@@ -27,11 +27,9 @@ type Values struct {
 	RestrictedDomains                string
 	Resources                        []core.NamedResourceReference
 
-	ShootDeployment      bool
-	CertClass            string
-	Replicas             int32
-	SeedIngressDNSDomain string
-	DNSSecretRole        string
+	ShootDeployment bool
+	CertClass       string
+	Replicas        int32
 }
 
 func (v Values) getLabels() map[string]string {

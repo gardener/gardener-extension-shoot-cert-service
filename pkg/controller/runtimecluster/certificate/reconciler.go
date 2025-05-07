@@ -20,15 +20,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-)
 
-const (
-	TLSCertAPIServerNamesAnnotation = "service.cert.extensions.gardener.cloud/tls-cert-apiserver-names"
-	TLSCertRequestedAtAnnotation    = "service.cert.extensions.gardener.cloud/tls-cert-requested-at"
-	TLSCertHashAnnotation           = "service.cert.extensions.gardener.cloud/tls-cert-hash"
-
-	ManagedByLabel      = "service.cert.extensions.gardener.cloud/managed-by"
-	ExtensionClassLabel = "service.cert.extensions.gardener.cloud/extension-class"
+	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/controller/extension"
 )
 
 // Reconciler reconciles Gardens.
@@ -78,7 +71,7 @@ func (r *Reconciler) reconcile(
 		return reconcile.Result{}, nil
 	}
 
-	apiDNSNames := cert.GetAnnotations()[TLSCertAPIServerNamesAnnotation]
+	apiDNSNames := cert.GetAnnotations()[extension.TLSCertAPIServerNamesAnnotation]
 	certHash := cert.GetLabels()[certificate.LabelCertificateNewHashKey]
 
 	secret := &corev1.Secret{}
@@ -145,9 +138,9 @@ func (r *Reconciler) updateVirtualGardenDeploymentAnnotation(
 		return fmt.Errorf("failed to get deployment %s: %w", deploy.Name, err)
 	}
 
-	if deploy.Annotations[TLSCertAPIServerNamesAnnotation] == apiserverNames &&
-		deploy.Annotations[TLSCertRequestedAtAnnotation] == requestedAt &&
-		deploy.Annotations[TLSCertHashAnnotation] == certHash {
+	if deploy.Annotations[extension.TLSCertAPIServerNamesAnnotation] == apiserverNames &&
+		deploy.Annotations[extension.TLSCertRequestedAtAnnotation] == requestedAt &&
+		deploy.Annotations[extension.TLSCertHashAnnotation] == certHash {
 		return nil
 	}
 
@@ -156,13 +149,13 @@ func (r *Reconciler) updateVirtualGardenDeploymentAnnotation(
 		if deploy.Annotations == nil {
 			deploy.Annotations = map[string]string{}
 		}
-		deploy.Annotations[TLSCertAPIServerNamesAnnotation] = apiserverNames
-		deploy.Annotations[TLSCertRequestedAtAnnotation] = requestedAt
-		deploy.Annotations[TLSCertHashAnnotation] = certHash
+		deploy.Annotations[extension.TLSCertAPIServerNamesAnnotation] = apiserverNames
+		deploy.Annotations[extension.TLSCertRequestedAtAnnotation] = requestedAt
+		deploy.Annotations[extension.TLSCertHashAnnotation] = certHash
 	} else {
-		delete(deploy.Annotations, TLSCertAPIServerNamesAnnotation)
-		delete(deploy.Annotations, TLSCertRequestedAtAnnotation)
-		delete(deploy.Annotations, TLSCertHashAnnotation)
+		delete(deploy.Annotations, extension.TLSCertAPIServerNamesAnnotation)
+		delete(deploy.Annotations, extension.TLSCertRequestedAtAnnotation)
+		delete(deploy.Annotations, extension.TLSCertHashAnnotation)
 	}
 	if err := r.RuntimeClientSet.Client().Patch(ctx, deploy, patch); err != nil {
 		return fmt.Errorf("failed to patch virtual garden kube-apisever deployment annotations: %w", err)

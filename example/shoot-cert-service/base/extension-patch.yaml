@@ -10,9 +10,6 @@ spec:
       injectGardenKubeconfig: true
       policy: Always
       runtimeClusterValues:
-        gardenerCertificates:
-          runtimeCluster:
-            enabled: true
         certificateConfig:
           defaultIssuer:
             name: garden
@@ -20,10 +17,6 @@ spec:
               server: https://acme-v02.api.letsencrypt.org/directory
               email: some.user@example.com
       values:
-        gardenerCertificates:
-          seed:
-            enabled: true
-            dnsSecretRole: internal-domain
         certificateConfig:
           defaultIssuer:
             name: garden

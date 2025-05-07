@@ -69,10 +69,8 @@ rules:
   - update
   - patch
   - delete
-  {{- if and .Values.gardener.runtimeCluster.enabled .Values.gardenerCertificates.runtimeCluster.enabled }}
   - list
   - watch
-  {{- end }}
 - apiGroups:
   - coordination.k8s.io
   resources:
@@ -114,7 +112,6 @@ rules:
   - patch
   - update
   - delete
-{{- if or .Values.gardener.runtimeCluster.enabled .Values.gardenerCertificates.seed.enabled }}
 - apiGroups:
   - cert.gardener.cloud
   resources:
@@ -127,7 +124,6 @@ rules:
   - patch
   - update
   - delete
-{{- end }}
 {{- if .Values.gardener.runtimeCluster.enabled }}
 - apiGroups:
   - operator.gardener.cloud

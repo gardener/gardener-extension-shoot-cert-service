@@ -20,6 +20,7 @@ import (
 	. "github.com/onsi/gomega"
 	. "github.com/onsi/gomega/gstruct"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -32,6 +33,14 @@ var _ = Describe("Shoot-Cert-Service Tests", func() {
 		seedExtension      = &extensionsv1alpha1.Extension{ObjectMeta: metav1.ObjectMeta{Name: "shoot-cert-service"}}
 		runtimeCertificate = &certv1alpha1.Certificate{ObjectMeta: metav1.ObjectMeta{Namespace: "garden", Name: "tls"}}
 		seedCertificate    = &certv1alpha1.Certificate{ObjectMeta: metav1.ObjectMeta{Namespace: "garden", Name: "ingress-wildcard-cert"}}
+
+		rawExtension = &runtime.RawExtension{
+			Raw: []byte(`{
+  "apiVersion": "service.cert.extensions.gardener.cloud/v1alpha1",
+  "kind": "CertConfig",
+  "generateControlPlaneCertificate": true
+}`),
+		}
 	)
 
 	It("Create, Delete", Label("simple"), func() {
@@ -52,7 +61,10 @@ var _ = Describe("Shoot-Cert-Service Tests", func() {
 		Expect(virtualClusterClient.Client().Get(ctx, client.ObjectKeyFromObject(seed), seed)).To(Succeed())
 		seedPatch := client.MergeFrom(seed.DeepCopy())
 		seed.Spec.Extensions = []gardencorev1beta1.Extension{
-			{Type: "shoot-cert-service"},
+			{
+				Type:           "shoot-cert-service",
+				ProviderConfig: rawExtension,
+			},
 		}
 		Expect(virtualClusterClient.Client().Patch(ctx, seed, seedPatch)).To(Succeed())
 
@@ -79,7 +91,10 @@ var _ = Describe("Shoot-Cert-Service Tests", func() {
 		Expect(runtimeClient.Get(ctx, client.ObjectKeyFromObject(garden), garden)).To(Succeed())
 		patch := client.MergeFrom(garden.DeepCopy())
 		garden.Spec.Extensions = []operatorv1alpha1.GardenExtension{
-			{Type: "shoot-cert-service"},
+			{
+				Type:           "shoot-cert-service",
+				ProviderConfig: rawExtension,
+			},
 		}
 		Expect(runtimeClient.Patch(ctx, garden, patch)).To(Succeed())
 

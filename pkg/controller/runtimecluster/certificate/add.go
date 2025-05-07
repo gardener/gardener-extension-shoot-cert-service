@@ -18,6 +18,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
+
+	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/controller/extension"
 )
 
 // ControllerName is the name of this controller.
@@ -62,7 +64,8 @@ func (r *Reconciler) AddToManager(mgr manager.Manager) error {
 			predicate.NewPredicateFuncs(func(obj client.Object) bool {
 				return obj != nil &&
 					obj.GetLabels()[v1beta1constants.GardenRole] == v1beta1constants.GardenRoleGardenWildcardCert &&
-					obj.GetLabels()[ExtensionClassLabel] == string(extensionsv1alpha1.ExtensionClassGarden)
+					obj.GetLabels()[extension.ManagedByLabel] == extension.ManagedByValue &&
+					obj.GetLabels()[extension.ExtensionClassLabel] == string(extensionsv1alpha1.ExtensionClassGarden)
 			}),
 		)).
 		WithOptions(r.ControllerOptions).

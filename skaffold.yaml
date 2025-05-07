@@ -41,7 +41,6 @@ build:
             - pkg/controller/extension/model
             - pkg/controller/healthcheck
             - pkg/controller/runtimecluster/certificate
-            - pkg/controller/runtimecluster/garden
             - pkg/webhook/sniconfig
             - VERSION
         ldflags:

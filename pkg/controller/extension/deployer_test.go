@@ -15,9 +15,7 @@ import (
 	"github.com/gardener/gardener/pkg/apis/core"
 	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
 	resourcesv1alpha1 "github.com/gardener/gardener/pkg/apis/resources/v1alpha1"
-	gardenerutils "github.com/gardener/gardener/pkg/utils/gardener"
 	"github.com/gardener/gardener/pkg/utils/test/matchers"
-	"github.com/go-logr/logr"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/types"
@@ -47,28 +45,9 @@ import (
 var _ = Describe("deployer", func() {
 	var (
 		ctx       = context.Background()
-		log       = logr.Discard()
 		c         client.Client
 		consistOf func(...client.Object) types.GomegaMatcher
 		values    Values
-
-		fakeSecretGetter = func(_ context.Context, gardenRole string) (*corev1.Secret, error) {
-			if gardenRole != "controlplane-cert" {
-				return nil, nil
-			}
-			return &corev1.Secret{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "controlplane-cert-secret",
-					Namespace: "garden",
-					Annotations: map[string]string{
-						gardenerutils.DNSProvider: "test-provider",
-					},
-				},
-				Data: map[string][]byte{
-					"foo": []byte("bar"),
-				},
-			}, nil
-		}
 
 		standardShootResources = func() []client.Object {
 			return []client.Object{
@@ -982,7 +961,7 @@ var _ = Describe("deployer", func() {
 
 		testInternalManagedResource = func(resources []client.Object, isGarden bool, modifyDeployment func(*appsv1.Deployment)) {
 			deployer := newDeployer(values)
-			ExpectWithOffset(1, deployer.DeployGardenOrSeedManagedResource(ctx, log, c, fakeSecretGetter)).To(Succeed())
+			ExpectWithOffset(1, deployer.DeployGardenOrSeedManagedResource(ctx, c)).To(Succeed())
 			name := servicev1alpha1.CertManagementResourceNameSeed
 			if isGarden {
 				name = servicev1alpha1.CertManagementResourceNameGarden
@@ -1364,8 +1343,6 @@ var _ = Describe("deployer", func() {
 			values.ShootDeployment = false
 			values.Namespace = "seed-foo"
 			values.CertClass = "seed"
-			values.SeedIngressDNSDomain = "ingress.seed.example.com"
-			values.DNSSecretRole = "controlplane-cert"
 			resources := standardInternalResources(values.Namespace, values.CertClass, true)
 			resources = append(resources,
 				&certv1alpha1.Issuer{
@@ -1393,44 +1370,6 @@ var _ = Describe("deployer", func() {
 					Data: map[string][]byte{
 						"email":      []byte("foo@example.com"),
 						"privateKey": []byte("<private-key>"),
-					},
-				},
-				&certv1alpha1.Certificate{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "ingress-wildcard-cert",
-						Namespace: "garden",
-						Annotations: map[string]string{
-							"cert.gardener.cloud/class":                   "seed",
-							"cert.gardener.cloud/dnsrecord-provider-type": "test-provider",
-							"cert.gardener.cloud/dnsrecord-secret-ref":    "seed-foo/dns-challenge-secret",
-						},
-						Labels: map[string]string{
-							"service.cert.extensions.gardener.cloud/managed-by": "shoot_cert_service-controller",
-							"gardener.cloud/role":                               "controlplane-cert",
-						},
-					},
-					Spec: certv1alpha1.CertificateSpec{
-						CommonName: ptr.To("*.ingress.seed.example.com"),
-						SecretLabels: map[string]string{
-							"service.cert.extensions.gardener.cloud/managed-by": "shoot_cert_service-controller",
-							"gardener.cloud/role":                               "controlplane-cert",
-						},
-						SecretRef: &corev1.SecretReference{
-							Name:      "ingress-wildcard-cert",
-							Namespace: "garden",
-						},
-					},
-				},
-				&corev1.Secret{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "dns-challenge-secret",
-						Namespace: values.Namespace,
-						Annotations: map[string]string{
-							gardenerutils.DNSProvider: "test-provider",
-						},
-					},
-					Data: map[string][]byte{
-						"foo": []byte("bar"),
 					},
 				},
 			)

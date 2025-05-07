@@ -51,12 +51,7 @@ spec:
         - --heartbeat-renew-interval-seconds={{ .Values.controllers.heartbeat.renewIntervalSeconds }}
         {{- if .Values.gardener.runtimeCluster.enabled }}
         - --extension-class=garden
-        {{- if .Values.gardenerCertificates.runtimeCluster.enabled }}
-        - --controllers=shoot_cert_service,garden,certificate
-        {{- else }}
-        - --controllers=shoot_cert_service
-        - --disable-webhooks=sni-config
-        {{- end }}
+        - --controllers=shoot_cert_service,certificate
         {{- else }}
         - --controllers=shoot_cert_service,healthcheck,heartbeat
         - --disable-webhooks=sni-config
@@ -70,18 +65,8 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.namespace
-        {{- if .Values.gardenerCertificates.runtimeCluster.virtualKubeAPIServerIncludePrimaryDomain }}
-        - name: VIRTUAL_KUBE_API_SERVER_SNI_INCLUDE_PRIMARY_DOMAIN
-          value: "true"
-        {{- end }}
-        {{- if .Values.gardenerCertificates.seed.enabled }}
         - name: SEED_NAME
           value: {{ .Values.gardener.seed.name }}
-        - name: SEED_INGRESS_DNS_DOMAIN
-          value: {{ .Values.gardener.seed.ingressDomain }}
-        - name: SEED_DNS_SECRET_ROLE
-          value: {{ .Values.gardenerCertificates.seed.dnsSecretRole }}
-        {{- end }}
         {{- if .Values.imageVectorOverwrite }}
         - name: IMAGEVECTOR_OVERWRITE
           value: /charts_overwrite/images_overwrite.yaml

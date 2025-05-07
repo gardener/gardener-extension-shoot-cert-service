@@ -10,7 +10,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"os"
 	"reflect"
 	"strings"
 
@@ -25,13 +24,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
-	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/controller/runtimecluster/certificate"
-)
-
-const (
-	// EnvVirtualKubeAPIServerSNIIncludePrimaryDomain is the environment variable that can be set to `"true"` to include the primary domain in the SNI list.
-	// The default is to not include the primary domain, as it uses the self-signed certificate managed by Gardener.
-	EnvVirtualKubeAPIServerSNIIncludePrimaryDomain = "VIRTUAL_KUBE_API_SERVER_SNI_INCLUDE_PRIMARY_DOMAIN"
+	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/controller/extension"
 )
 
 // Handler handles admission requests for deployment of virtual-garden-kube-apiserver and configures the SNI command line arguments.
@@ -99,10 +92,10 @@ func mutateTLSCertSNI(log logr.Logger, deployment *appsv1.Deployment) error {
 	updateTemplateAnnotations(deployment)
 
 	var apiServerNames []string
-	if deployment.Annotations[certificate.TLSCertAPIServerNamesAnnotation] != "" {
-		apiServerNames = strings.Split(deployment.Annotations[certificate.TLSCertAPIServerNamesAnnotation], ",")
+	if deployment.Annotations[extension.TLSCertAPIServerNamesAnnotation] != "" {
+		apiServerNames = strings.Split(deployment.Annotations[extension.TLSCertAPIServerNamesAnnotation], ",")
 	}
-	if len(apiServerNames) > 0 && os.Getenv(EnvVirtualKubeAPIServerSNIIncludePrimaryDomain) != "true" {
+	if len(apiServerNames) > 0 {
 		apiServerNames = apiServerNames[1:]
 	}
 	for i := range deployment.Spec.Template.Spec.Containers {
@@ -168,21 +161,21 @@ func mutateTLSCertSNI(log logr.Logger, deployment *appsv1.Deployment) error {
 }
 
 func updateTemplateAnnotations(deployment *appsv1.Deployment) {
-	certHash := deployment.Annotations[certificate.TLSCertHashAnnotation]
-	certRequestedAt := deployment.Annotations[certificate.TLSCertRequestedAtAnnotation]
+	certHash := deployment.Annotations[extension.TLSCertHashAnnotation]
+	certRequestedAt := deployment.Annotations[extension.TLSCertRequestedAtAnnotation]
 
 	if deployment.Spec.Template.Annotations == nil {
 		deployment.Spec.Template.Annotations = map[string]string{}
 	}
 
 	if certHash != "" {
-		deployment.Spec.Template.Annotations[certificate.TLSCertHashAnnotation] = certHash
+		deployment.Spec.Template.Annotations[extension.TLSCertHashAnnotation] = certHash
 	} else {
-		delete(deployment.Spec.Template.Annotations, certificate.TLSCertHashAnnotation)
+		delete(deployment.Spec.Template.Annotations, extension.TLSCertHashAnnotation)
 	}
 	if certRequestedAt != "" {
-		deployment.Spec.Template.Annotations[certificate.TLSCertRequestedAtAnnotation] = certRequestedAt
+		deployment.Spec.Template.Annotations[extension.TLSCertRequestedAtAnnotation] = certRequestedAt
 	} else {
-		delete(deployment.Spec.Template.Annotations, certificate.TLSCertRequestedAtAnnotation)
+		delete(deployment.Spec.Template.Annotations, extension.TLSCertRequestedAtAnnotation)
 	}
 }

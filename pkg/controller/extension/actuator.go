@@ -13,7 +13,6 @@ import (
 	"github.com/gardener/gardener/extensions/pkg/controller"
 	"github.com/gardener/gardener/extensions/pkg/controller/extension"
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
-	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
 	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
 	extensionsv1alpha1helper "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1/helper"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
@@ -23,10 +22,12 @@ import (
 	"github.com/gardener/gardener/pkg/utils/managedresources"
 	"github.com/go-logr/logr"
 	autoscalingv1 "k8s.io/api/autoscaling/v1"
-	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	kubernetesscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
@@ -40,28 +41,36 @@ import (
 const (
 	// EnvSeedName is the environment variable for the seed name.
 	EnvSeedName = "SEED_NAME"
-	// EnvSeedIngressDNSDomain is the environment variable for the seed ingress DNS domain.
-	EnvSeedIngressDNSDomain = "SEED_INGRESS_DNS_DOMAIN"
-	// EnvSeedDNSDomainSecretRole is the environment variable for the seed DNS domain secret role.
-	// This role is used to look up the DNS secret in the seed namespace on the virtual garden used for DNS Challenges
-	EnvSeedDNSDomainSecretRole = "SEED_DNS_SECRET_ROLE" // #nosec G101 -- false positive
 	// EnvLeaderElectionNamespace is the environment variable name set in the deployment for providing the pod namespace.
 	EnvLeaderElectionNamespace = "LEADER_ELECTION_NAMESPACE"
+
+	// ManagedByLabel is a label used to identify the owner of certificate and secret resources.
+	ManagedByLabel = "service.cert.extensions.gardener.cloud/managed-by"
+	// ManagedByValue is a value used to identify own managed certificate and secret resources.
+	ManagedByValue = "gardener-extension-shoot-cert-service"
+
+	// ExtensionClassLabel is a label used to identify the extension class of the certificate resources.
+	ExtensionClassLabel = "service.cert.extensions.gardener.cloud/extension-class"
+
+	TLSCertAPIServerNamesAnnotation = "service.cert.extensions.gardener.cloud/tls-cert-apiserver-names"
+	TLSCertRequestedAtAnnotation    = "service.cert.extensions.gardener.cloud/tls-cert-requested-at"
+	TLSCertHashAnnotation           = "service.cert.extensions.gardener.cloud/tls-cert-hash"
 )
 
 // NewActuator returns an actuator responsible for Extension resources.
 func NewActuator(mgr manager.Manager, config config.Configuration, extensionClasses []extensionsv1alpha1.ExtensionClass) extension.Actuator {
 	return &actuator{
-		client:           mgr.GetClient(),
-		config:           mgr.GetConfig(),
-		scheme:           mgr.GetScheme(),
-		decoder:          serializer.NewCodecFactory(mgr.GetScheme(), serializer.EnableStrict).UniversalDecoder(),
-		serviceConfig:    config,
-		extensionClasses: extensionClasses,
+		client:            mgr.GetClient(),
+		config:            mgr.GetConfig(),
+		scheme:            mgr.GetScheme(),
+		serviceConfig:     config,
+		extensionClasses:  extensionClasses,
+		certConfigDecoder: newCertConfigDecoder(mgr),
 	}
 }
 
 type actuator struct {
+	certConfigDecoder
 	client           client.Client
 	config           *rest.Config
 	scheme           *runtime.Scheme
@@ -87,14 +96,9 @@ func (a *actuator) Reconcile(ctx context.Context, log logr.Logger, ex *extension
 		}
 	}
 
-	certConfig := &service.CertConfig{}
-	if ex.Spec.ProviderConfig != nil {
-		if _, _, err := a.decoder.Decode(ex.Spec.ProviderConfig.Raw, nil, certConfig); err != nil {
-			return fmt.Errorf("failed to decode provider config: %+v", err)
-		}
-		if errs := validation.ValidateCertConfig(certConfig, cluster); len(errs) > 0 {
-			return errs.ToAggregate()
-		}
+	certConfig, err := a.decodeAndValidateProviderConfig(ex, cluster)
+	if err != nil {
+		return err
 	}
 
 	values, err := a.createValues(ctx, log, certConfig, cluster, namespace, ex)
@@ -115,6 +119,43 @@ func (a *actuator) Reconcile(ctx context.Context, log logr.Logger, ex *extension
 		if err := a.createResourcesForGardenOrSeed(ctx, log, *values); err != nil {
 			return err
 		}
+
+		generate, err := a.isGenerateControlPlaneCertificate(ex)
+		if err != nil {
+			return err
+		}
+		if isGardenDeployment(ex) {
+			handler := newGardenCert(a.client, log)
+			if generate {
+				if err := handler.reconcile(ctx, ex); err != nil {
+					return err
+				}
+			} else {
+				if err := handler.delete(ctx, ex); err != nil {
+					return err
+				}
+			}
+		} else {
+			handler := newControlPlaneCert(a.client, log)
+			if generate {
+				seedName := os.Getenv(EnvSeedName)
+				seed, err := a.fetchSeedFromVirtualGarden(ctx, seedName)
+				if err != nil {
+					return fmt.Errorf("failed to get seed %s: %w", seedName, err)
+				}
+
+				handler.domain = seed.Spec.Ingress.Domain
+				handler.dnsProviderType = seed.Spec.DNS.Provider.Type
+				handler.dnsProviderSecretRef = &seed.Spec.DNS.Provider.SecretRef
+				if err := handler.reconcile(ctx); err != nil {
+					return err
+				}
+			} else {
+				if err := handler.delete(ctx); err != nil {
+					return err
+				}
+			}
+		}
 	}
 
 	return a.updateStatus(ctx, ex, certConfig)
@@ -126,6 +167,11 @@ func (a *actuator) Delete(ctx context.Context, log logr.Logger, ex *extensionsv1
 
 	log.Info("Component is being deleted", "component", "cert-management", "namespace", namespace)
 	if !isShootDeployment(ex) {
+		if isGardenDeployment(ex) {
+			if err := newGardenCert(a.client, log).delete(ctx, ex); err != nil {
+				return err
+			}
+		}
 		return a.deleteResourcesForGardenOrSeed(ctx, log, ex)
 	}
 
@@ -187,7 +233,9 @@ func (a *actuator) createValues(
 		}
 		values.GenericTokenKubeconfigSecretName = extensions.GenericTokenKubeconfigSecretNameFromCluster(cluster)
 	} else {
-		setValuesForGardenOrSeed(ex, &values)
+		if err := setValuesForGardenOrSeed(ex, &values); err != nil {
+			return nil, err
+		}
 	}
 
 	images, err := utilsimagevector.FindImages(imagevector.ImageVector(), []string{v1alpha1.CertManagementImageName})
@@ -210,7 +258,7 @@ func (a *actuator) createSeedResourcesForShoot(ctx context.Context, log logr.Log
 
 func (a *actuator) createResourcesForGardenOrSeed(ctx context.Context, log logr.Logger, values Values) error {
 	log.Info("Component is being applied", "component", "cert-management", "namespace", values.Namespace, "certclass", values.CertClass)
-	return newDeployer(values).DeployGardenOrSeedManagedResource(ctx, log, a.client, a.fetchSecretFromVirtualGardenByGardenRole)
+	return newDeployer(values).DeployGardenOrSeedManagedResource(ctx, a.client)
 }
 
 func (a *actuator) createShootResourcesForShoot(ctx context.Context, log logr.Logger, values Values) error {
@@ -223,7 +271,9 @@ func (a *actuator) createShootResourcesForShoot(ctx context.Context, log logr.Lo
 
 func (a *actuator) deleteResourcesForGardenOrSeed(ctx context.Context, log logr.Logger, ex *extensionsv1alpha1.Extension) error {
 	values := Values{Namespace: ex.GetNamespace(), ShootDeployment: false}
-	setValuesForGardenOrSeed(ex, &values)
+	if err := setValuesForGardenOrSeed(ex, &values); err != nil {
+		return err
+	}
 	log.Info("Deleting managed resource for garden or seed", "namespace", values.Namespace, "certclass", values.CertClass)
 	return newDeployer(values).DeleteGardenOrSeedManagedResourceAndWait(ctx, a.client, 2*time.Minute)
 }
@@ -269,28 +319,20 @@ func (a *actuator) createShootIssuersValues(certConfig *service.CertConfig) map[
 	}
 }
 
-func (a *actuator) fetchSecretFromVirtualGardenByGardenRole(ctx context.Context, role string) (*corev1.Secret, error) {
-	if role == "" {
-		// assuming not configured, as no DNSChallenges needed
-		return nil, nil
-	}
-
+func (a *actuator) fetchSeedFromVirtualGarden(ctx context.Context, seedName string) (*gardencorev1beta1.Seed, error) {
 	gardenClient, err := a.createGardenClient()
 	if err != nil {
 		return nil, err
 	}
-	seedNamespace := gardenerutils.ComputeGardenNamespace(os.Getenv(EnvSeedName))
-	secretList := &corev1.SecretList{}
-	if err := gardenClient.List(ctx, secretList, client.InNamespace(seedNamespace), client.MatchingLabels{v1beta1constants.GardenRole: role}); err != nil {
-		return nil, fmt.Errorf("failed to list secrets in seed: %w", err)
+	seed := &gardencorev1beta1.Seed{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: seedName,
+		},
 	}
-	if len(secretList.Items) == 0 {
-		return nil, fmt.Errorf("no secret found in seed namespace %s with role %s", seedNamespace, role)
+	if err := gardenClient.Get(ctx, client.ObjectKeyFromObject(seed), seed); err != nil {
+		return nil, fmt.Errorf("failed to get seed %s: %w", seedName, err)
 	}
-	if len(secretList.Items) > 1 {
-		return nil, fmt.Errorf("multiple secrets found in seed namespace %s with role %s", seedNamespace, role)
-	}
-	return &secretList.Items[0], nil
+	return seed, nil
 }
 
 func (a *actuator) createGardenClient() (client.Client, error) {
@@ -298,8 +340,15 @@ func (a *actuator) createGardenClient() (client.Client, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to read garden kubeconfig: %w", err)
 	}
+	scheme := runtime.NewScheme()
+	if err := kubernetesscheme.AddToScheme(scheme); err != nil {
+		return nil, fmt.Errorf("failed to add kubernetes scheme: %w", err)
+	}
+	if err := gardencorev1beta1.AddToScheme(scheme); err != nil {
+		return nil, fmt.Errorf("failed to add gardencorev1beta1 scheme: %w", err)
+	}
 	return client.New(restConfig, client.Options{
-		Scheme: a.scheme,
+		Scheme: scheme,
 	})
 }
 
@@ -311,14 +360,44 @@ func isGardenDeployment(ex *extensionsv1alpha1.Extension) bool {
 	return extensionsv1alpha1helper.GetExtensionClassOrDefault(ex.Spec.Class) == extensionsv1alpha1.ExtensionClassGarden
 }
 
-func setValuesForGardenOrSeed(ex *extensionsv1alpha1.Extension, values *Values) {
+func setValuesForGardenOrSeed(ex *extensionsv1alpha1.Extension, values *Values) error {
 	if isGardenDeployment(ex) {
 		values.CertClass = "garden"
 	} else {
 		values.CertClass = "seed"
-		values.SeedIngressDNSDomain = os.Getenv(EnvSeedIngressDNSDomain)
-		values.DNSSecretRole = os.Getenv(EnvSeedDNSDomainSecretRole)
 		// use the extension namespace for deployment of cert-manager-controller
 		values.Namespace = os.Getenv(EnvLeaderElectionNamespace)
 	}
+	return nil
+}
+
+type certConfigDecoder struct {
+	decoder runtime.Decoder
+}
+
+func newCertConfigDecoder(mgr manager.Manager) certConfigDecoder {
+	return certConfigDecoder{
+		decoder: serializer.NewCodecFactory(mgr.GetScheme(), serializer.EnableStrict).UniversalDecoder(),
+	}
+}
+
+func (d *certConfigDecoder) decodeAndValidateProviderConfig(ex *extensionsv1alpha1.Extension, cluster *controller.Cluster) (*service.CertConfig, error) {
+	certConfig := &service.CertConfig{}
+	if ex.Spec.ProviderConfig != nil {
+		if _, _, err := d.decoder.Decode(ex.Spec.ProviderConfig.Raw, nil, certConfig); err != nil {
+			return nil, fmt.Errorf("failed to decode provider config: %+v", err)
+		}
+		if errs := validation.ValidateCertConfig(certConfig, cluster); len(errs) > 0 {
+			return nil, errs.ToAggregate()
+		}
+	}
+	return certConfig, nil
+}
+
+func (d *certConfigDecoder) isGenerateControlPlaneCertificate(ex *extensionsv1alpha1.Extension) (bool, error) {
+	certConfig, err := d.decodeAndValidateProviderConfig(ex, nil)
+	if err != nil {
+		return false, err
+	}
+	return ptr.Deref(certConfig.GenerateControlPlaneCertificate, false), nil
 }

@@ -81,20 +81,12 @@ spec:
         deactivateAuthorizations: true # if true, enables flag --acme-deactivate-authorizations in cert-controller-manager
         skipDNSChallengeValidation: false # if true, skips dns-challenges in cert-controller-manager
 
-        gardenerCertificates:
-          seed:
-            dnsSecretRole: internal-domain # secret role for the DNS provider, used to lookup the DNS secret in the `garden` namespace
-            enabled: true # if true, the extension creates a certificate in the `garden` namespace on the runtime cluster to provide the TLS secret with the label `gardener.cloud/role: garden-cert`
-
       # The following values are only needed if the extension should be deployed on the runtime cluster. 
       runtimeClusterValues:
         certificateConfig:
           defaultIssuer:
             # typically the same values as at .spec.deployment.values.certificateConfig.defaultIssuer
             ...
-        gardenerCertificates:
-          runtimeCluster:
-            enabled: true # if true, the extension creates a certificate in the `garden` namespace on the seeds to provide the TLS secret with the label `gardener.cloud/role: controlplane-cert`
   resources:
   - globallyEnabled: true # if true, the extension is enabled for all shoots by default
     kind: Extension
@@ -109,7 +101,8 @@ See [Trusted TLS Certificate for Garden Runtime Cluster](https://gardener.cloud/
 
 For this purpose, the extension must be deployed on the runtime cluster. Several configuration steps are needed:
 
-1. Add the extension to the `Garden` resource on the Garden runtime cluster.
+1. Provide the `spec.runtimeClusterValues` values in the `extension.operator.gardener.cloud` resource in the operator extension.
+2. Add the extension to the `Garden` resource on the Garden runtime cluster.
     ```yaml
     apiVersion: operator.gardener.cloud/v1alpha1
     kind: Garden
@@ -118,15 +111,15 @@ For this purpose, the extension must be deployed on the runtime cluster. Several
     spec:
       extensions:
       - type: shoot-cert-service
+        providerConfig:
+          apiVersion: service.cert.extensions.gardener.cloud/v1alpha1
+          kind: CertConfig
+          generateControlPlaneCertificate: true
     ```
-2. Provide the `spec.runtimeClusterValues` values in the `extension.operator.gardener.cloud` resource.
-3. The `.spec.runtimeClusterValues.gardenerCertificates.runtimeCluster.enabled` value must be set to `true`.
 
-Steps 1 and 2 are needed to deploy the extension on the runtime cluster.
-It will result in a `cert-controller-manager` deployment in the `garden` namespace.
+If you only want to deploy the `cert-controller-manager` in the `garden` namespace, you can set `generateControlPlaneCertificate` to `false`.
 
-Step 3 is needed to enable the controller watching the `Garden` resource and to create the certificate in the `garden` namespace.
-This controller extracts the current values `spec.virtualCluster.dns.domains` and `spec.runtimeCluster.ingress.domains` from the `Garden` resource and creates/updates a certificate in the `garden` namespace.
+If `generateControlPlaneCertificate` is set to `true`, the current values `spec.virtualCluster.dns.domains` and `spec.runtimeCluster.ingress.domains` from the `Garden` resource are read, and the certificate is created/updated in the `garden` namespace.
 The certificate will be reconciled by the `cert-controller-manager` to provide the TLS secret with the label `gardener.cloud/role: garden-cert` in the `garden` namespace.
 Additionally, the extension provides a webhook to mutate the `virtual-garden-kube-apiserver` deployment in the `garden` namespace.
 It will manage the `--tls-sni-cert-key` command line arguments and patches the volume/volume mount with the TLS secret.
@@ -173,21 +166,21 @@ spec:
 The `shoot-cert-service` can provide the TLS secret labeled with `gardener.cloud/role: controlplane-cert` in the `garden` namespace on the seeds.
 See [Trusted TLS Certificate for Shoot Control Planes](https://gardener.cloud/docs/gardener/trusted-tls-for-control-planes/) for more information.
 
-For this purpose, the extension must be enabled for the seed(s). Two configuration steps are needed:
+For this purpose, the extension must be enabled for the seed(s) by adding the `shoot-cert-service` to the `Seed` manifest:
 
-1. Add the extension to the `Seed` manifest.
-    ```yaml
-    apiVersion: core.gardener.cloud/v1beta1
-    kind: Seed
-    metadata:
-      name: ...
-    spec:
-      extensions:
-      - type: shoot-cert-service
-    ```
-3. The `.spec.values.gardenerCertificates.seed.enabled` value must be set to `true`.
-   If an `ACME` issuer is used, the `.spec.values.gardenerCertificates.seed.dnsSecretRole` value must be set to the secret role for the DNS provider, used to look up the DNS secret in the `garden` namespace.
-   It is used by the `cert-controller-manager` to create the DNS challenge records.
+```yaml
+apiVersion: core.gardener.cloud/v1beta1
+kind: Seed
+metadata:
+  name: ...
+spec:
+  extensions:
+  - type: shoot-cert-service
+    providerConfig:
+      apiVersion: service.cert.extensions.gardener.cloud/v1alpha1
+      kind: CertConfig
+      generateControlPlaneCertificate: true
+```
 
 The certificate will contain the wildcard domain name using the base domain name from the `.spec.ingress.domain` value of the `Seed` resource.
 

@@ -66,6 +66,12 @@ type CertConfig struct {
 	// Alerting contains configuration for alerting of certificate expiration.
 	// +optional
 	Alerting *Alerting `json:"alerting,omitempty"`
+
+	// GenerateControlPlaneCertificate is a boolean flag to indicate if the control plane certificate should be generated.
+	// This is only relevant for the Garden runtime or seed cluster.
+	// If not specified, the default value is false.
+	// +optional
+	GenerateControlPlaneCertificate *bool `json:"generateControlPlaneCertificate,omitempty"`
 }
 
 // Alerting contains configuration for alerting of certificate expiration.
