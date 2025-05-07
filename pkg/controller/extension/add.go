@@ -6,7 +6,7 @@ package extension
 
 import (
 	"context"
-	"crypto/md5"
+	"crypto/sha256"
 	"fmt"
 
 	extensionscontroller "github.com/gardener/gardener/extensions/pkg/controller"
@@ -152,7 +152,7 @@ func mapGardenToExtension(mgr manager.Manager, log logr.Logger) func(context.Con
 }
 
 func calcGardenRelevantDataHash(garden *operatorv1alpha1.Garden) string {
-	hash := md5.New()
+	hash := sha256.New()
 	for _, domain := range garden.Spec.VirtualCluster.DNS.Domains {
 		if _, err := hash.Write([]byte(domain.Name)); err != nil {
 			return ""

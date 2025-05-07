@@ -98,11 +98,11 @@ format: $(GOIMPORTS) $(GOIMPORTSREVISER)
 
 .PHONY: sast
 sast: $(GOSEC)
-	@./hack/sast.sh
+	@./hack/sast.sh --exclude-dirs gardener
 
 .PHONY: sast-report
 sast-report: $(GOSEC)
-	@./hack/sast.sh --gosec-report true
+	@./hack/sast.sh --exclude-dirs gardener --gosec-report true
 
 .PHONY: test
 test:
