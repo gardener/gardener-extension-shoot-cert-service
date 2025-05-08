@@ -10,7 +10,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"reflect"
 	"strings"
 
 	"github.com/go-logr/logr"
@@ -20,6 +19,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
@@ -110,12 +110,15 @@ func mutateTLSCertSNI(log logr.Logger, deployment *appsv1.Deployment) error {
 }
 
 func patchKubeAPIServerContainer(log logr.Logger, container *corev1.Container, apiServerNames []string) {
-	var oldArgs, newArgs []string
+	var (
+		oldArgs = sets.NewString()
+		newArgs = sets.NewString()
+	)
 
 	// remove old args
 	for i := len(container.Args) - 1; i >= 0; i-- {
 		if strings.HasPrefix(container.Args[i], "--tls-sni-cert-key=/srv/kubernetes/tls-sni/") {
-			oldArgs = append(oldArgs, container.Args[i])
+			oldArgs.Insert(container.Args[i])
 			container.Args = append(container.Args[:i], container.Args[i+1:]...)
 			// no break here, as there could be multiple args
 		}
@@ -125,9 +128,9 @@ func patchKubeAPIServerContainer(log logr.Logger, container *corev1.Container, a
 		newArg := fmt.Sprintf("--tls-sni-cert-key=/srv/kubernetes/tls-sni/shoot-cert-service-injected/tls.crt,/srv/kubernetes/tls-sni/shoot-cert-service-injected/tls.key:%s",
 			apiServerName)
 		container.Args = append(container.Args, newArg)
-		newArgs = append(newArgs, newArg)
+		newArgs.Insert(newArg)
 	}
-	if !reflect.DeepEqual(oldArgs, newArgs) {
+	if !newArgs.Equal(oldArgs) {
 		log.Info("updated tls-cert-sni domain names", "domainNames", strings.Join(apiServerNames, ","))
 	}
 
