@@ -43,7 +43,7 @@ func (r *controlPlaneCert) reconcile(ctx context.Context) error {
 		ManagedByLabel:              ManagedByValue,
 	}
 
-	secret := r.newSecret()
+	secret := r.newDNSProviderSecret()
 	_, err := controllerutils.CreateOrGetAndMergePatch(ctx, r.client, secret, func() error {
 		secret.Labels = map[string]string{
 			ManagedByLabel: ManagedByValue,
@@ -96,7 +96,7 @@ func (r *controlPlaneCert) delete(ctx context.Context) error {
 	}
 	r.log.Info("Deleted certificate", "name", cert.Name)
 
-	secret := r.newSecret()
+	secret := r.newDNSProviderSecret()
 	if err := r.client.Delete(ctx, secret); client.IgnoreNotFound(err) != nil {
 		return fmt.Errorf("failed to delete secret: %w", err)
 	}
@@ -113,7 +113,7 @@ func (r *controlPlaneCert) newCertificate() *certv1alpha1.Certificate {
 	}
 }
 
-func (r *controlPlaneCert) newSecret() *corev1.Secret {
+func (r *controlPlaneCert) newDNSProviderSecret() *corev1.Secret {
 	return &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      SecretNameControlPlaneCert + "-dns-provider",

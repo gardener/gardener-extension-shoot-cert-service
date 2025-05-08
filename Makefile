@@ -136,6 +136,7 @@ extension-up: $(SKAFFOLD) $(HELM) $(KUBECTL)
 	$(REPO_ROOT)/hack/pebble-up.sh
 	$(SKAFFOLD) run --cache-artifacts=true
 
+.PHONY: extension-down
 extension-down:
 	$(SKAFFOLD) delete
 	$(REPO_ROOT)/hack/pebble-down.sh

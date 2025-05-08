@@ -101,42 +101,54 @@ func mutateTLSCertSNI(log logr.Logger, deployment *appsv1.Deployment) error {
 	for i := range deployment.Spec.Template.Spec.Containers {
 		container := &deployment.Spec.Template.Spec.Containers[i]
 		if container.Name == "kube-apiserver" {
-			// remove old args
-			var oldAPIServerNames []string
-
-			for i := len(container.Args) - 1; i >= 0; i-- {
-				if strings.HasPrefix(container.Args[i], "--tls-sni-cert-key=/srv/kubernetes/tls-sni/shoot-cert-service-injected/") {
-					container.Args = append(container.Args[:i], container.Args[i+1:]...)
-					// no break here, as there could be multiple args
-				}
-			}
-			// add new args
-			for _, apiServerName := range apiServerNames {
-				container.Args = append(container.Args, fmt.Sprintf(
-					"--tls-sni-cert-key=/srv/kubernetes/tls-sni/shoot-cert-service-injected/tls.crt,/srv/kubernetes/tls-sni/shoot-cert-service-injected/tls.key:%s",
-					apiServerName))
-			}
-			if !reflect.DeepEqual(oldAPIServerNames, apiServerNames) {
-				log.Info("updated tls-cert-sni domain names", "domainNames", strings.Join(apiServerNames, ","))
-			}
-
-			// remove old volume mount
-			for i, volume := range container.VolumeMounts {
-				if volume.Name == "tls-sni-shoot-cert-service-injected" {
-					container.VolumeMounts = append(container.VolumeMounts[:i], container.VolumeMounts[i+1:]...)
-					break
-				}
-			}
-			// add new volume mount
-			if len(apiServerNames) > 0 {
-				container.VolumeMounts = append(container.VolumeMounts, corev1.VolumeMount{
-					Name:      "tls-sni-shoot-cert-service-injected",
-					MountPath: "/srv/kubernetes/tls-sni/shoot-cert-service-injected",
-					ReadOnly:  true,
-				})
-			}
+			patchKubeAPIServerContainer(log, container, apiServerNames)
 		}
 	}
+	patchVolumes(deployment, len(apiServerNames) > 0)
+
+	return nil
+}
+
+func patchKubeAPIServerContainer(log logr.Logger, container *corev1.Container, apiServerNames []string) {
+	var oldArgs, newArgs []string
+
+	// remove old args
+	for i := len(container.Args) - 1; i >= 0; i-- {
+		if strings.HasPrefix(container.Args[i], "--tls-sni-cert-key=/srv/kubernetes/tls-sni/") {
+			oldArgs = append(oldArgs, container.Args[i])
+			container.Args = append(container.Args[:i], container.Args[i+1:]...)
+			// no break here, as there could be multiple args
+		}
+	}
+	// add new args
+	for _, apiServerName := range apiServerNames {
+		newArg := fmt.Sprintf("--tls-sni-cert-key=/srv/kubernetes/tls-sni/shoot-cert-service-injected/tls.crt,/srv/kubernetes/tls-sni/shoot-cert-service-injected/tls.key:%s",
+			apiServerName)
+		container.Args = append(container.Args, newArg)
+		newArgs = append(newArgs, newArg)
+	}
+	if !reflect.DeepEqual(oldArgs, newArgs) {
+		log.Info("updated tls-cert-sni domain names", "domainNames", strings.Join(apiServerNames, ","))
+	}
+
+	// remove old volume mount
+	for i, volume := range container.VolumeMounts {
+		if volume.Name == "tls-sni-shoot-cert-service-injected" {
+			container.VolumeMounts = append(container.VolumeMounts[:i], container.VolumeMounts[i+1:]...)
+			break
+		}
+	}
+	// add new volume mount
+	if len(apiServerNames) > 0 {
+		container.VolumeMounts = append(container.VolumeMounts, corev1.VolumeMount{
+			Name:      "tls-sni-shoot-cert-service-injected",
+			MountPath: "/srv/kubernetes/tls-sni/shoot-cert-service-injected",
+			ReadOnly:  true,
+		})
+	}
+}
+
+func patchVolumes(deployment *appsv1.Deployment, add bool) {
 	// remove old volume
 	for i, volume := range deployment.Spec.Template.Spec.Volumes {
 		if volume.Name == "tls-sni-shoot-cert-service-injected" {
@@ -145,7 +157,7 @@ func mutateTLSCertSNI(log logr.Logger, deployment *appsv1.Deployment) error {
 		}
 	}
 	// add new volume
-	if len(apiServerNames) > 0 {
+	if add {
 		deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes, corev1.Volume{
 			Name: "tls-sni-shoot-cert-service-injected",
 			VolumeSource: corev1.VolumeSource{
@@ -156,8 +168,6 @@ func mutateTLSCertSNI(log logr.Logger, deployment *appsv1.Deployment) error {
 			},
 		})
 	}
-
-	return nil
 }
 
 func updateTemplateAnnotations(deployment *appsv1.Deployment) {

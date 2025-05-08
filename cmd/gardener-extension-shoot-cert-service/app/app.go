@@ -39,7 +39,7 @@ func NewServiceControllerCommand() *cobra.Command {
 			verflag.PrintAndExitIfRequested()
 
 			if err := options.optionAggregator.Complete(); err != nil {
-				return fmt.Errorf("error completing options: %s", err)
+				return fmt.Errorf("error completing options: %w", err)
 			}
 
 			if err := options.heartbeatOptions.Validate(); err != nil {
@@ -75,23 +75,23 @@ func (o *Options) run(ctx context.Context) error {
 
 	mgr, err := manager.New(o.restOptions.Completed().Config, mgrOpts)
 	if err != nil {
-		return fmt.Errorf("could not instantiate controller-manager: %s", err)
+		return fmt.Errorf("could not instantiate controller-manager: %w", err)
 	}
 
 	if err := extensionscontroller.AddToScheme(mgr.GetScheme()); err != nil {
-		return fmt.Errorf("could not update manager scheme: %s", err)
+		return fmt.Errorf("could not update manager scheme: %w", err)
 	}
 
 	if err := serviceinstall.AddToScheme(mgr.GetScheme()); err != nil {
-		return fmt.Errorf("could not update manager scheme: %s", err)
+		return fmt.Errorf("could not update manager scheme: %w", err)
 	}
 
 	if err := certv1alpha1.AddToScheme(mgr.GetScheme()); err != nil {
-		return fmt.Errorf("could not update manager scheme: %s", err)
+		return fmt.Errorf("could not update manager scheme: %w", err)
 	}
 
 	if err := operatorv1alpha1.AddToScheme(mgr.GetScheme()); err != nil {
-		return fmt.Errorf("could not update manager scheme: %s", err)
+		return fmt.Errorf("could not update manager scheme: %w", err)
 	}
 
 	ctrlConfig := o.certOptions.Completed()
@@ -104,17 +104,17 @@ func (o *Options) run(ctx context.Context) error {
 	o.certificateControllerOptions.Completed().Apply(&certificatecontroller.DefaultAddOptions)
 
 	if err := o.controllerSwitches.Completed().AddToManager(ctx, mgr); err != nil {
-		return fmt.Errorf("could not add controllers to manager: %s", err)
+		return fmt.Errorf("could not add controllers to manager: %w", err)
 	}
 
 	if config := o.webhookOptions.Completed(); !config.Switch.Disabled {
 		if _, err := config.AddToManager(ctx, mgr, mgr, false); err != nil {
-			return fmt.Errorf("could not add webhooks to manager: %s", err)
+			return fmt.Errorf("could not add webhooks to manager: %w", err)
 		}
 	}
 
 	if err := mgr.Start(ctx); err != nil {
-		return fmt.Errorf("error running manager: %s", err)
+		return fmt.Errorf("error running manager: %w", err)
 	}
 
 	return nil
