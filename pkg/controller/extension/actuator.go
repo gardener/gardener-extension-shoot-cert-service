@@ -55,6 +55,13 @@ const (
 	TLSCertAPIServerNamesAnnotation = "service.cert.extensions.gardener.cloud/tls-cert-apiserver-names"
 	TLSCertRequestedAtAnnotation    = "service.cert.extensions.gardener.cloud/tls-cert-requested-at"
 	TLSCertHashAnnotation           = "service.cert.extensions.gardener.cloud/tls-cert-hash"
+
+	// SecretNameGardenCert is the name of the secret used for storing the garden certificate.
+	// This name is used for backwards compatibility.
+	SecretNameGardenCert = "tls"
+	// SecretNameControlPlaneCert is the name of the secret used for storing the control plane certificate.
+	// This name is used for backwards compatibility.
+	SecretNameControlPlaneCert = "ingress-wildcard-cert"
 )
 
 // NewActuator returns an actuator responsible for Extension resources.

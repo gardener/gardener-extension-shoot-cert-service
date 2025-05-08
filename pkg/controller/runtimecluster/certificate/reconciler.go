@@ -112,15 +112,6 @@ func (r *Reconciler) delete(
 	return reconcile.Result{}, nil
 }
 
-func (r *Reconciler) newCertificate() *certv1alpha1.Certificate {
-	return &certv1alpha1.Certificate{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "tls",
-			Namespace: r.GardenNamespace,
-		},
-	}
-}
-
 func (r *Reconciler) updateVirtualGardenDeploymentAnnotation(
 	ctx context.Context,
 	log logr.Logger,

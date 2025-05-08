@@ -58,7 +58,7 @@ func (r *controlPlaneCert) reconcile(ctx context.Context) error {
 		cert.Spec.CommonName = ptr.To("*." + r.domain)
 		cert.Spec.SecretLabels = labels
 		cert.Spec.SecretRef = &corev1.SecretReference{
-			Name:      "ingress-wildcard-cert",
+			Name:      SecretNameControlPlaneCert,
 			Namespace: v1beta1constants.GardenNamespace,
 		}
 		return nil
@@ -95,7 +95,7 @@ func (r *controlPlaneCert) delete(ctx context.Context) error {
 func (r *controlPlaneCert) newCertificate() *certv1alpha1.Certificate {
 	return &certv1alpha1.Certificate{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "ingress-wildcard-cert",
+			Name:      SecretNameControlPlaneCert,
 			Namespace: v1beta1constants.GardenNamespace,
 		},
 	}

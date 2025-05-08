@@ -150,7 +150,7 @@ func mutateTLSCertSNI(log logr.Logger, deployment *appsv1.Deployment) error {
 			Name: "tls-sni-shoot-cert-service-injected",
 			VolumeSource: corev1.VolumeSource{
 				Secret: &corev1.SecretVolumeSource{
-					SecretName:  "tls",
+					SecretName:  extension.SecretNameGardenCert,
 					DefaultMode: ptr.To(int32(416)),
 				},
 			},

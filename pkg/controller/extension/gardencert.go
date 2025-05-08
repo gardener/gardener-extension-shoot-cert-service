@@ -75,7 +75,7 @@ func (r *gardenCert) reconcile(ctx context.Context, ex *extensionsv1alpha1.Exten
 			ExtensionClassLabel:         string(extensionsv1alpha1.ExtensionClassGarden),
 		}
 		cert.Spec.SecretRef = &corev1.SecretReference{
-			Name:      "tls",
+			Name:      SecretNameGardenCert,
 			Namespace: v1beta1constants.GardenNamespace,
 		}
 		if cert.Annotations == nil {
@@ -146,7 +146,7 @@ func (r *gardenCert) delete(ctx context.Context, ex *extensionsv1alpha1.Extensio
 func (r *gardenCert) newCertificate() *certv1alpha1.Certificate {
 	return &certv1alpha1.Certificate{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "tls",
+			Name:      SecretNameGardenCert,
 			Namespace: v1beta1constants.GardenNamespace,
 		},
 	}
