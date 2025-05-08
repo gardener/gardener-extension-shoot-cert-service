@@ -81,6 +81,11 @@ func (in *CertConfig) DeepCopyInto(out *CertConfig) {
 		*out = new(Alerting)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.GenerateControlPlaneCertificate != nil {
+		in, out := &in.GenerateControlPlaneCertificate, &out.GenerateControlPlaneCertificate
+		*out = new(bool)
+		**out = **in
+	}
 	return
 }
 

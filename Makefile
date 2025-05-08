@@ -83,10 +83,12 @@ check-generate:
 check: $(GOIMPORTS) $(GOLANGCI_LINT) $(HELM)
 	@bash $(GARDENER_HACK_DIR)/check.sh --golangci-lint-config=./.golangci.yaml ./cmd/... ./pkg/... ./test/...
 	@bash $(GARDENER_HACK_DIR)/check-charts.sh ./charts
+	@GARDENER_HACK_DIR=$(GARDENER_HACK_DIR) $(REPO_ROOT)/hack/check-skaffold-deps.sh
 
 .PHONY: generate
-generate: $(CONTROLLER_GEN) $(GEN_CRD_API_REFERENCE_DOCS) $(HELM) $(MOCKGEN) $(YQ) $(VGOPATH)
-	@VGOPATH=$(VGOPATH) REPO_ROOT=$(REPO_ROOT) CONTROLLER_GEN=$(CONTROLLER_GEN) GARDENER_HACK_DIR=$(GARDENER_HACK_DIR) bash $(GARDENER_HACK_DIR)/generate-sequential.sh ./charts/... ./cmd/... ./pkg/... ./test/...
+generate: $(CONTROLLER_GEN) $(GEN_CRD_API_REFERENCE_DOCS) $(HELM) $(MOCKGEN) $(YQ) $(VGOPATH) $(EXTENSION_GEN) $(KUBECTL)
+	@VGOPATH=$(VGOPATH) REPO_ROOT=$(REPO_ROOT) CONTROLLER_GEN=$(CONTROLLER_GEN) GARDENER_HACK_DIR=$(GARDENER_HACK_DIR) bash $(GARDENER_HACK_DIR)/generate-sequential.sh ./charts/... ./cmd/... ./pkg/... ./test/... ./example/...
+	@./hack/prepare-operator-extension.sh
 	$(MAKE) format
 	@./hack/generate-renovate-ignore-deps.sh
 
@@ -96,11 +98,11 @@ format: $(GOIMPORTS) $(GOIMPORTSREVISER)
 
 .PHONY: sast
 sast: $(GOSEC)
-	@./hack/sast.sh
+	@./hack/sast.sh --exclude-dirs gardener
 
 .PHONY: sast-report
 sast-report: $(GOSEC)
-	@./hack/sast.sh --gosec-report true
+	@./hack/sast.sh --exclude-dirs gardener --gosec-report true
 
 .PHONY: test
 test:
@@ -119,3 +121,22 @@ verify: check format test sast
 
 .PHONY: verify-extended
 verify-extended: check-generate check format test-cov test-clean sast-report
+
+.PHONY: test-e2e-local
+test-e2e-local: $(KIND) $(YQ) $(GINKGO)
+	@$(REPO_ROOT)/hack/test-e2e-provider-local.sh --procs=3
+
+.PHONY: extension-up
+extension-up: export EXTENSION_VERSION = $(VERSION)
+extension-up: export SKAFFOLD_DEFAULT_REPO = garden.local.gardener.cloud:5001
+extension-up: export SKAFFOLD_PUSH = true
+extension-up: export LD_FLAGS = $(shell bash $(GARDENER_HACK_DIR)/get-build-ld-flags.sh k8s.io/component-base $(REPO_ROOT)/VERSION gardener-extension-shoot-cert-service)
+extension-up: export EXTENSION_GARDENER_HACK_DIR = $(GARDENER_HACK_DIR)
+extension-up: $(SKAFFOLD) $(HELM) $(KUBECTL)
+	$(REPO_ROOT)/hack/pebble-up.sh
+	$(SKAFFOLD) run --cache-artifacts=true
+
+.PHONY: extension-down
+extension-down:
+	$(SKAFFOLD) delete
+	$(REPO_ROOT)/hack/pebble-down.sh

@@ -12,6 +12,9 @@ metrics:
   # default metrics endpoint in controller-runtime
   port: 8080
 
+webhookConfig:
+  serverPort: 10250
+
 resources: {}
 
 vpa:
@@ -28,7 +31,11 @@ controllers:
   healthcheck:
     concurrentSyncs: 5
   heartbeat: 
-    renewIntervalSeconds: 30 
+    renewIntervalSeconds: 30
+# garden:
+#   concurrentSyncs: 1
+# certificate:
+#   concurrentSyncs: 1
 
 certificateConfig:
   # defaultRequestsPerDayQuota: 100
@@ -65,10 +72,15 @@ certificateConfig:
   #  ...
   #  -----END CERTIFICATE-----
 
+  #inClusterACMEServerNamespaceMatchLabel:
+  # cert.gardener.cloud/cluster-acme-server: "true" # label to select the in-cluster ACME server namespace
+
   shootIssuers:
-    enabled: false # if true, allows to specify issuers in the shoot clusters
+    enabled: false # if true, allows specifying issuers in the shoot clusters
 
   deactivateAuthorizations: true # if true, enables flag --acme-deactivate-authorizations in cert-controller-manager
+
+  skipDNSChallengeValidation: false # if true, skips dns-challenges in cert-controller-manager
 
 disableControllers: []
 
@@ -81,5 +93,7 @@ disableControllers: []
 
 gardener:
   version: ""
+  seed:
+    name: ""
   runtimeCluster:
     enabled: false

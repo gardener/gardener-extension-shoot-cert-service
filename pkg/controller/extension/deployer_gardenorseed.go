@@ -13,6 +13,8 @@ import (
 	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
 	resourcesv1alpha1 "github.com/gardener/gardener/pkg/apis/resources/v1alpha1"
 	"github.com/gardener/gardener/pkg/utils/managedresources"
+	networkingv1 "k8s.io/api/networking/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -44,6 +46,7 @@ func (d *deployer) DeployGardenOrSeedManagedResource(ctx context.Context, c clie
 	objects = append(objects, d.createShootRoleBinding())
 	objects = append(objects, d.createShootClusterRole())
 	objects = append(objects, d.createShootClusterRoleBinding())
+	objects = append(objects, d.createNetworkPolicy())
 	crds, err := d.getShootCRDs()
 	if err != nil {
 		return err
@@ -73,4 +76,33 @@ func (d *deployer) DeleteGardenOrSeedManagedResourceAndWait(ctx context.Context,
 	timeoutCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 	return managedresources.WaitUntilDeleted(timeoutCtx, c, d.values.Namespace, d.values.resourceNameGardenOrSeed())
+}
+
+func (d *deployer) createNetworkPolicy() *networkingv1.NetworkPolicy {
+	if len(d.values.ExtensionConfig.InClusterACMEServerNamespaceMatchLabel) == 0 {
+		return nil
+	}
+	return &networkingv1.NetworkPolicy{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "egress-from-cert-controller-manager-to-labelled-namespaces",
+			Namespace: d.values.Namespace,
+			Annotations: map[string]string{
+				"configured-by": "certificateConfig.inClusterACMEServerNamespaceMatchLabel",
+			},
+		},
+		Spec: networkingv1.NetworkPolicySpec{
+			PodSelector: metav1.LabelSelector{},
+			Egress: []networkingv1.NetworkPolicyEgressRule{
+				{
+					To: []networkingv1.NetworkPolicyPeer{
+						{
+							NamespaceSelector: &metav1.LabelSelector{
+								MatchLabels: d.values.ExtensionConfig.InClusterACMEServerNamespaceMatchLabel,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
 }

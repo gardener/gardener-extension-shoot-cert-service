@@ -27,9 +27,10 @@ type Values struct {
 	RestrictedDomains                string
 	Resources                        []core.NamedResourceReference
 
-	ShootDeployment bool
-	CertClass       string
-	Replicas        int32
+	ShootDeployment  bool
+	GardenDeployment bool
+	CertClass        string
+	Replicas         int32
 }
 
 func (v Values) getLabels() map[string]string {
@@ -118,9 +119,6 @@ func (v Values) caCertificates() string {
 	if v.ExtensionConfig.ACME != nil {
 		return ptr.Deref(v.ExtensionConfig.ACME.CACertificates, "")
 	}
-	if v.ExtensionConfig.CA.CACertificates != nil {
-		return ptr.Deref(v.ExtensionConfig.CA.CACertificates, "")
-	}
 	return ""
 }
 
@@ -146,10 +144,10 @@ func (v Values) propagationTimeout() string {
 }
 
 func (v Values) priorityClassName() string {
-	if v.ShootDeployment {
-		return "gardener-system-200"
+	if v.GardenDeployment {
+		return "gardener-garden-system-100"
 	}
-	return "gardener-garden-system-100"
+	return "gardener-system-200"
 }
 
 func (v Values) shootIssuersEnabled() bool {

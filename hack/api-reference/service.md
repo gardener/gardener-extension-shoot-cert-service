@@ -112,6 +112,20 @@ Alerting
 <p>Alerting contains configuration for alerting of certificate expiration.</p>
 </td>
 </tr>
+<tr>
+<td>
+<code>generateControlPlaneCertificate</code></br>
+<em>
+bool
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>GenerateControlPlaneCertificate is a boolean flag to indicate if the control plane certificate should be generated.
+This is only relevant for the Garden runtime or seed cluster.
+If not specified, the default value is false.</p>
+</td>
+</tr>
 </tbody>
 </table>
 <h3 id="service.cert.extensions.gardener.cloud/v1alpha1.ACMEExternalAccountBinding">ACMEExternalAccountBinding

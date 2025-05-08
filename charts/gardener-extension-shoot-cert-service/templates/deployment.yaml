@@ -33,6 +33,7 @@ spec:
         app.kubernetes.io/instance: {{ .Release.Name }}
         networking.gardener.cloud/to-runtime-apiserver: allowed
         networking.gardener.cloud/to-dns: allowed
+        networking.resources.gardener.cloud/to-all-istio-ingresses-istio-ingressgateway-tcp-9443: allowed
     spec:
       priorityClassName: gardener-system-900
       serviceAccountName: gardener-extension-shoot-cert-service
@@ -42,8 +43,7 @@ spec:
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         securityContext:
           allowPrivilegeEscalation: false
-        command:
-        - /gardener-extension-shoot-cert-service
+        args:
         - --config=/etc/cert-service/config.yaml
         - --max-concurrent-reconciles={{ .Values.controllers.concurrentSyncs }}
         - --healthcheck-max-concurrent-reconciles={{ .Values.controllers.healthcheck.concurrentSyncs }}
@@ -51,7 +51,10 @@ spec:
         - --heartbeat-renew-interval-seconds={{ .Values.controllers.heartbeat.renewIntervalSeconds }}
         {{- if .Values.gardener.runtimeCluster.enabled }}
         - --extension-class=garden
-        - --controllers=shoot_cert_service
+        - --controllers=shoot_cert_service,certificate
+        {{- else }}
+        - --controllers=shoot_cert_service,healthcheck,heartbeat
+        - --disable-webhooks=sni-config
         {{- end }}
         - --disable-controllers={{ .Values.disableControllers | join "," }}
         - --ignore-operation-annotation={{ .Values.controllers.ignoreOperationAnnotation }}
@@ -62,6 +65,8 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.namespace
+        - name: SEED_NAME
+          value: {{ .Values.gardener.seed.name }}
         {{- if .Values.imageVectorOverwrite }}
         - name: IMAGEVECTOR_OVERWRITE
           value: /charts_overwrite/images_overwrite.yaml
