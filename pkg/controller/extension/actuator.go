@@ -22,6 +22,7 @@ import (
 	"github.com/gardener/gardener/pkg/utils/managedresources"
 	"github.com/go-logr/logr"
 	autoscalingv1 "k8s.io/api/autoscaling/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
@@ -146,14 +147,26 @@ func (a *actuator) Reconcile(ctx context.Context, log logr.Logger, ex *extension
 			handler := newControlPlaneCert(a.client, log)
 			if generate {
 				seedName := os.Getenv(EnvSeedName)
-				seed, err := a.fetchSeedFromVirtualGarden(ctx, seedName)
+				gardenClient, err := a.createGardenClient()
+				if err != nil {
+					return err
+				}
+
+				seed, err := a.fetchSeedFromVirtualGarden(ctx, gardenClient, seedName)
 				if err != nil {
 					return fmt.Errorf("failed to get seed %s: %w", seedName, err)
 				}
 
 				handler.domain = seed.Spec.Ingress.Domain
 				handler.dnsProviderType = seed.Spec.DNS.Provider.Type
-				handler.dnsProviderSecretRef = &seed.Spec.DNS.Provider.SecretRef
+				handler.dnsProviderSecretData = nil
+				if seed.Spec.DNS.Provider != nil {
+					secret, err := a.fetchSeedSecret(ctx, gardenClient, seedName, seed.Spec.DNS.Provider.SecretRef)
+					if err != nil {
+						return fmt.Errorf("failed to get DNS provider secret data for %s: %w", seedName, err)
+					}
+					handler.dnsProviderSecretData = secret.Data
+				}
 				if err := handler.reconcile(ctx); err != nil {
 					return err
 				}
@@ -217,12 +230,13 @@ func (a *actuator) createValues(
 	ex *extensionsv1alpha1.Extension,
 ) (*Values, error) {
 	values := Values{
-		ExtensionConfig: a.serviceConfig,
-		CertConfig:      *certConfig,
-		Namespace:       namespace,
-		Resources:       nil,
-		ShootDeployment: isShootDeployment(ex),
-		Replicas:        1,
+		ExtensionConfig:  a.serviceConfig,
+		CertConfig:       *certConfig,
+		Namespace:        namespace,
+		Resources:        nil,
+		ShootDeployment:  isShootDeployment(ex),
+		GardenDeployment: isGardenDeployment(ex),
+		Replicas:         1,
 	}
 
 	if values.ShootDeployment {
@@ -326,11 +340,7 @@ func (a *actuator) createShootIssuersValues(certConfig *service.CertConfig) map[
 	}
 }
 
-func (a *actuator) fetchSeedFromVirtualGarden(ctx context.Context, seedName string) (*gardencorev1beta1.Seed, error) {
-	gardenClient, err := a.createGardenClient()
-	if err != nil {
-		return nil, err
-	}
+func (a *actuator) fetchSeedFromVirtualGarden(ctx context.Context, gardenClient client.Client, seedName string) (*gardencorev1beta1.Seed, error) {
 	seed := &gardencorev1beta1.Seed{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: seedName,
@@ -340,6 +350,20 @@ func (a *actuator) fetchSeedFromVirtualGarden(ctx context.Context, seedName stri
 		return nil, fmt.Errorf("failed to get seed %s: %w", seedName, err)
 	}
 	return seed, nil
+}
+
+func (a *actuator) fetchSeedSecret(ctx context.Context, gardenClient client.Client, seedName string, ref corev1.SecretReference) (*corev1.Secret, error) {
+	seedNamespace := gardenerutils.ComputeGardenNamespace(seedName)
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      ref.Name,
+			Namespace: seedNamespace,
+		},
+	}
+	if err := gardenClient.Get(ctx, client.ObjectKeyFromObject(secret), secret); err != nil {
+		return nil, fmt.Errorf("failed to get secret %s/%s: %w", ref.Namespace, ref.Name, err)
+	}
+	return secret, nil
 }
 
 func (a *actuator) createGardenClient() (client.Client, error) {

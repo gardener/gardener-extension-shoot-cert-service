@@ -14,7 +14,6 @@ import (
 	"github.com/gardener/gardener/pkg/controllerutils"
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -26,9 +25,9 @@ type controlPlaneCert struct {
 	client client.Client
 	log    logr.Logger
 
-	domain               string
-	dnsProviderType      string
-	dnsProviderSecretRef *corev1.SecretReference
+	domain                string
+	dnsProviderType       string
+	dnsProviderSecretData map[string][]byte
 }
 
 func newControlPlaneCert(client client.Client, log logr.Logger) *controlPlaneCert {
@@ -44,13 +43,24 @@ func (r *controlPlaneCert) reconcile(ctx context.Context) error {
 		ManagedByLabel:              ManagedByValue,
 	}
 
+	secret := r.newSecret()
+	_, err := controllerutils.CreateOrGetAndMergePatch(ctx, r.client, secret, func() error {
+		secret.Labels = map[string]string{
+			ManagedByLabel: ManagedByValue,
+		}
+		secret.Data = r.dnsProviderSecretData
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("failed to create or update secret: %w", err)
+	}
+
 	annotations := map[string]string{
 		source.AnnotClass: "seed",
 	}
-	if ref := r.dnsProviderSecretRef; ref != nil {
-		annotations[source.AnnotDNSRecordProviderType] = r.dnsProviderType
-		annotations[source.AnnotDNSRecordSecretRef] = ref.Namespace + "/" + ref.Name
-	}
+
+	annotations[source.AnnotDNSRecordProviderType] = r.dnsProviderType
+	annotations[source.AnnotDNSRecordSecretRef] = fmt.Sprintf("%s/%s", secret.Namespace, secret.Name)
 	cert := r.newCertificate()
 	result, err := controllerutils.CreateOrGetAndMergePatch(ctx, r.client, cert, func() error {
 		cert.Annotations = annotations
@@ -81,13 +91,15 @@ func (r *controlPlaneCert) reconcile(ctx context.Context) error {
 
 func (r *controlPlaneCert) delete(ctx context.Context) error {
 	cert := r.newCertificate()
-	if err := r.client.Delete(ctx, cert); err != nil {
-		if apierrors.IsNotFound(err) {
-			return nil
-		}
+	if err := r.client.Delete(ctx, cert); client.IgnoreNotFound(err) != nil {
 		return fmt.Errorf("failed to delete certificate: %w", err)
 	}
 	r.log.Info("Deleted certificate", "name", cert.Name)
+
+	secret := r.newSecret()
+	if err := r.client.Delete(ctx, secret); client.IgnoreNotFound(err) != nil {
+		return fmt.Errorf("failed to delete secret: %w", err)
+	}
 
 	return nil
 }
@@ -96,6 +108,15 @@ func (r *controlPlaneCert) newCertificate() *certv1alpha1.Certificate {
 	return &certv1alpha1.Certificate{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      SecretNameControlPlaneCert,
+			Namespace: v1beta1constants.GardenNamespace,
+		},
+	}
+}
+
+func (r *controlPlaneCert) newSecret() *corev1.Secret {
+	return &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      SecretNameControlPlaneCert + "-dns-provider",
 			Namespace: v1beta1constants.GardenNamespace,
 		},
 	}

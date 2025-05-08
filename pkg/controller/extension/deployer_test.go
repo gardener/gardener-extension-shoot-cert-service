@@ -190,7 +190,9 @@ var _ = Describe("deployer", func() {
 			if internal {
 				name = "cert-management-" + certClass
 				shootNamespace = namespace
-				priorityClassName = "gardener-garden-system-100"
+				if certClass == "garden" {
+					priorityClassName = "gardener-garden-system-100"
+				}
 			}
 
 			args := []string{
@@ -1272,6 +1274,7 @@ var _ = Describe("deployer", func() {
 	Describe("DeployGardenOrSeedManagedResource", func() {
 		It("should deploy it for the runtime cluster with self-signed root CA", func() {
 			values.ShootDeployment = false
+			values.GardenDeployment = true
 			values.Namespace = "garden"
 			values.CertClass = "garden"
 			values.ExtensionConfig.CA = &config.CA{
