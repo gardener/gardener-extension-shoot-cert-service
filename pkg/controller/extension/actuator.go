@@ -253,6 +253,7 @@ func (a *actuator) createValues(
 			return nil, err
 		}
 		values.GenericTokenKubeconfigSecretName = extensions.GenericTokenKubeconfigSecretNameFromCluster(cluster)
+		values.Resources = cluster.Shoot.Spec.Resources
 	} else {
 		if err := setValuesForGardenOrSeed(ex, &values); err != nil {
 			return nil, err
