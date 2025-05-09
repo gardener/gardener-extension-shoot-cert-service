@@ -168,6 +168,7 @@ func (a *actuator) createValues(ctx context.Context, certConfig *service.CertCon
 			return nil, err
 		}
 		values.GenericTokenKubeconfigSecretName = extensions.GenericTokenKubeconfigSecretNameFromCluster(cluster)
+		values.Resources = cluster.Shoot.Spec.Resources
 	} else {
 		values.CertClass = "seed"
 		if a.extensionClass == extensionsv1alpha1.ExtensionClassGarden {

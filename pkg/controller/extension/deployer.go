@@ -7,7 +7,7 @@ package extension
 import (
 	"strings"
 
-	"github.com/gardener/gardener/pkg/apis/core"
+	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"github.com/gardener/gardener/pkg/utils/managedresources"
 	"k8s.io/utils/ptr"
 
@@ -25,7 +25,7 @@ type Values struct {
 	Image                            string
 	GenericTokenKubeconfigSecretName string
 	RestrictedDomains                string
-	Resources                        []core.NamedResourceReference
+	Resources                        []gardencorev1beta1.NamedResourceReference
 
 	ShootDeployment bool
 	CertClass       string

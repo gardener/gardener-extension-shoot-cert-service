@@ -12,7 +12,7 @@ import (
 	"time"
 
 	certv1alpha1 "github.com/gardener/cert-management/pkg/apis/cert/v1alpha1"
-	"github.com/gardener/gardener/pkg/apis/core"
+	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
 	resourcesv1alpha1 "github.com/gardener/gardener/pkg/apis/resources/v1alpha1"
 	"github.com/gardener/gardener/pkg/utils/test/matchers"
@@ -1196,7 +1196,7 @@ var _ = Describe("deployer", func() {
 					Email:  "bar2@example.com",
 				},
 			}
-			values.Resources = []core.NamedResourceReference{
+			values.Resources = []gardencorev1beta1.NamedResourceReference{
 				{Name: "bar-secret", ResourceRef: autoscalingv1.CrossVersionObjectReference{Name: "original-bar-secret", Kind: "Secret"}},
 				{Name: "eab-secret", ResourceRef: autoscalingv1.CrossVersionObjectReference{Name: "original-bar-secret", Kind: "Secret"}},
 			}
