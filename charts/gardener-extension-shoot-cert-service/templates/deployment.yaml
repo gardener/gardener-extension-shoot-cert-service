@@ -35,7 +35,11 @@ spec:
         networking.gardener.cloud/to-dns: allowed
         networking.resources.gardener.cloud/to-all-istio-ingresses-istio-ingressgateway-tcp-9443: allowed
     spec:
+      {{- if .Values.gardener.runtimeCluster.enabled }}
+      priorityClassName: {{ .Values.gardener.runtimeCluster.priorityClassName }}
+      {{- else }}
       priorityClassName: gardener-system-900
+      {{- end }}
       serviceAccountName: gardener-extension-shoot-cert-service
       containers:
       - name: gardener-extension-shoot-cert-service
