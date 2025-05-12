@@ -32,7 +32,6 @@ import (
 	. "github.com/onsi/gomega"
 	. "github.com/onsi/gomega/gstruct"
 	gomegatypes "github.com/onsi/gomega/types"
-	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -176,18 +175,6 @@ func createSelfSignedTLSSecret() ([]byte, []byte, error) {
 	certDerBytes, _ := x509.CreateCertificate(rand.Reader, &template, &template, certPrivateKey.Public(), certPrivateKey)
 	certPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: certDerBytes})
 	return certPEM, certPrivateKeyPEM, nil
-}
-
-func waitForVirtualGardenKubeAPIServerPatched(ctx context.Context) {
-	idFn := func(element interface{}) string {
-		return fmt.Sprintf("%v", element)
-	}
-	expectedArg := "--tls-sni-cert-key=/srv/kubernetes/tls-sni/shoot-cert-service-injected/tls.crt,/srv/kubernetes/tls-sni/shoot-cert-service-injected/tls.key:api.vg.local.gardener.cloud"
-	CEventually(ctx, func(g Gomega) []string {
-		deployment := &appsv1.Deployment{}
-		g.Expect(runtimeClient.Get(ctx, client.ObjectKey{Namespace: "garden", Name: "virtual-garden-kube-apiserver"}, deployment)).To(Succeed())
-		return deployment.Spec.Template.Spec.Containers[0].Args
-	}).WithPolling(2 * time.Second).Should(MatchElements(idFn, IgnoreExtras, Elements{expectedArg: Equal(expectedArg)}))
 }
 
 func getExtensionNamespace(ctx context.Context, controllerRegistrationName string) string {

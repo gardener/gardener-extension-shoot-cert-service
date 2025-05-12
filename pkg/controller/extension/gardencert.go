@@ -7,7 +7,6 @@ package extension
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	certv1alpha1 "github.com/gardener/cert-management/pkg/apis/cert/v1alpha1"
 	"github.com/gardener/cert-management/pkg/cert/source"
@@ -19,6 +18,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
@@ -37,8 +37,8 @@ func newGardenCert(client client.Client, log logr.Logger) *gardenCert {
 
 func (r *gardenCert) reconcile(ctx context.Context, ex *extensionsv1alpha1.Extension) error {
 	var (
-		apiServerNames []string
-		dnsNames       []string
+		dnsNames   []string
+		dnsNameSet = sets.NewString()
 	)
 
 	gardenList := &operatorv1alpha1.GardenList{}
@@ -54,12 +54,17 @@ func (r *gardenCert) reconcile(ctx context.Context, ex *extensionsv1alpha1.Exten
 	garden := &gardenList.Items[0]
 
 	for _, domain := range garden.Spec.VirtualCluster.DNS.Domains {
-		apiServerNames = append(apiServerNames, fmt.Sprintf("api.%s", domain.Name))
-		dnsNames = append(dnsNames, fmt.Sprintf("*.%s", domain.Name))
+		if !dnsNameSet.Has(domain.Name) {
+			dnsNameSet.Insert(domain.Name)
+			dnsNames = append(dnsNames, fmt.Sprintf("*.%s", domain.Name))
+		}
 	}
 
 	for _, domain := range garden.Spec.RuntimeCluster.Ingress.Domains {
-		dnsNames = append(dnsNames, fmt.Sprintf("*.%s", domain.Name))
+		if !dnsNameSet.Has(domain.Name) {
+			dnsNameSet.Insert(domain.Name)
+			dnsNames = append(dnsNames, fmt.Sprintf("*.%s", domain.Name))
+		}
 	}
 
 	if len(dnsNames) == 0 {
@@ -82,7 +87,6 @@ func (r *gardenCert) reconcile(ctx context.Context, ex *extensionsv1alpha1.Exten
 			cert.Annotations = map[string]string{}
 		}
 		cert.Annotations[source.AnnotClass] = "garden"
-		cert.Annotations[TLSCertAPIServerNamesAnnotation] = strings.Join(apiServerNames, ",")
 		if garden.Spec.DNS != nil {
 			cert.Annotations[source.AnnotDNSRecordProviderType] = garden.Spec.DNS.Providers[0].Type
 			cert.Annotations[source.AnnotDNSRecordSecretRef] = garden.Spec.DNS.Providers[0].SecretRef.Name

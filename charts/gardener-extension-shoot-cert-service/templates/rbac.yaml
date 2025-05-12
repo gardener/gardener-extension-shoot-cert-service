@@ -133,27 +133,6 @@ rules:
   - get
   - list
   - watch
-- apiGroups:
-  - apps
-  resources:
-  - deployments
-  verbs:
-  - get
-  - list
-  - watch
-  - patch
-  - update
-- apiGroups:
-  - admissionregistration.k8s.io
-  resources:
-  - mutatingwebhookconfigurations
-  verbs:
-  - create
-  - get
-  - list
-  - watch
-  - patch
-  - update
 {{- end }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1

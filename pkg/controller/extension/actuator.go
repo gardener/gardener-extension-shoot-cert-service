@@ -53,10 +53,6 @@ const (
 	// ExtensionClassLabel is a label used to identify the extension class of the certificate resources.
 	ExtensionClassLabel = "service.cert.extensions.gardener.cloud/extension-class"
 
-	TLSCertAPIServerNamesAnnotation = "service.cert.extensions.gardener.cloud/tls-cert-apiserver-names"
-	TLSCertRequestedAtAnnotation    = "service.cert.extensions.gardener.cloud/tls-cert-requested-at"
-	TLSCertHashAnnotation           = "service.cert.extensions.gardener.cloud/tls-cert-hash"
-
 	// SecretNameGardenCert is the name of the secret used for storing the garden certificate.
 	// This name is used for backwards compatibility.
 	SecretNameGardenCert = "tls"
