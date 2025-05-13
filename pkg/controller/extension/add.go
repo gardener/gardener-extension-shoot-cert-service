@@ -32,8 +32,12 @@ import (
 const (
 	// Type is the type of Extension resource.
 	Type = "shoot-cert-service"
+	// Type is the second type of Extension resource with different life cycle (before kube-apiserver)
+	Type2 = "controlplane-cert-service"
 	// ControllerName is the name of the shoot cert service controller.
 	ControllerName = "shoot_cert_service"
+	// ControllerName is the name of the shoot cert service controller.
+	ControllerName2 = "controlplane_cert_service"
 	// FinalizerSuffix is the finalizer suffix for the shoot cert service controller.
 	FinalizerSuffix = "shoot-cert-service"
 
@@ -63,12 +67,43 @@ func AddToManager(ctx context.Context, mgr manager.Manager) error {
 	return AddToManagerWithOptions(ctx, mgr, DefaultAddOptions)
 }
 
+// AddToManager2 adds a second controller with the default Options to the given Controller Manager.
+func AddToManager2(ctx context.Context, mgr manager.Manager) error {
+	return AddToManagerWithOptions2(ctx, mgr, DefaultAddOptions)
+}
+
 // AddToManagerWithOptions adds a controller with the given Options to the given manager.
 // The opts.Reconciler is being set with a newly instantiated actuator.
 func AddToManagerWithOptions(ctx context.Context, mgr manager.Manager, opts AddOptions) error {
 	predicates := extension.DefaultPredicates(ctx, mgr, DefaultAddOptions.IgnoreOperationAnnotation)
-	extensionClasses := []extensionsv1alpha1.ExtensionClass{extensionsv1alpha1.ExtensionClassShoot, extensionsv1alpha1.ExtensionClassSeed}
-	watchBuilder := extensionscontroller.NewWatchBuilder()
+
+	if opts.ExtensionClass == extensionsv1alpha1.ExtensionClassGarden {
+		return fmt.Errorf("controller %q for type %q is not supported for extension class %q", ControllerName, Type, opts.ExtensionClass)
+	}
+
+	extensionClasses := []extensionsv1alpha1.ExtensionClass{extensionsv1alpha1.ExtensionClassShoot}
+
+	return extension.Add(mgr, extension.AddArgs{
+		Actuator:          NewActuator(mgr, opts.ServiceConfig, extensionClasses),
+		ControllerOptions: opts.ControllerOptions,
+		Name:              ControllerName,
+		FinalizerSuffix:   FinalizerSuffix,
+		Resync:            0,
+		Predicates:        predicates,
+		Type:              Type,
+		ExtensionClasses:  extensionClasses,
+	})
+}
+
+// AddToManagerWithOptions2 adds a second controller with the given Options to the given manager.
+// The opts.Reconciler is being set with a newly instantiated actuator.
+func AddToManagerWithOptions2(ctx context.Context, mgr manager.Manager, opts AddOptions) error {
+	var (
+		predicates       = extension.DefaultPredicates(ctx, mgr, DefaultAddOptions.IgnoreOperationAnnotation)
+		extensionClasses = []extensionsv1alpha1.ExtensionClass{extensionsv1alpha1.ExtensionClassSeed}
+		watchBuilder     extensionscontroller.WatchBuilder
+	)
+
 	if opts.ExtensionClass == extensionsv1alpha1.ExtensionClassGarden {
 		extensionClasses = []extensionsv1alpha1.ExtensionClass{extensionsv1alpha1.ExtensionClassGarden}
 		watchBuilder = extensionscontroller.NewWatchBuilder(func(c controller.Controller) error {
@@ -84,11 +119,11 @@ func AddToManagerWithOptions(ctx context.Context, mgr manager.Manager, opts AddO
 	return extension.Add(mgr, extension.AddArgs{
 		Actuator:          NewActuator(mgr, opts.ServiceConfig, extensionClasses),
 		ControllerOptions: opts.ControllerOptions,
-		Name:              ControllerName,
+		Name:              ControllerName2,
 		FinalizerSuffix:   FinalizerSuffix,
 		Resync:            0,
 		Predicates:        predicates,
-		Type:              Type,
+		Type:              Type2,
 		ExtensionClasses:  extensionClasses,
 		WatchBuilder:      watchBuilder,
 	})
@@ -126,7 +161,7 @@ func mapGardenToExtension(mgr manager.Manager, log logr.Logger) func(context.Con
 
 		var requests []reconcile.Request
 		for _, ex := range extList.Items {
-			if ex.Spec.Type == Type &&
+			if ex.Spec.Type == Type2 &&
 				extensionsv1alpha1helper.GetExtensionClassOrDefault(ex.Spec.Class) == extensionsv1alpha1.ExtensionClassGarden {
 				b, err := decoder.isGenerateControlPlaneCertificate(&ex)
 				if err != nil {
