@@ -84,6 +84,11 @@ var _ = Describe("Shoot-Cert-Service Tests", func() {
 				Name:     newDomainName,
 				Provider: garden.Spec.VirtualCluster.DNS.Domains[0].Provider,
 			})
+			// Set SNI section to verify that extension reconciliation is performed even garden reconciliation fails as TLS secret is not yet existing.
+			garden.Spec.VirtualCluster.Kubernetes.KubeAPIServer.SNI = &operatorv1alpha1.SNI{
+				DomainPatterns: []string{"api." + newDomainName},
+				SecretName:     "tls",
+			}
 			Expect(runtimeClient.Patch(ctx, garden, patch)).To(Succeed())
 		}
 
