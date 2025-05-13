@@ -151,16 +151,6 @@ then the `Certificate` will be created with these wildcard domain names:
 - `*.secondary.foo.example.com`
 - `*.ingress.garden.example.com`
 
-The deployment of the `virtual-garden-kube-apiserver` will be patched with the following command line argument (and additional patches for the volume and volume mount):
-```yaml
-spec:
-  template:
-    spec:
-      containers:
-      - args:
-        - --tls-sni-cert-key=/srv/kubernetes/tls-sni/shoot-cert-service-injected/tls.crt,/srv/kubernetes/tls-sni/shoot-cert-service-injected/tls.key:api.secondary.foo.example.com
-```
-
 #### Providing Trusted TLS Certificate for Shoot Control Planes
 
 The `shoot-cert-service` can provide the TLS secret labeled with `gardener.cloud/role: controlplane-cert` in the `garden` namespace on the seeds.
