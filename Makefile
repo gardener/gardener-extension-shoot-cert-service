@@ -116,11 +116,15 @@ test-cov:
 test-clean:
 	@bash $(GARDENER_HACK_DIR)/test-cover-clean.sh
 
+.PHONY: test-integration
+test-integration: $(REPORT_COLLECTOR) $(SETUP_ENVTEST)
+	@bash $(GARDENER_HACK_DIR)/test-integration.sh ./test/integration/extension/...
+
 .PHONY: verify
-verify: check format test sast
+verify: check format test test-integration sast
 
 .PHONY: verify-extended
-verify-extended: check-generate check format test-cov test-clean sast-report
+verify-extended: check-generate check format test-cov test-clean test-integration sast-report
 
 .PHONY: test-e2e-local
 test-e2e-local: $(KIND) $(YQ) $(GINKGO)
