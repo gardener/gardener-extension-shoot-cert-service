@@ -40,8 +40,6 @@ build:
             - pkg/controller/extension/assets/crd-cert.gardener.cloud_issuers.yaml
             - pkg/controller/extension/model
             - pkg/controller/healthcheck
-            - pkg/controller/runtimecluster/certificate
-            - pkg/webhook/sniconfig
             - VERSION
         ldflags:
           - '{{.LD_FLAGS}}'

@@ -122,9 +122,6 @@ var _ = Describe("Shoot-Cert-Service Tests", func() {
 			"CommonName": PointTo(Equal("*.ingress.local.seed.local.gardener.cloud")),
 		}))
 
-		By("Wait for Virtual Garden Kube API Server")
-		waitForVirtualGardenKubeAPIServerPatched(ctx)
-
 		By("Patch Garden: Remove garden extension")
 		Expect(runtimeClient.Get(ctx, client.ObjectKeyFromObject(garden), garden)).To(Succeed())
 		patch = client.MergeFrom(garden.DeepCopy())

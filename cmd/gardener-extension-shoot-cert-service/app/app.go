@@ -23,7 +23,6 @@ import (
 	serviceinstall "github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/service/install"
 	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/controller/extension"
 	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/controller/healthcheck"
-	certificatecontroller "github.com/gardener/gardener-extension-shoot-cert-service/pkg/controller/runtimecluster/certificate"
 )
 
 // NewServiceControllerCommand creates a new command that is used to start the Certificate Service controller.
@@ -101,16 +100,9 @@ func (o *Options) run(ctx context.Context) error {
 	o.healthOptions.Completed().Apply(&healthcheck.DefaultAddOptions.Controller)
 	o.reconcileOptions.Completed().Apply(&extension.DefaultAddOptions.IgnoreOperationAnnotation, &extension.DefaultAddOptions.ExtensionClass)
 	o.heartbeatOptions.Completed().Apply(&heartbeat.DefaultAddOptions)
-	o.certificateControllerOptions.Completed().Apply(&certificatecontroller.DefaultAddOptions)
 
 	if err := o.controllerSwitches.Completed().AddToManager(ctx, mgr); err != nil {
 		return fmt.Errorf("could not add controllers to manager: %w", err)
-	}
-
-	if config := o.webhookOptions.Completed(); !config.Switch.Disabled {
-		if _, err := config.AddToManager(ctx, mgr, mgr, false); err != nil {
-			return fmt.Errorf("could not add webhooks to manager: %w", err)
-		}
 	}
 
 	if err := mgr.Start(ctx); err != nil {
