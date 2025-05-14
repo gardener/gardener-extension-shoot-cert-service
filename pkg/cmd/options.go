@@ -94,6 +94,7 @@ func (c *CertificateServiceConfig) Apply(config *config.Configuration) {
 func ControllerSwitches() *cmd.SwitchOptions {
 	return cmd.NewSwitchOptions(
 		cmd.Switch(extension.ControllerName, extension.AddToManager),
+		cmd.Switch(extension.ControllerName2, extension.AddToManager2),
 		cmd.Switch(extensionshealthcheckcontroller.ControllerName, healthcheckcontroller.AddToManager),
 		cmd.Switch(extensionsheartbeatcontroller.ControllerName, extensionsheartbeatcontroller.AddToManager),
 	)
