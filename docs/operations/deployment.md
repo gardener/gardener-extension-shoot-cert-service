@@ -102,7 +102,7 @@ See [Trusted TLS Certificate for Garden Runtime Cluster](https://gardener.cloud/
 For this purpose, the extension must be deployed on the runtime cluster. Several configuration steps are needed:
 
 1. Provide the `spec.runtimeClusterValues` values in the `extension.operator.gardener.cloud` resource in the operator extension.
-2. Add the extension to the `Garden` resource on the Garden runtime cluster.
+2. Add the extension with type `controlplane-cert-service` to the `Garden` resource on the Garden runtime cluster.
     ```yaml
     apiVersion: operator.gardener.cloud/v1alpha1
     kind: Garden
@@ -110,7 +110,7 @@ For this purpose, the extension must be deployed on the runtime cluster. Several
       name: ...
     spec:
       extensions:
-      - type: shoot-cert-service
+      - type: controlplane-cert-service
         providerConfig:
           apiVersion: service.cert.extensions.gardener.cloud/v1alpha1
           kind: CertConfig
@@ -156,7 +156,7 @@ then the `Certificate` will be created with these wildcard domain names:
 The `shoot-cert-service` can provide the TLS secret labeled with `gardener.cloud/role: controlplane-cert` in the `garden` namespace on the seeds.
 See [Trusted TLS Certificate for Shoot Control Planes](https://gardener.cloud/docs/gardener/trusted-tls-for-control-planes/) for more information.
 
-For this purpose, the extension must be enabled for the seed(s) by adding the `shoot-cert-service` to the `Seed` manifest:
+For this purpose, the extension must be enabled for the seed(s) by adding the `controlplane-cert-service` type to the `Seed` manifest:
 
 ```yaml
 apiVersion: core.gardener.cloud/v1beta1
@@ -165,7 +165,7 @@ metadata:
   name: ...
 spec:
   extensions:
-  - type: shoot-cert-service
+  - type: controlplane-cert-service
     providerConfig:
       apiVersion: service.cert.extensions.gardener.cloud/v1alpha1
       kind: CertConfig

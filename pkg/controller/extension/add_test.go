@@ -65,7 +65,7 @@ var _ = Describe("#mapGardenToExtension", func() {
 			},
 			Spec: extensionsv1alpha1.ExtensionSpec{
 				DefaultSpec: extensionsv1alpha1.DefaultSpec{
-					Type:  "shoot-cert-service",
+					Type:  "controlplane-cert-service",
 					Class: ptr.To(extensionsv1alpha1.ExtensionClassGarden),
 					ProviderConfig: &runtime.RawExtension{
 						Raw: []byte(`{
