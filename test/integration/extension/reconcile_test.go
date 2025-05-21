@@ -212,8 +212,8 @@ var _ = Describe("Extension tests", func() {
 		By("creating extension")
 		ext := &extensionsv1alpha1.Extension{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "test",
-				Namespace: testName,
+				GenerateName: "test-",
+				Namespace:    testName,
 			},
 			Spec: extensionsv1alpha1.ExtensionSpec{
 				DefaultSpec: extensionsv1alpha1.DefaultSpec{
@@ -266,8 +266,8 @@ var _ = Describe("Extension tests", func() {
 		By("creating extension")
 		ext := &extensionsv1alpha1.Extension{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "test",
-				Namespace: testName,
+				GenerateName: "test-",
+				Namespace:    testName,
 			},
 			Spec: extensionsv1alpha1.ExtensionSpec{
 				DefaultSpec: extensionsv1alpha1.DefaultSpec{
