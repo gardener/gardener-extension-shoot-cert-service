@@ -294,25 +294,25 @@ var _ = Describe("Extension tests", func() {
 })
 
 func setupShootEnvironment(ctx context.Context, c client.Client, namespace *corev1.Namespace, cluster *extensionsv1alpha1.Cluster) {
-	Expect(c.Create(ctx, namespace)).To(Succeed())
-	Expect(c.Create(ctx, cluster)).To(Succeed())
+	ExpectWithOffset(1, c.Create(ctx, namespace)).To(Succeed())
+	ExpectWithOffset(1, c.Create(ctx, cluster)).To(Succeed())
 }
 
 func teardownShootEnvironment(ctx context.Context, c client.Client, namespace *corev1.Namespace, cluster *extensionsv1alpha1.Cluster) {
-	Expect(client.IgnoreNotFound(c.Delete(ctx, cluster))).To(Succeed())
-	Expect(c.DeleteAllOf(ctx, &corev1.Secret{}, client.InNamespace(namespace.Name), client.MatchingLabels{"resources.gardener.cloud/garbage-collectable-reference": "true"})).To(Succeed())
-	Expect(client.IgnoreNotFound(c.Delete(ctx, namespace))).To(Succeed())
+	ExpectWithOffset(1, client.IgnoreNotFound(c.Delete(ctx, cluster))).To(Succeed())
+	ExpectWithOffset(1, c.DeleteAllOf(ctx, &corev1.Secret{}, client.InNamespace(namespace.Name), client.MatchingLabels{"resources.gardener.cloud/garbage-collectable-reference": "true"})).To(Succeed())
+	ExpectWithOffset(1, client.IgnoreNotFound(c.Delete(ctx, namespace))).To(Succeed())
 }
 
 func randomString() string {
 	rs, err := gardenerutils.GenerateRandomStringFromCharset(5, "0123456789abcdefghijklmnopqrstuvwxyz")
-	Expect(err).NotTo(HaveOccurred())
+	ExpectWithOffset(1, err).NotTo(HaveOccurred())
 	return rs
 }
 
 func shootToBytes(shoot *gardencorev1beta1.Shoot) []byte {
 	data, err := json.Marshal(shoot)
-	Expect(err).NotTo(HaveOccurred())
+	ExpectWithOffset(1, err).NotTo(HaveOccurred())
 	return data
 }
 
