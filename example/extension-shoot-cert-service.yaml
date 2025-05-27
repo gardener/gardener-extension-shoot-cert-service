@@ -31,8 +31,7 @@ spec:
     kind: Extension
     type: shoot-cert-service
     workerlessSupported: true
-  - globallyEnabled: true
-    kind: Extension
+  - kind: Extension
     lifecycle:
       delete: AfterKubeAPIServer
       reconcile: BeforeKubeAPIServer
