@@ -2,15 +2,18 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-package extension
+package shared
 
 import (
+	"fmt"
 	"strings"
 
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
+	utilsimagevector "github.com/gardener/gardener/pkg/utils/imagevector"
 	"github.com/gardener/gardener/pkg/utils/managedresources"
 	"k8s.io/utils/ptr"
 
+	"github.com/gardener/gardener-extension-shoot-cert-service/imagevector"
 	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/config"
 	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/service"
 	certv1alpha1 "github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/service/v1alpha1"
@@ -100,7 +103,7 @@ func (v Values) fullName() string {
 	return "cert-controller-manager"
 }
 
-func (v Values) restrictedIssuer() bool {
+func (v Values) RestrictedIssuer() bool {
 	return v.RestrictedDomains != "" && ptr.Deref(v.ExtensionConfig.RestrictIssuer, false)
 }
 
@@ -164,12 +167,12 @@ func (v Values) dnsChallengeOnShootEnabled() bool {
 	return v.ShootDeployment && v.CertConfig.DNSChallengeOnShoot != nil && v.CertConfig.DNSChallengeOnShoot.Enabled
 }
 
-type deployer struct {
+type Deployer struct {
 	values Values
 }
 
-func newDeployer(values Values) *deployer {
-	return &deployer{
+func NewDeployer(values Values) *Deployer {
+	return &Deployer{
 		values: values,
 	}
 }
@@ -190,4 +193,16 @@ func mergeServers(serversList ...string) string {
 
 func newManagedResourceRegistry() *managedresources.Registry {
 	return managedresources.NewRegistry(client.ClusterScheme, client.ClusterCodec, client.ClusterSerializer)
+}
+
+func PrepareCertManagementImage() (string, error) {
+	images, err := utilsimagevector.FindImages(imagevector.ImageVector(), []string{certv1alpha1.CertManagementImageName})
+	if err != nil {
+		return "", fmt.Errorf("failed to find image version for %s: %w", certv1alpha1.CertManagementImageName, err)
+	}
+	image, ok := images[certv1alpha1.CertManagementImageName]
+	if !ok {
+		return "", fmt.Errorf("failed to find image version for %s", certv1alpha1.CertManagementImageName)
+	}
+	return image.String(), nil
 }

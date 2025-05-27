@@ -24,7 +24,6 @@ patches:
       value:
         kind: Extension
         type: controlplane-cert-service
-        globallyEnabled: true
         lifecycle:
           reconcile: BeforeKubeAPIServer
           delete: AfterKubeAPIServer

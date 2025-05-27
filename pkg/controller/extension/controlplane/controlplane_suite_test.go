@@ -1,4 +1,4 @@
-package extension
+package controlplane
 
 import (
 	"testing"
@@ -9,5 +9,5 @@ import (
 
 func TestDNSManagement(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Extension Controller Suite")
+	RunSpecs(t, "Extension ControlPlane Controller Suite")
 }

@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-package extension
+package shared
 
 import (
 	"context"
@@ -52,7 +52,7 @@ var (
 //go:embed assets/cert-dashboard.json
 var certDashboardJSON string
 
-func (d *deployer) DeploySeedManagedResource(ctx context.Context, c client.Client) error {
+func (d *Deployer) DeploySeedManagedResource(ctx context.Context, c client.Client) error {
 	if !d.values.ShootDeployment {
 		return fmt.Errorf("only supported for shoot deployment")
 	}
@@ -92,7 +92,7 @@ func (d *deployer) DeploySeedManagedResource(ctx context.Context, c client.Clien
 	return managedresources.Create(ctx, c, d.values.Namespace, v1alpha1.CertManagementResourceNameSeed, nil, false, v1beta1constants.SeedResourceManagerClass, data, &keepObjects, nil, &forceOverwriteAnnotations)
 }
 
-func (d *deployer) DeleteSeedManagedResourceAndWait(ctx context.Context, c client.Client, timeout time.Duration) error {
+func (d *Deployer) DeleteSeedManagedResourceAndWait(ctx context.Context, c client.Client, timeout time.Duration) error {
 	if err := kutil.DeleteObject(ctx, c, &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: shootAccessSecretName, Namespace: d.values.Namespace}}); err != nil {
 		return err
 	}
@@ -106,7 +106,7 @@ func (d *deployer) DeleteSeedManagedResourceAndWait(ctx context.Context, c clien
 	return managedresources.WaitUntilDeleted(timeoutCtx, c, d.values.Namespace, v1alpha1.CertManagementResourceNameSeed)
 }
 
-func (d *deployer) createCACertificatesConfigMap() *corev1.ConfigMap {
+func (d *Deployer) createCACertificatesConfigMap() *corev1.ConfigMap {
 	certs := d.values.caCertificates()
 	if certs == "" {
 		return nil
@@ -123,7 +123,7 @@ func (d *deployer) createCACertificatesConfigMap() *corev1.ConfigMap {
 	}
 }
 
-func (d *deployer) createDashboardsConfigMap() *corev1.ConfigMap {
+func (d *Deployer) createDashboardsConfigMap() *corev1.ConfigMap {
 	return &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "cert-controller-manager-dashboards",
@@ -138,7 +138,7 @@ func (d *deployer) createDashboardsConfigMap() *corev1.ConfigMap {
 	}
 }
 
-func (d *deployer) createDeployment() (*appsv1.Deployment, error) {
+func (d *Deployer) createDeployment() (*appsv1.Deployment, error) {
 	labels := d.values.getLabels()
 	if d.values.ShootDeployment {
 		labels["high-availability-config.resources.gardener.cloud/type"] = "controller"
@@ -226,7 +226,7 @@ func (d *deployer) createDeployment() (*appsv1.Deployment, error) {
 	}, nil
 }
 
-func (d *deployer) createPodDisruptionBudget() *policyv1.PodDisruptionBudget {
+func (d *Deployer) createPodDisruptionBudget() *policyv1.PodDisruptionBudget {
 	return &policyv1.PodDisruptionBudget{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "cert-controller-manager",
@@ -243,7 +243,7 @@ func (d *deployer) createPodDisruptionBudget() *policyv1.PodDisruptionBudget {
 	}
 }
 
-func (d *deployer) createPrometheusRule() *monitoringv1.PrometheusRule {
+func (d *Deployer) createPrometheusRule() *monitoringv1.PrometheusRule {
 	alertDays := d.values.certExpirationAlertDays()
 	if alertDays == 0 {
 		return nil
@@ -283,7 +283,7 @@ func (d *deployer) createPrometheusRule() *monitoringv1.PrometheusRule {
 	}
 }
 
-func (d *deployer) createRole() *rbacv1.Role {
+func (d *Deployer) createRole() *rbacv1.Role {
 	role := &rbacv1.Role{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "extensions.gardener.cloud:extension-shoot-cert-service",
@@ -339,7 +339,7 @@ func (d *deployer) createRole() *rbacv1.Role {
 	return role
 }
 
-func (d *deployer) createRoleBinding() *rbacv1.RoleBinding {
+func (d *Deployer) createRoleBinding() *rbacv1.RoleBinding {
 	return &rbacv1.RoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      d.values.chartNameSeed(),
@@ -361,7 +361,7 @@ func (d *deployer) createRoleBinding() *rbacv1.RoleBinding {
 	}
 }
 
-func (d *deployer) createService() *corev1.Service {
+func (d *Deployer) createService() *corev1.Service {
 	return &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "cert-controller-manager",
@@ -386,7 +386,7 @@ func (d *deployer) createService() *corev1.Service {
 	}
 }
 
-func (d *deployer) createServiceAccount() *corev1.ServiceAccount {
+func (d *Deployer) createServiceAccount() *corev1.ServiceAccount {
 	return &corev1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      d.values.chartNameSeed(),
@@ -397,7 +397,7 @@ func (d *deployer) createServiceAccount() *corev1.ServiceAccount {
 	}
 }
 
-func (d *deployer) createServiceMonitor() *monitoringv1.ServiceMonitor {
+func (d *Deployer) createServiceMonitor() *monitoringv1.ServiceMonitor {
 	return &monitoringv1.ServiceMonitor{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "monitoring.coreos.com/v1",
@@ -434,7 +434,7 @@ func (d *deployer) createServiceMonitor() *monitoringv1.ServiceMonitor {
 	}
 }
 
-func (d *deployer) createVPA() *vpaautoscalingv1.VerticalPodAutoscaler {
+func (d *Deployer) createVPA() *vpaautoscalingv1.VerticalPodAutoscaler {
 	if !d.values.ShootDeployment {
 		return nil
 	}
@@ -469,7 +469,7 @@ func (d *deployer) createVPA() *vpaautoscalingv1.VerticalPodAutoscaler {
 	}
 }
 
-func (d *deployer) env() []corev1.EnvVar {
+func (d *Deployer) env() []corev1.EnvVar {
 	if d.values.caCertificates() == "" {
 		return nil
 	}
@@ -485,7 +485,7 @@ func (d *deployer) env() []corev1.EnvVar {
 	}
 }
 
-func (d *deployer) args() []string {
+func (d *Deployer) args() []string {
 	args := []string{fmt.Sprintf("--name=%s", d.values.fullName())}
 	if d.values.ShootDeployment {
 		args = append(args,
@@ -504,7 +504,7 @@ func (d *deployer) args() []string {
 	if quota := ptr.Deref(d.values.ExtensionConfig.DefaultRequestsPerDayQuota, 0); quota > 0 {
 		args = append(args, fmt.Sprintf("--issuer.default-requests-per-day-quota=%d", quota))
 	}
-	if d.values.restrictedIssuer() {
+	if d.values.RestrictedIssuer() {
 		args = append(args, fmt.Sprintf("--issuer.default-issuer-domain-ranges=%s", d.values.RestrictedDomains))
 	}
 	if nameservers := d.values.precheckNameservers(); nameservers != "" {
@@ -558,7 +558,7 @@ func (d *deployer) args() []string {
 	return args
 }
 
-func (d *deployer) volumeMounts() []corev1.VolumeMount {
+func (d *Deployer) volumeMounts() []corev1.VolumeMount {
 	var mounts []corev1.VolumeMount
 	if d.values.ShootDeployment {
 		mounts = append(mounts, corev1.VolumeMount{
@@ -577,7 +577,7 @@ func (d *deployer) volumeMounts() []corev1.VolumeMount {
 	return mounts
 }
 
-func (d *deployer) volumes() []corev1.Volume {
+func (d *Deployer) volumes() []corev1.Volume {
 	var volumes []corev1.Volume
 	if d.values.ShootDeployment {
 		volumes = append(volumes, corev1.Volume{
@@ -634,7 +634,7 @@ func (d *deployer) volumes() []corev1.Volume {
 	return volumes
 }
 
-func (d *deployer) getPrometheusLabels() map[string]string {
+func (d *Deployer) getPrometheusLabels() map[string]string {
 	labels := d.values.getLabels()
 	labels["prometheus"] = "shoot"
 	return labels

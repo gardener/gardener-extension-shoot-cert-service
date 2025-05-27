@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-package model
+package shared
 
 // Issuer is the configuration model for an ACME or CA issuer.
 type Issuer struct {

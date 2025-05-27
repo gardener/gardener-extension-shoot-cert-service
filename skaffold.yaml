@@ -33,12 +33,13 @@ build:
             - pkg/apis/service/validation
             - pkg/client
             - pkg/cmd
-            - pkg/controller/extension
-            - pkg/controller/extension/assets/cert-dashboard.json
-            - pkg/controller/extension/assets/crd-cert.gardener.cloud_certificaterevocations.yaml
-            - pkg/controller/extension/assets/crd-cert.gardener.cloud_certificates.yaml
-            - pkg/controller/extension/assets/crd-cert.gardener.cloud_issuers.yaml
-            - pkg/controller/extension/model
+            - pkg/controller/extension/controlplane
+            - pkg/controller/extension/shared
+            - pkg/controller/extension/shared/assets/cert-dashboard.json
+            - pkg/controller/extension/shared/assets/crd-cert.gardener.cloud_certificaterevocations.yaml
+            - pkg/controller/extension/shared/assets/crd-cert.gardener.cloud_certificates.yaml
+            - pkg/controller/extension/shared/assets/crd-cert.gardener.cloud_issuers.yaml
+            - pkg/controller/extension/shoot
             - pkg/controller/healthcheck
             - VERSION
         ldflags:

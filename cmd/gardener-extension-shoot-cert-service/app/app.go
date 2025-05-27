@@ -21,7 +21,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	serviceinstall "github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/service/install"
-	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/controller/extension"
+	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/controller/extension/controlplane"
+	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/controller/extension/shoot"
 	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/controller/healthcheck"
 )
 
@@ -95,10 +96,14 @@ func (o *Options) run(ctx context.Context) error {
 
 	ctrlConfig := o.certOptions.Completed()
 	ctrlConfig.ApplyHealthCheckConfig(&healthcheck.DefaultAddOptions.HealthCheckConfig)
-	ctrlConfig.Apply(&extension.DefaultAddOptions.ServiceConfig)
-	o.controllerOptions.Completed().Apply(&extension.DefaultAddOptions.ControllerOptions)
+	ctrlConfig.Apply(&shoot.DefaultAddOptions.ServiceConfig)
+	ctrlConfig.Apply(&controlplane.DefaultAddOptions.ServiceConfig)
+	o.shootControllerOptions.Completed().Apply(&shoot.DefaultAddOptions.ControllerOptions)
+	o.controlPlaneControllerOptions.Completed().Apply(&controlplane.DefaultAddOptions.ControllerOptions)
 	o.healthOptions.Completed().Apply(&healthcheck.DefaultAddOptions.Controller)
-	o.reconcileOptions.Completed().Apply(&extension.DefaultAddOptions.IgnoreOperationAnnotation, &extension.DefaultAddOptions.ExtensionClass)
+	reconcilerConfig := o.reconcileOptions.Completed()
+	reconcilerConfig.Apply(&shoot.DefaultAddOptions.IgnoreOperationAnnotation, &shoot.DefaultAddOptions.ExtensionClass)
+	reconcilerConfig.Apply(&controlplane.DefaultAddOptions.IgnoreOperationAnnotation, &controlplane.DefaultAddOptions.ExtensionClass)
 	o.heartbeatOptions.Completed().Apply(&heartbeat.DefaultAddOptions)
 
 	if err := o.controllerSwitches.Completed().AddToManager(ctx, mgr); err != nil {

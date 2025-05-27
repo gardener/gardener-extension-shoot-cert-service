@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-package extension
+package shared
 
 import (
 	"crypto/sha256"
@@ -15,14 +15,12 @@ import (
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
-
-	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/controller/extension/model"
 )
 
-func (d *deployer) collectIssuers() ([]model.Issuer, error) {
-	gardenIssuer := model.Issuer{Name: d.values.ExtensionConfig.IssuerName}
+func (d *Deployer) collectIssuers() ([]Issuer, error) {
+	gardenIssuer := Issuer{Name: d.values.ExtensionConfig.IssuerName}
 	if acme := d.values.ExtensionConfig.ACME; acme != nil {
-		gardenIssuer.ACME = &model.ACME{
+		gardenIssuer.ACME = &ACME{
 			Email:                      acme.Email,
 			Server:                     acme.Server,
 			PrivateKey:                 acme.PrivateKey,
@@ -30,13 +28,13 @@ func (d *deployer) collectIssuers() ([]model.Issuer, error) {
 		}
 	}
 	if ca := d.values.ExtensionConfig.CA; ca != nil {
-		gardenIssuer.CA = &model.CA{
+		gardenIssuer.CA = &CA{
 			Certificate:    ca.Certificate,
 			CertificateKey: ca.CertificateKey,
 		}
 	}
 
-	issuerList := []model.Issuer{gardenIssuer}
+	issuerList := []Issuer{gardenIssuer}
 
 	if !d.values.ShootDeployment {
 		return issuerList, nil
@@ -47,7 +45,7 @@ func (d *deployer) collectIssuers() ([]model.Issuer, error) {
 			continue
 		}
 
-		acme := &model.ACME{
+		acme := &ACME{
 			Email:  issuer.Email,
 			Server: issuer.Server,
 		}
@@ -63,7 +61,7 @@ func (d *deployer) collectIssuers() ([]model.Issuer, error) {
 			if err != nil {
 				return nil, fmt.Errorf("failed to lookup referenced private key secret for issuer %s: %w", issuer.Name, err)
 			}
-			acme.ExternalAccountBinding = &model.ExternalAccountBinding{
+			acme.ExternalAccountBinding = &ExternalAccountBinding{
 				KeyID:         issuer.ExternalAccountBinding.KeyID,
 				KeySecretName: secretName,
 			}
@@ -72,7 +70,7 @@ func (d *deployer) collectIssuers() ([]model.Issuer, error) {
 			acme.SkipDNSChallengeValidation = true
 		}
 		if issuer.Domains != nil && len(issuer.Domains.Include)+len(issuer.Domains.Exclude) > 0 {
-			acme.Domains = &model.Domains{}
+			acme.Domains = &Domains{}
 			if issuer.Domains.Include != nil {
 				acme.Domains.Include = issuer.Domains.Include
 			}
@@ -81,7 +79,7 @@ func (d *deployer) collectIssuers() ([]model.Issuer, error) {
 			}
 		}
 
-		modelIssuer := model.Issuer{
+		modelIssuer := Issuer{
 			Name: issuer.Name,
 			ACME: acme,
 		}
@@ -97,7 +95,7 @@ func (d *deployer) collectIssuers() ([]model.Issuer, error) {
 	return issuerList, nil
 }
 
-func (d *deployer) issuersChecksum() (string, error) {
+func (d *Deployer) issuersChecksum() (string, error) {
 	issuers, err := d.collectIssuers()
 	if err != nil {
 		return "", err
@@ -109,7 +107,7 @@ func (d *deployer) issuersChecksum() (string, error) {
 	return fmt.Sprintf("%x", sha256.Sum256(issuersData)), nil
 }
 
-func (d *deployer) createIssuers() ([]client.Object, error) {
+func (d *Deployer) createIssuers() ([]client.Object, error) {
 	var objects []client.Object
 
 	issuers, err := d.collectIssuers()
@@ -129,7 +127,7 @@ func (d *deployer) createIssuers() ([]client.Object, error) {
 	return objects, nil
 }
 
-func (d *deployer) secretACME(issuer model.Issuer) *corev1.Secret {
+func (d *Deployer) secretACME(issuer Issuer) *corev1.Secret {
 	return &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("extension-shoot-cert-service-issuer-%s", issuer.Name),
@@ -143,7 +141,7 @@ func (d *deployer) secretACME(issuer model.Issuer) *corev1.Secret {
 	}
 }
 
-func (d *deployer) secretCA(issuer model.Issuer) *corev1.Secret {
+func (d *Deployer) secretCA(issuer Issuer) *corev1.Secret {
 	return &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("extension-shoot-cert-service-issuer-%s-ca", issuer.Name),
@@ -157,7 +155,7 @@ func (d *deployer) secretCA(issuer model.Issuer) *corev1.Secret {
 	}
 }
 
-func (d *deployer) createIssuer(input model.Issuer) *certv1alpha1.Issuer {
+func (d *Deployer) createIssuer(input Issuer) *certv1alpha1.Issuer {
 	issuer := &certv1alpha1.Issuer{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      input.Name,
@@ -174,7 +172,7 @@ func (d *deployer) createIssuer(input model.Issuer) *certv1alpha1.Issuer {
 	return issuer
 }
 
-func (d *deployer) createACMESpec(issuer model.Issuer) *certv1alpha1.ACMESpec {
+func (d *Deployer) createACMESpec(issuer Issuer) *certv1alpha1.ACMESpec {
 	input := issuer.ACME
 	if input == nil {
 		return nil
@@ -215,7 +213,7 @@ func (d *deployer) createACMESpec(issuer model.Issuer) *certv1alpha1.ACMESpec {
 	return acme
 }
 
-func (d *deployer) createCASpec(issuer model.Issuer) *certv1alpha1.CASpec {
+func (d *Deployer) createCASpec(issuer Issuer) *certv1alpha1.CASpec {
 	if issuer.CA == nil {
 		return nil
 	}
@@ -227,7 +225,7 @@ func (d *deployer) createCASpec(issuer model.Issuer) *certv1alpha1.CASpec {
 	}
 }
 
-func (d *deployer) lookupReferencedSecret(refname string) (string, error) {
+func (d *Deployer) lookupReferencedSecret(refname string) (string, error) {
 	if !d.values.ShootDeployment {
 		return "invalid", fmt.Errorf("only shoot deployment supports additional issuers")
 	}
