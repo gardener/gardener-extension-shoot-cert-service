@@ -21,7 +21,7 @@ const (
 	// Type is the type of Extension resource.
 	Type = "shoot-cert-service"
 	// ControllerName is the name of the shoot cert service controller.
-	ControllerName = "shoot_cert_service"
+	ControllerName = "shoot-cert-service"
 )
 
 var (

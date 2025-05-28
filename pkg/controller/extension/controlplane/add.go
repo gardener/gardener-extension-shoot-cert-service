@@ -35,7 +35,7 @@ const (
 	// Type is the second type of Extension resource with different life cycle (before kube-apiserver)
 	Type = "controlplane-cert-service"
 	// ControllerName is the name of the shoot cert service controller.
-	ControllerName = "controlplane_cert_service"
+	ControllerName = "controlplane-cert-service"
 
 	// GardenRelevantDataHashAnnotation is the annotation key for the hash of garden relevant data.
 	GardenRelevantDataHashAnnotation = "garden-relevant-data-hash"
