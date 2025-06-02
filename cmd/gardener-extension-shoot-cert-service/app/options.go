@@ -50,7 +50,7 @@ func NewOptions() *Options {
 		},
 		controlPlaneControllerOptions: &controllercmd.ControllerOptions{
 			// This is a default value.
-			MaxConcurrentReconciles: 2,
+			MaxConcurrentReconciles: 1,
 		},
 		healthOptions: &controllercmd.ControllerOptions{
 			// This is a default value.

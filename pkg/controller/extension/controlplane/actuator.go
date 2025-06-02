@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/gardener/gardener/extensions/pkg/controller/extension"
@@ -69,13 +70,15 @@ func NewActuator(mgr manager.Manager, config config.Configuration, extensionClas
 type actuator struct {
 	certConfigDecoder shared.CertConfigDecoder
 	client            client.Client
-	gardenClient      client.Client
 	config            *rest.Config
 	scheme            *runtime.Scheme
 	decoder           runtime.Decoder
 	extensionClasses  []extensionsv1alpha1.ExtensionClass
 
 	serviceConfig config.Configuration
+
+	gardenClient     client.Client
+	gardenClientLock sync.Mutex
 }
 
 // Reconcile the Extension resource.
@@ -264,6 +267,9 @@ func (a *actuator) fetchSeedSecret(ctx context.Context, gardenClient client.Clie
 }
 
 func (a *actuator) getOrCreateGardenClient() (client.Client, error) {
+	a.gardenClientLock.Lock()
+	defer a.gardenClientLock.Unlock()
+
 	if a.gardenClient != nil {
 		return a.gardenClient, nil
 	}
