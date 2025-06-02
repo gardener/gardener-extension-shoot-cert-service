@@ -69,6 +69,7 @@ func NewActuator(mgr manager.Manager, config config.Configuration, extensionClas
 type actuator struct {
 	certConfigDecoder shared.CertConfigDecoder
 	client            client.Client
+	gardenClient      client.Client
 	config            *rest.Config
 	scheme            *runtime.Scheme
 	decoder           runtime.Decoder
@@ -111,7 +112,7 @@ func (a *actuator) Reconcile(ctx context.Context, log logr.Logger, ex *extension
 		handler := newControlPlaneCert(a.client, log)
 		if generateControlPlaneCertificate {
 			seedName := os.Getenv(EnvSeedName)
-			gardenClient, err := a.createGardenClient()
+			gardenClient, err := a.getOrCreateGardenClient()
 			if err != nil {
 				return err
 			}
@@ -260,6 +261,19 @@ func (a *actuator) fetchSeedSecret(ctx context.Context, gardenClient client.Clie
 		return nil, fmt.Errorf("failed to get secret %s/%s: %w", ref.Namespace, ref.Name, err)
 	}
 	return secret, nil
+}
+
+func (a *actuator) getOrCreateGardenClient() (client.Client, error) {
+	if a.gardenClient != nil {
+		return a.gardenClient, nil
+	}
+
+	gardenClient, err := a.createGardenClient()
+	if err != nil {
+		return nil, err
+	}
+	a.gardenClient = gardenClient
+	return a.gardenClient, nil
 }
 
 func (a *actuator) createGardenClient() (client.Client, error) {
