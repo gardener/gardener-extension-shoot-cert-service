@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-package extension
+package shared
 
 import (
 	"context"
@@ -18,7 +18,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func (d *deployer) DeployGardenOrSeedManagedResource(ctx context.Context, c client.Client) error {
+func (d *Deployer) DeployGardenOrSeedManagedResource(ctx context.Context, c client.Client) error {
 	if d.values.ShootDeployment {
 		return fmt.Errorf("not supported for shoot deployment")
 	}
@@ -68,7 +68,7 @@ func (d *deployer) DeployGardenOrSeedManagedResource(ctx context.Context, c clie
 	return managedresources.Create(ctx, c, d.values.Namespace, d.values.resourceNameGardenOrSeed(), nil, false, v1beta1constants.SeedResourceManagerClass, data, &keepObjects, nil, &forceOverwriteAnnotations)
 }
 
-func (d *deployer) DeleteGardenOrSeedManagedResourceAndWait(ctx context.Context, c client.Client, timeout time.Duration) error {
+func (d *Deployer) DeleteGardenOrSeedManagedResourceAndWait(ctx context.Context, c client.Client, timeout time.Duration) error {
 	if err := managedresources.Delete(ctx, c, d.values.Namespace, d.values.resourceNameGardenOrSeed(), false); err != nil {
 		return err
 	}
@@ -78,7 +78,7 @@ func (d *deployer) DeleteGardenOrSeedManagedResourceAndWait(ctx context.Context,
 	return managedresources.WaitUntilDeleted(timeoutCtx, c, d.values.Namespace, d.values.resourceNameGardenOrSeed())
 }
 
-func (d *deployer) createNetworkPolicy() *networkingv1.NetworkPolicy {
+func (d *Deployer) createNetworkPolicy() *networkingv1.NetworkPolicy {
 	if len(d.values.ExtensionConfig.InClusterACMEServerNamespaceMatchLabel) == 0 {
 		return nil
 	}

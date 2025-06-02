@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-package extension
+package controlplane
 
 import (
 	"context"
@@ -17,6 +17,7 @@ import (
 	operatorv1alpha1 "github.com/gardener/gardener/pkg/apis/operator/v1alpha1"
 	operatorpredicate "github.com/gardener/gardener/pkg/operator/predicate"
 	"github.com/go-logr/logr"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/event"
@@ -27,15 +28,14 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/config"
+	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/controller/extension/shared"
 )
 
 const (
-	// Type is the type of Extension resource.
-	Type = "shoot-cert-service"
+	// Type is the second type of Extension resource with different life cycle (before kube-apiserver)
+	Type = "controlplane-cert-service"
 	// ControllerName is the name of the shoot cert service controller.
-	ControllerName = "shoot_cert_service"
-	// FinalizerSuffix is the finalizer suffix for the shoot cert service controller.
-	FinalizerSuffix = "shoot-cert-service"
+	ControllerName = "controlplane-cert-service"
 
 	// GardenRelevantDataHashAnnotation is the annotation key for the hash of garden relevant data.
 	GardenRelevantDataHashAnnotation = "garden-relevant-data-hash"
@@ -58,17 +58,20 @@ type AddOptions struct {
 	ExtensionClass extensionsv1alpha1.ExtensionClass
 }
 
-// AddToManager adds a controller with the default Options to the given Controller Manager.
+// AddToManager adds a second controller with the default Options to the given Controller Manager.
 func AddToManager(ctx context.Context, mgr manager.Manager) error {
 	return AddToManagerWithOptions(ctx, mgr, DefaultAddOptions)
 }
 
-// AddToManagerWithOptions adds a controller with the given Options to the given manager.
+// AddToManagerWithOptions adds a second controller with the given Options to the given manager.
 // The opts.Reconciler is being set with a newly instantiated actuator.
 func AddToManagerWithOptions(ctx context.Context, mgr manager.Manager, opts AddOptions) error {
-	predicates := extension.DefaultPredicates(ctx, mgr, DefaultAddOptions.IgnoreOperationAnnotation)
-	extensionClasses := []extensionsv1alpha1.ExtensionClass{extensionsv1alpha1.ExtensionClassShoot, extensionsv1alpha1.ExtensionClassSeed}
-	watchBuilder := extensionscontroller.NewWatchBuilder()
+	var (
+		predicates       = extension.DefaultPredicates(ctx, mgr, DefaultAddOptions.IgnoreOperationAnnotation)
+		extensionClasses = []extensionsv1alpha1.ExtensionClass{extensionsv1alpha1.ExtensionClassSeed}
+		watchBuilder     extensionscontroller.WatchBuilder
+	)
+
 	if opts.ExtensionClass == extensionsv1alpha1.ExtensionClassGarden {
 		extensionClasses = []extensionsv1alpha1.ExtensionClass{extensionsv1alpha1.ExtensionClassGarden}
 		watchBuilder = extensionscontroller.NewWatchBuilder(func(c controller.Controller) error {
@@ -85,7 +88,7 @@ func AddToManagerWithOptions(ctx context.Context, mgr manager.Manager, opts AddO
 		Actuator:          NewActuator(mgr, opts.ServiceConfig, extensionClasses),
 		ControllerOptions: opts.ControllerOptions,
 		Name:              ControllerName,
-		FinalizerSuffix:   FinalizerSuffix,
+		FinalizerSuffix:   shared.FinalizerSuffix,
 		Resync:            0,
 		Predicates:        predicates,
 		Type:              Type,
@@ -116,7 +119,7 @@ func (p *toTypedPredicate) Generic(e event.TypedGenericEvent[*operatorv1alpha1.G
 
 func mapGardenToExtension(mgr manager.Manager, log logr.Logger) func(context.Context, *operatorv1alpha1.Garden) []reconcile.Request {
 	c := mgr.GetClient()
-	decoder := newCertConfigDecoder(mgr)
+	decoder := shared.NewCertConfigDecoder(mgr)
 	return func(ctx context.Context, garden *operatorv1alpha1.Garden) []reconcile.Request {
 		extList := &extensionsv1alpha1.ExtensionList{}
 		if err := c.List(ctx, extList, client.InNamespace(constants.GardenNamespace)); err != nil {
@@ -128,12 +131,12 @@ func mapGardenToExtension(mgr manager.Manager, log logr.Logger) func(context.Con
 		for _, ex := range extList.Items {
 			if ex.Spec.Type == Type &&
 				extensionsv1alpha1helper.GetExtensionClassOrDefault(ex.Spec.Class) == extensionsv1alpha1.ExtensionClassGarden {
-				b, err := decoder.isGenerateControlPlaneCertificate(&ex)
+				certConfig, err := decoder.DecodeAndValidateProviderConfig(&ex, nil)
 				if err != nil {
 					log.Error(err, "Failed to decode extension config")
 					return nil
 				}
-				if b {
+				if ptr.Deref(certConfig.GenerateControlPlaneCertificate, false) {
 					hash := calcGardenRelevantDataHash(garden)
 					if ex.Annotations[GardenRelevantDataHashAnnotation] != hash {
 						log.Info("Garden relevant data hash has changed, requeueing extension", "hash", hash)

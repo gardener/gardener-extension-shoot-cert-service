@@ -55,9 +55,9 @@ spec:
         - --heartbeat-renew-interval-seconds={{ .Values.controllers.heartbeat.renewIntervalSeconds }}
         {{- if .Values.gardener.runtimeCluster.enabled }}
         - --extension-class=garden
-        - --controllers=shoot_cert_service
+        - --controllers=controlplane-cert-service
         {{- else }}
-        - --controllers=shoot_cert_service,healthcheck,heartbeat
+        - --controllers=shoot-cert-service,controlplane-cert-service,healthcheck,heartbeat
         {{- end }}
         - --disable-controllers={{ .Values.disableControllers | join "," }}
         - --ignore-operation-annotation={{ .Values.controllers.ignoreOperationAnnotation }}

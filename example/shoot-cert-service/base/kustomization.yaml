@@ -19,3 +19,11 @@ patches:
         type: shoot-cert-service
         workerlessSupported: true
         globallyEnabled: true
+    - op: add
+      path: /spec/resources/1
+      value:
+        kind: Extension
+        type: controlplane-cert-service
+        lifecycle:
+          reconcile: BeforeKubeAPIServer
+          delete: AfterKubeAPIServer

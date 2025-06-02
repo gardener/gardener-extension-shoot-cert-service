@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-package extension
+package shared
 
 import (
 	"context"
@@ -42,7 +42,7 @@ import (
 	certserviceclient "github.com/gardener/gardener-extension-shoot-cert-service/pkg/client"
 )
 
-var _ = Describe("deployer", func() {
+var _ = Describe("Deployer", func() {
 	var (
 		ctx       = context.Background()
 		c         client.Client
@@ -937,7 +937,7 @@ var _ = Describe("deployer", func() {
 		}
 
 		testSeedManagedResource = func(resources []client.Object, modifyDeployment func(*appsv1.Deployment)) {
-			deployer := newDeployer(values)
+			deployer := NewDeployer(values)
 			ExpectWithOffset(1, deployer.DeploySeedManagedResource(ctx, c)).To(Succeed())
 			mr := &resourcesv1alpha1.ManagedResource{
 				ObjectMeta: metav1.ObjectMeta{
@@ -962,7 +962,7 @@ var _ = Describe("deployer", func() {
 		}
 
 		testInternalManagedResource = func(resources []client.Object, isGarden bool, modifyDeployment func(*appsv1.Deployment)) {
-			deployer := newDeployer(values)
+			deployer := NewDeployer(values)
 			ExpectWithOffset(1, deployer.DeployGardenOrSeedManagedResource(ctx, c)).To(Succeed())
 			name := servicev1alpha1.CertManagementResourceNameSeed
 			if isGarden {
@@ -994,7 +994,7 @@ var _ = Describe("deployer", func() {
 		}
 
 		testShootManagedResource = func(resources []client.Object, expectedIssuerCRD bool) {
-			deployer := newDeployer(values)
+			deployer := NewDeployer(values)
 			ExpectWithOffset(1, deployer.DeployShootManagedResource(ctx, c)).To(Succeed())
 			mr := &resourcesv1alpha1.ManagedResource{
 				ObjectMeta: metav1.ObjectMeta{

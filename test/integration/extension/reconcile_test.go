@@ -43,7 +43,7 @@ import (
 
 	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/service"
 	servicev1alpha1 "github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/service/v1alpha1"
-	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/controller/extension"
+	extensionshoot "github.com/gardener/gardener-extension-shoot-cert-service/pkg/controller/extension/shoot"
 )
 
 var (
@@ -184,7 +184,7 @@ var _ = BeforeSuite(func() {
 	Expect(vpaautoscalingv1.SchemeBuilder.AddToScheme(mgr.GetScheme())).To(Succeed())
 	Expect(monitoringv1.AddToScheme(mgr.GetScheme())).To(Succeed())
 
-	Expect(extension.AddToManagerWithOptions(ctx, mgr, extension.AddOptions{})).To(Succeed())
+	Expect(extensionshoot.AddToManagerWithOptions(ctx, mgr, extensionshoot.AddOptions{})).To(Succeed())
 
 	var mgrContext context.Context
 	mgrContext, mgrCancel = context.WithCancel(ctx)

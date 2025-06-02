@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-package extension
+package shared
 
 import (
 	"context"
@@ -36,7 +36,7 @@ var (
 	crdIssuers string
 )
 
-func (d *deployer) DeployShootManagedResource(ctx context.Context, c client.Client) error {
+func (d *Deployer) DeployShootManagedResource(ctx context.Context, c client.Client) error {
 	if !d.values.ShootDeployment {
 		return fmt.Errorf("only supported for shoot deployment")
 	}
@@ -65,7 +65,7 @@ func (d *deployer) DeployShootManagedResource(ctx context.Context, c client.Clie
 	return managedresources.Create(ctx, c, d.values.Namespace, v1alpha1.CertManagementResourceNameShoot, nil, false, "", data, &keepObjects, nil, &forceOverwriteAnnotations)
 }
 
-func (d *deployer) DeleteShootManagedResourceAndWait(ctx context.Context, c client.Client, timeout time.Duration) error {
+func (d *Deployer) DeleteShootManagedResourceAndWait(ctx context.Context, c client.Client, timeout time.Duration) error {
 	if !d.values.ShootDeployment {
 		return fmt.Errorf("only supported for shoot deployment")
 	}
@@ -79,7 +79,7 @@ func (d *deployer) DeleteShootManagedResourceAndWait(ctx context.Context, c clie
 	return managedresources.WaitUntilDeleted(timeoutCtx, c, d.values.Namespace, v1alpha1.CertManagementResourceNameShoot)
 }
 
-func (d *deployer) createShootRole() *rbacv1.Role {
+func (d *Deployer) createShootRole() *rbacv1.Role {
 	return &rbacv1.Role{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      roleName,
@@ -112,7 +112,7 @@ func (d *deployer) createShootRole() *rbacv1.Role {
 	}
 }
 
-func (d *deployer) createShootRoleBinding() *rbacv1.RoleBinding {
+func (d *Deployer) createShootRoleBinding() *rbacv1.RoleBinding {
 	return &rbacv1.RoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      roleName,
@@ -127,7 +127,7 @@ func (d *deployer) createShootRoleBinding() *rbacv1.RoleBinding {
 	}
 }
 
-func (d *deployer) createShootClusterRole() *rbacv1.ClusterRole {
+func (d *Deployer) createShootClusterRole() *rbacv1.ClusterRole {
 	certResources := []string{"certificates", "certificates/status", "certificaterevocations", "certificaterevocations/status"}
 	if d.values.shootIssuersEnabled() {
 		certResources = append(certResources, "issuers", "issuers/status")
@@ -191,7 +191,7 @@ func (d *deployer) createShootClusterRole() *rbacv1.ClusterRole {
 	return role
 }
 
-func (d *deployer) createShootClusterRoleBinding() *rbacv1.ClusterRoleBinding {
+func (d *Deployer) createShootClusterRoleBinding() *rbacv1.ClusterRoleBinding {
 	return &rbacv1.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   d.values.shootClusterRoleName(),
@@ -206,7 +206,7 @@ func (d *deployer) createShootClusterRoleBinding() *rbacv1.ClusterRoleBinding {
 	}
 }
 
-func (d *deployer) getServiceAccount() rbacv1.Subject {
+func (d *Deployer) getServiceAccount() rbacv1.Subject {
 	subjectName := v1alpha1.ShootAccessServiceAccountName
 	subjectNamespace := "kube-system"
 	if !d.values.ShootDeployment {
@@ -222,7 +222,7 @@ func (d *deployer) getServiceAccount() rbacv1.Subject {
 }
 
 // getShootCRDs reads cert-mangement CRDs from embedded resources.
-func (d *deployer) getShootCRDs() ([]client.Object, error) {
+func (d *Deployer) getShootCRDs() ([]client.Object, error) {
 	var crds []client.Object
 
 	items := []string{crdCertificates, crdRevocations}
@@ -240,7 +240,7 @@ func (d *deployer) getShootCRDs() ([]client.Object, error) {
 	return crds, nil
 }
 
-func (d *deployer) getShootLabels() map[string]string {
+func (d *Deployer) getShootLabels() map[string]string {
 	return map[string]string{
 		"app.kubernetes.io/instance": d.values.chartNameShoot(),
 	}

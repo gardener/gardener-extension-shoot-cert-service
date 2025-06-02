@@ -29,8 +29,8 @@ var _ = Describe("Shoot-Cert-Service Tests", func() {
 		garden             = &operatorv1alpha1.Garden{ObjectMeta: metav1.ObjectMeta{Name: "local"}}
 		seed               = &gardencorev1beta1.Seed{ObjectMeta: metav1.ObjectMeta{Name: "local"}}
 		operatorExtension  = &operatorv1alpha1.Extension{ObjectMeta: metav1.ObjectMeta{Name: "extension-shoot-cert-service"}}
-		runtimeExtension   = &extensionsv1alpha1.Extension{ObjectMeta: metav1.ObjectMeta{Namespace: "garden", Name: "shoot-cert-service"}}
-		seedExtension      = &extensionsv1alpha1.Extension{ObjectMeta: metav1.ObjectMeta{Name: "shoot-cert-service"}}
+		runtimeExtension   = &extensionsv1alpha1.Extension{ObjectMeta: metav1.ObjectMeta{Namespace: "garden", Name: "controlplane-cert-service"}}
+		seedExtension      = &extensionsv1alpha1.Extension{ObjectMeta: metav1.ObjectMeta{Name: "controlplane-cert-service"}}
 		runtimeCertificate = &certv1alpha1.Certificate{ObjectMeta: metav1.ObjectMeta{Namespace: "garden", Name: "tls"}}
 		seedCertificate    = &certv1alpha1.Certificate{ObjectMeta: metav1.ObjectMeta{Namespace: "garden", Name: "ingress-wildcard-cert"}}
 
@@ -62,7 +62,7 @@ var _ = Describe("Shoot-Cert-Service Tests", func() {
 		seedPatch := client.MergeFrom(seed.DeepCopy())
 		seed.Spec.Extensions = []gardencorev1beta1.Extension{
 			{
-				Type:           "shoot-cert-service",
+				Type:           "controlplane-cert-service",
 				ProviderConfig: rawExtension,
 			},
 		}
@@ -92,7 +92,7 @@ var _ = Describe("Shoot-Cert-Service Tests", func() {
 		patch := client.MergeFrom(garden.DeepCopy())
 		garden.Spec.Extensions = []operatorv1alpha1.GardenExtension{
 			{
-				Type:           "shoot-cert-service",
+				Type:           "controlplane-cert-service",
 				ProviderConfig: rawExtension,
 			},
 		}
