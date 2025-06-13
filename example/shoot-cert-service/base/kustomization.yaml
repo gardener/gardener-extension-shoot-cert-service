@@ -18,7 +18,10 @@ patches:
         kind: Extension
         type: shoot-cert-service
         workerlessSupported: true
-        globallyEnabled: true
+        autoEnable:
+        - shoot
+        clusterCompatibility:
+        - shoot
     - op: add
       path: /spec/resources/1
       value:
@@ -27,3 +30,6 @@ patches:
         lifecycle:
           reconcile: BeforeKubeAPIServer
           delete: AfterKubeAPIServer
+        clusterCompatibility:
+        - garden
+        - seed

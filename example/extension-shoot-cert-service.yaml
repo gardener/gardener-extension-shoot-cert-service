@@ -27,11 +27,17 @@ spec:
               server: https://acme-v02.api.letsencrypt.org/directory
             name: garden
   resources:
-  - globallyEnabled: true
+  - autoEnable:
+    - shoot
+    clusterCompatibility:
+    - shoot
     kind: Extension
     type: shoot-cert-service
     workerlessSupported: true
-  - kind: Extension
+  - clusterCompatibility:
+    - garden
+    - seed
+    kind: Extension
     lifecycle:
       delete: AfterKubeAPIServer
       reconcile: BeforeKubeAPIServer
