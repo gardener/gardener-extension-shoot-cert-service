@@ -88,10 +88,21 @@ spec:
             # typically the same values as at .spec.deployment.values.certificateConfig.defaultIssuer
             ...
   resources:
-  - globallyEnabled: true # if true, the extension is enabled for all shoots by default
+  - autoEnable:
+    - shoot # if set, the extension is enabled for all shoots by default
+    clusterCompatibility:
+    - shoot
     kind: Extension
     type: shoot-cert-service
     workerlessSupported: true
+  - clusterCompatibility:
+    - garden
+    - seed
+    kind: Extension
+    lifecycle:
+      delete: AfterKubeAPIServer
+      reconcile: BeforeKubeAPIServer
+    type: controlplane-cert-service
 ```
 
 #### Providing Trusted TLS Certificate for Garden Runtime Cluster
@@ -224,15 +235,19 @@ kind: ControllerRegistration
 
 #### Enablement
 
-If the `shoot-cert-service` should be enabled for every shoot cluster in your Gardener managed environment, you need to globally enable it in the `ControllerRegistration`:
+If the `shoot-cert-service` should be enabled for every shoot cluster in your Gardener managed environment, you need to auto enable it in the `ControllerRegistration`:
 ```yaml
 apiVersion: core.gardener.cloud/v1beta1
 kind: ControllerRegistration
 ...
   resources:
-  - globallyEnabled: true
-    kind: Extension
+  - kind: Extension
     type: shoot-cert-service
+    autoEnable:
+    - shoot # if set, the extension is enabled for all shoots by default
+    clusterCompatibility:
+    - shoot
+    workerlessSupported: true
 ```
 
 Alternatively, you're given the option to only enable the service for certain shoots:
