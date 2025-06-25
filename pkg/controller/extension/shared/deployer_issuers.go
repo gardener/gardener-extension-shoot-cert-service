@@ -167,12 +167,8 @@ func (d *Deployer) createIssuer(input Issuer) *certv1alpha1.Issuer {
 			CA:   d.createCASpec(input),
 		},
 	}
-	if !d.values.ShootDeployment {
-		class := "seed"
-		if d.values.GardenDeployment {
-			class = "garden"
-		}
-		issuer.Annotations = map[string]string{source.AnnotClass: class}
+	if d.values.CertClass != "" {
+		issuer.Annotations = map[string]string{source.AnnotClass: d.values.CertClass}
 	}
 	if input.RequestsPerDayQuota > 0 {
 		issuer.Spec.RequestsPerDayQuota = &input.RequestsPerDayQuota
