@@ -9,6 +9,7 @@ import (
 	"fmt"
 
 	certv1alpha1 "github.com/gardener/cert-management/pkg/apis/cert/v1alpha1"
+	"github.com/gardener/cert-management/pkg/cert/source"
 	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -165,6 +166,13 @@ func (d *Deployer) createIssuer(input Issuer) *certv1alpha1.Issuer {
 			ACME: d.createACMESpec(input),
 			CA:   d.createCASpec(input),
 		},
+	}
+	if !d.values.ShootDeployment {
+		class := "seed"
+		if d.values.GardenDeployment {
+			class = "garden"
+		}
+		issuer.Annotations = map[string]string{source.AnnotClass: class}
 	}
 	if input.RequestsPerDayQuota > 0 {
 		issuer.Spec.RequestsPerDayQuota = &input.RequestsPerDayQuota
