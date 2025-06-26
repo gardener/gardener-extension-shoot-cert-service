@@ -1289,6 +1289,9 @@ var _ = Describe("Deployer", func() {
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "garden",
 						Namespace: values.Namespace,
+						Annotations: map[string]string{
+							"cert.gardener.cloud/class": "garden",
+						},
 					},
 					Spec: certv1alpha1.IssuerSpec{
 						CA: &certv1alpha1.CASpec{
@@ -1352,6 +1355,9 @@ var _ = Describe("Deployer", func() {
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "garden",
 						Namespace: values.Namespace,
+						Annotations: map[string]string{
+							"cert.gardener.cloud/class": "seed",
+						},
 					},
 					Spec: certv1alpha1.IssuerSpec{
 						ACME: &certv1alpha1.ACMESpec{
