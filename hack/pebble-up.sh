@@ -13,7 +13,7 @@ PEBBLE_CERTIFICATE_VALIDITY=${PEBBLE_CERTIFICATE_VALIDITY:-7776000} # default va
 repo_root="$(readlink -f $(dirname ${0})/..)"
 mkdir -p ${repo_root}/dev
 
-export KUBECONFIG=$repo_root/gardener/example/provider-local/seed-operator/base/kubeconfig
+export KUBECONFIG=$repo_root/gardener/dev-setup/gardenlet/components/kubeconfigs/seed-local/kubeconfig
 
 create_certificate() {
   # generate certificate for ACME server

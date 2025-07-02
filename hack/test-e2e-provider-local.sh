@@ -26,7 +26,7 @@ trap '{
   export_artifacts "gardener-local"
   make kind-operator-down
 }' EXIT
-export KUBECONFIG=$repo_root/gardener/example/provider-local/seed-operator/base/kubeconfig
+export KUBECONFIG=$repo_root/gardener/dev-setup/gardenlet/components/kubeconfigs/seed-local/kubeconfig
 echo "<<<<<<<<<<<<<<<<<<<< kind-operator-up done"
 
 echo ">>>>>>>>>>>>>>>>>>>> operator-up"
