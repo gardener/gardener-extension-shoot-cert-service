@@ -39,7 +39,7 @@ start:
 		--ignore-operation-annotation=$(IGNORE_OPERATION_ANNOTATION) \
 		--leader-election=$(LEADER_ELECTION) \
 		--config=./example/00-config.yaml \
-		--gardener-version="v1.85.0"
+		--gardener-version="v1.122.1"
 
 #################################################################
 # Rules related to binary build, Docker image build and release #
