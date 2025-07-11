@@ -19,15 +19,15 @@ cd "$repo_root/gardener"
 git checkout "$gardener_version"
 source "$repo_root/gardener/hack/ci-common.sh"
 
-echo ">>>>>>>>>>>>>>>>>>>> kind-operator-up"
-make kind-operator-up
+echo ">>>>>>>>>>>>>>>>>>>> kind-single-node-up"
+make kind-single-node-up
 trap '{
   cd "$repo_root/gardener"
   export_artifacts "gardener-local"
   make kind-operator-down
 }' EXIT
 export KUBECONFIG=$repo_root/gardener/dev-setup/gardenlet/components/kubeconfigs/seed-local/kubeconfig
-echo "<<<<<<<<<<<<<<<<<<<< kind-operator-up done"
+echo "<<<<<<<<<<<<<<<<<<<< kind-single-node-up done"
 
 echo ">>>>>>>>>>>>>>>>>>>> operator-up"
 make operator-up
@@ -55,7 +55,7 @@ export GOMEGA_DEFAULT_CONSISTENTLY_POLLING_INTERVAL=200ms
 
 ginkgo --timeout=30m --v --show-node-events "$@" $repo_root/test/e2e/...
 
-echo ">>>>>>>>>>>>>>>>>>>> kind-operator-down"
+echo ">>>>>>>>>>>>>>>>>>>> kind-single-node-down"
 cd "$repo_root/gardener"
-make kind-operator-down
-echo "<<<<<<<<<<<<<<<<<<<< kind-operator-down done"
+make kind-single-node-down
+echo "<<<<<<<<<<<<<<<<<<<< kind-single-node-down done"
