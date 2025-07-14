@@ -24,7 +24,7 @@ make kind-single-node-up
 trap '{
   cd "$repo_root/gardener"
   export_artifacts "gardener-local"
-  make kind-operator-down
+  make kind-single-node-down
 }' EXIT
 export KUBECONFIG=$repo_root/gardener/dev-setup/gardenlet/components/kubeconfigs/seed-local/kubeconfig
 echo "<<<<<<<<<<<<<<<<<<<< kind-single-node-up done"
