@@ -6,7 +6,7 @@ toolchain go1.24.5
 
 require (
 	github.com/ahmetb/gen-crd-api-reference-docs v0.3.0
-	github.com/gardener/cert-management v0.17.7
+	github.com/gardener/cert-management v0.17.8
 	github.com/gardener/gardener v1.123.1
 	github.com/go-logr/logr v1.4.2
 	github.com/onsi/ginkgo/v2 v2.23.4
@@ -45,7 +45,7 @@ require (
 	github.com/blang/semver/v4 v4.0.0 // indirect
 	github.com/brunoga/deep v1.2.5 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
-	github.com/cert-manager/cert-manager v1.18.1 // indirect
+	github.com/cert-manager/cert-manager v1.18.2 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/coreos/go-systemd/v22 v22.5.0 // indirect
 	github.com/cyphar/filepath-securejoin v0.4.1 // indirect
@@ -61,7 +61,7 @@ require (
 	github.com/gardener/etcd-druid/api v0.30.1 // indirect
 	github.com/gardener/external-dns-management v0.25.2 // indirect
 	github.com/gardener/machine-controller-manager v0.58.0 // indirect
-	github.com/go-acme/lego/v4 v4.23.1 // indirect
+	github.com/go-acme/lego/v4 v4.24.0 // indirect
 	github.com/go-asn1-ber/asn1-ber v1.5.6 // indirect
 	github.com/go-jose/go-jose/v4 v4.1.0 // indirect
 	github.com/go-ldap/ldap/v3 v3.4.8 // indirect
