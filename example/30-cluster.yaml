@@ -20,7 +20,7 @@ spec:
       dns:
         domain: foo.bar.example.com
       kubernetes:
-        version: 1.28.2
+        version: 1.32.0
       resources:
         - name: issuer-custom-eab-hmackey
           resourceRef:
