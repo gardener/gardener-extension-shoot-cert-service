@@ -46,7 +46,6 @@
     "github.com/beorn7/perks",
     "github.com/blang/semver/v4",
     "github.com/brunoga/deep",
-    "github.com/cenkalti/backoff/v4",
     "github.com/cespare/xxhash/v2",
     "github.com/coreos/go-systemd/v22",
     "github.com/cyphar/filepath-securejoin",
