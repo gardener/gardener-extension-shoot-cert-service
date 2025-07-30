@@ -96,7 +96,7 @@ jobs:
         with:
           blobs-directory: /tmp/blobs.d
           ocm-resources: |
-           - name: gosec-report
+            - name: gosec-report
               relation: local
               access:
                 type: localBlob
