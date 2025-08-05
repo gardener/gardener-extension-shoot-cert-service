@@ -65,7 +65,15 @@ func (r *controlPlaneCert) reconcile(ctx context.Context) error {
 	result, err := controllerutils.CreateOrGetAndMergePatch(ctx, r.client, cert, func() error {
 		cert.Annotations = annotations
 		cert.Labels = labels
-		cert.Spec.CommonName = ptr.To("*." + r.domain)
+		dnsName := "*." + r.domain
+		if len(dnsName) <= 64 {
+			cert.Spec.CommonName = ptr.To(dnsName)
+			cert.Spec.DNSNames = nil
+		} else {
+			cert.Spec.CommonName = nil
+			cert.Spec.DNSNames = []string{dnsName}
+		}
+
 		cert.Spec.SecretLabels = labels
 		cert.Spec.SecretRef = &corev1.SecretReference{
 			Name:      SecretNameControlPlaneCert,
