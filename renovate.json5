@@ -15,7 +15,7 @@
       groupName: 'Go',
       description: 'Group all Go dependencies together.',
       matchPackageNames: [
-        'actions/setup-go',
+        'actions/go-versions',
         'go',
         'golang',
       ],
