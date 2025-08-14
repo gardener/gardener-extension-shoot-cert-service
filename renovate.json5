@@ -10,6 +10,16 @@
   postUpdateOptions: [
     'gomodTidy',
   ],
+  packageRules: [
+    {
+      groupName: 'Go',
+      description: 'Group all Go dependencies together.',
+      matchPackageNames: [
+        'go',
+        'golang',
+      ],
+    },
+  ],
   // The following list of dependencies to ignore is updated by `make generate`.
   // DO NOT EDIT THIS SECTION MANUALLY.
   ignoreDeps: [
