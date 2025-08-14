@@ -1,25 +1,15 @@
 {
-  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "dependencyDashboard": true,
+  $schema: 'https://docs.renovatebot.com/renovate-schema.json',
   extends: [
     'config:recommended',
+    'github>gardener/ci-infra//config/renovate/group-go-updates.json5',
   ],
+  dependencyDashboard: true,
   labels: [
     'kind/enhancement',
   ],
   postUpdateOptions: [
     'gomodTidy',
-  ],
-  packageRules: [
-    {
-      groupName: 'Go',
-      description: 'Group all Go dependencies together.',
-      matchPackageNames: [
-        'actions/go-versions',
-        'go',
-        'golang',
-      ],
-    },
   ],
   // The following list of dependencies to ignore is updated by `make generate`.
   // DO NOT EDIT THIS SECTION MANUALLY.
