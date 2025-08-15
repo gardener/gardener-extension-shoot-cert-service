@@ -108,12 +108,12 @@ func (d *Deployer) issuersChecksum() (string, error) {
 	return fmt.Sprintf("%x", sha256.Sum256(issuersData)), nil
 }
 
-func (d *Deployer) createIssuers() ([]client.Object, error) {
+func (d *Deployer) createIssuers() ([]client.Object, []Issuer, error) {
 	var objects []client.Object
 
 	issuers, err := d.collectIssuers()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	for _, issuer := range issuers {
@@ -125,7 +125,7 @@ func (d *Deployer) createIssuers() ([]client.Object, error) {
 		}
 		objects = append(objects, d.createIssuer(issuer))
 	}
-	return objects, nil
+	return objects, issuers, nil
 }
 
 func (d *Deployer) secretACME(issuer Issuer) *corev1.Secret {

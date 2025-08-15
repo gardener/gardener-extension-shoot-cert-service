@@ -7,12 +7,17 @@ package shared
 import (
 	"context"
 	_ "embed"
+	"errors"
 	"fmt"
 	"time"
 
+	"github.com/gardener/cert-management/pkg/apis/cert/v1alpha1"
+	"github.com/gardener/cert-management/pkg/certman2/core"
+	"github.com/gardener/cert-management/pkg/shared/legobridge"
 	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
 	resourcesv1alpha1 "github.com/gardener/gardener/pkg/apis/resources/v1alpha1"
 	"github.com/gardener/gardener/pkg/utils/managedresources"
+	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -27,7 +32,7 @@ func (d *Deployer) DeployGardenOrSeedManagedResource(ctx context.Context, c clie
 
 	objects = append(objects, d.createServiceAccount())
 	objects = append(objects, d.createCACertificatesConfigMap())
-	issuerObjects, err := d.createIssuers()
+	issuerObjects, issuers, err := d.createIssuers()
 	if err != nil {
 		return err
 	}
@@ -61,6 +66,10 @@ func (d *Deployer) DeployGardenOrSeedManagedResource(ctx context.Context, c clie
 	data, err := registry.AddAllAndSerialize(objects...)
 	if err != nil {
 		return err
+	}
+
+	if err := d.validateIssuerSecrets(ctx, c, issuers); err != nil {
+		return fmt.Errorf("failed to validate issuer secrets: %w", err)
 	}
 
 	keepObjects := false
@@ -105,4 +114,40 @@ func (d *Deployer) createNetworkPolicy() *networkingv1.NetworkPolicy {
 			},
 		},
 	}
+}
+
+func (d *Deployer) validateIssuerSecrets(ctx context.Context, c client.Client, issuers []Issuer) error {
+	var errs []error
+	for _, issuer := range issuers {
+		if issuer.ACME != nil {
+			if issuer.ACME.PrivateKeySecretName != "" {
+				secret := &corev1.Secret{}
+				if err := c.Get(ctx, client.ObjectKey{Namespace: d.values.Namespace, Name: issuer.ACME.PrivateKeySecretName}, secret); err != nil {
+					errs = append(errs, fmt.Errorf("failed to read secret for issuer %s: %w", issuer.Name, err))
+				}
+				if err := legobridge.ValidatePrivateKeySecretDataKeys(secret.Data); err != nil {
+					errs = append(errs, fmt.Errorf("failed to validate ACME private key secret for issuer %s: %w", issuer.Name, err))
+				}
+			}
+			if issuer.ACME.ExternalAccountBinding != nil && issuer.ACME.ExternalAccountBinding.KeySecretName != "" {
+				support, err := core.NewHandlerSupport("dummy", d.values.Namespace, 100)
+				if err != nil {
+					errs = append(errs, fmt.Errorf("failed to create support for EAB key secret validation: %w", err))
+				}
+				_, _, err = support.LoadEABHmacKey(ctx,
+					c,
+					core.NewIssuerKey(client.ObjectKey{Namespace: d.values.Namespace, Name: issuer.Name}, false),
+					&v1alpha1.ACMESpec{
+						ExternalAccountBinding: &v1alpha1.ACMEExternalAccountBinding{
+							KeyID:        issuer.ACME.ExternalAccountBinding.KeyID,
+							KeySecretRef: &corev1.SecretReference{Namespace: d.values.Namespace, Name: issuer.ACME.ExternalAccountBinding.KeySecretName},
+						},
+					})
+				if err != nil {
+					errs = append(errs, fmt.Errorf("failed to validate EAB key secret for issuer %s: %w", issuer.Name, err))
+				}
+			}
+		}
+	}
+	return errors.Join(errs...)
 }

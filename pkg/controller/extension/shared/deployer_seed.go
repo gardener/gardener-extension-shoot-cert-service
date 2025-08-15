@@ -62,7 +62,7 @@ func (d *Deployer) DeploySeedManagedResource(ctx context.Context, c client.Clien
 	objects = append(objects, d.createPodDisruptionBudget())
 	objects = append(objects, d.createServiceAccount())
 	objects = append(objects, d.createCACertificatesConfigMap())
-	issuerObjects, err := d.createIssuers()
+	issuerObjects, issuers, err := d.createIssuers()
 	if err != nil {
 		return err
 	}
@@ -85,6 +85,10 @@ func (d *Deployer) DeploySeedManagedResource(ctx context.Context, c client.Clien
 	data, err := registry.AddAllAndSerialize(objects...)
 	if err != nil {
 		return err
+	}
+
+	if err := d.validateIssuerSecrets(ctx, c, issuers); err != nil {
+		return fmt.Errorf("failed to validate issuer secrets: %w", err)
 	}
 
 	keepObjects := false
