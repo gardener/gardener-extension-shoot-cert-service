@@ -5,7 +5,6 @@
 **/dev
 /hack/tools/bin
 /gardener
-/example/shoot-cert-service/pebble
 
 *.coverprofile
 *.html

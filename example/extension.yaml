@@ -4,31 +4,28 @@ metadata:
   annotations:
     security.gardener.cloud/pod-security-enforce: baseline
   name: extension-shoot-cert-service
-  spec:
-    deployment:
-      extension:
-        injectGardenKubeconfig: true
-        policy: Always
-        runtimeClusterValues:
-          certificateConfig:
-            defaultIssuer:
-              acme:
-                email: some.user@example.com
-                server: https://acme-v02.api.letsencrypt.org/directory
-              name: garden
-        values:
-          certificateConfig:
-            defaultIssuer:
-              acme:
-                email: some.user@example.com
-                server: https://acme-v02.api.letsencrypt.org/directory
-              name: garden
 spec:
   deployment:
     extension:
       helm:
         ociRepository:
           ref: europe-docker.pkg.dev/gardener-project/public/charts/gardener/extensions/shoot-cert-service:v1.53.0-dev
+      injectGardenKubeconfig: true
+      policy: Always
+      runtimeClusterValues:
+        certificateConfig:
+          defaultIssuer:
+            acme:
+              email: some.user@example.com
+              server: https://acme-v02.api.letsencrypt.org/directory
+            name: garden
+      values:
+        certificateConfig:
+          defaultIssuer:
+            acme:
+              email: some.user@example.com
+              server: https://acme-v02.api.letsencrypt.org/directory
+            name: garden
   resources:
   - autoEnable:
     - shoot

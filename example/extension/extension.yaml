@@ -1,0 +1,21 @@
+apiVersion: operator.gardener.cloud/v1alpha1
+kind: Extension
+metadata:
+  name: extension-shoot-cert-service
+spec:
+  deployment:
+    extension:
+      runtimeClusterValues:
+        certificateConfig:
+          defaultIssuer:
+            acme:
+              email: some.user@example.com
+              server: https://acme-v02.api.letsencrypt.org/directory
+            name: garden
+      values:
+        certificateConfig:
+          defaultIssuer:
+            acme:
+              email: some.user@example.com
+              server: https://acme-v02.api.letsencrypt.org/directory
+            name: garden

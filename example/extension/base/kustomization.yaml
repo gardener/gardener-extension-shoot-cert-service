@@ -5,30 +5,4 @@ resources:
 - extension.yaml
 
 patches:
-- target:
-    version: v1alpha1
-    group: operator.gardener.cloud
-    kind: Extension
-    name: extension-shoot-cert-service
-  patch: |
-    - op: replace
-      path: /spec/resources/0
-      value:
-        kind: Extension
-        type: shoot-cert-service
-        workerlessSupported: true
-        autoEnable:
-        - shoot
-        clusterCompatibility:
-        - shoot
-    - op: add
-      path: /spec/resources/1
-      value:
-        kind: Extension
-        type: controlplane-cert-service
-        lifecycle:
-          reconcile: BeforeKubeAPIServer
-          delete: AfterKubeAPIServer
-        clusterCompatibility:
-        - garden
-        - seed
+- path: extension-patch.yaml
