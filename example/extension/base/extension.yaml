@@ -7,7 +7,7 @@ spec:
     extension:
       helm:
         ociRepository:
-          ref: local-skaffold/gardener-extension-shoot-cert-service/charts/extension:v0.0.0
+          ref: europe-docker.pkg.dev/gardener-project/public/charts/gardener/extensions/shoot-cert-service:v1.53.0-dev
   resources:
   - kind: Extension
     type: shoot-cert-service
