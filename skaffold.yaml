@@ -64,6 +64,6 @@ resourceSelector:
 manifests:
   kustomize:
     paths:
-      - example/shoot-cert-service/pebble
+      - dev/extension
 deploy:
   kubectl: {}

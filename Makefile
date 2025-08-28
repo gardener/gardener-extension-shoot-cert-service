@@ -24,7 +24,7 @@ endif
 # Tools                                 #
 #########################################
 
-TOOLS_DIR := hack/tools
+TOOLS_DIR := $(HACK_DIR)/tools
 include $(GARDENER_HACK_DIR)/tools.mk
 
 #########################################
@@ -86,9 +86,8 @@ check: $(GOIMPORTS) $(GOLANGCI_LINT) $(HELM)
 	@GARDENER_HACK_DIR=$(GARDENER_HACK_DIR) $(REPO_ROOT)/hack/check-skaffold-deps.sh
 
 .PHONY: generate
-generate: $(CONTROLLER_GEN) $(GEN_CRD_API_REFERENCE_DOCS) $(HELM) $(MOCKGEN) $(YQ) $(VGOPATH) $(EXTENSION_GEN) $(KUBECTL)
-	@VGOPATH=$(VGOPATH) REPO_ROOT=$(REPO_ROOT) CONTROLLER_GEN=$(CONTROLLER_GEN) GARDENER_HACK_DIR=$(GARDENER_HACK_DIR) bash $(GARDENER_HACK_DIR)/generate-sequential.sh ./charts/... ./cmd/... ./pkg/... ./test/... ./example/...
-	@./hack/prepare-operator-extension.sh
+generate: $(CONTROLLER_GEN) $(GEN_CRD_API_REFERENCE_DOCS) $(HELM) $(MOCKGEN) $(KUSTOMIZE) $(YQ) $(VGOPATH) $(EXTENSION_GEN) $(KUBECTL)
+	@VGOPATH=$(VGOPATH) REPO_ROOT=$(REPO_ROOT) CONTROLLER_GEN=$(CONTROLLER_GEN) GARDENER_HACK_DIR=$(GARDENER_HACK_DIR) bash $(GARDENER_HACK_DIR)/generate-sequential.sh ./charts/... ./cmd/... ./example/... ./pkg/... ./test/...
 	$(MAKE) format
 	@./hack/generate-renovate-ignore-deps.sh
 

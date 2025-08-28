@@ -15,7 +15,7 @@ To let the `shoot-cert-service` operate properly, you need to have:
 
 Using an operator extension resource (`extension.operator.gardener.cloud`) is the recommended way to deploy the `shoot-cert-service` extension.
 
-An example of an `operator` extension resource can be found at [extension-shoot-cert-service.yaml](../../example/extension-shoot-cert-service.yaml).
+An example of an `operator` extension resource can be found at [`example/extension.yaml`](../../example/extension.yaml).
 
 The `ControllerRegistration` contains a reference to the Helm chart which eventually deploy the `shoot-cert-service` to seed clusters.
 It offers some configuration options, mainly to set up a default issuer for shoot clusters.
