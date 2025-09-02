@@ -203,7 +203,7 @@ var _ = Describe("Deployer", func() {
 				args = append(args, "--source=/var/run/secrets/gardener.cloud/shoot/generic-kubeconfig/kubeconfig")
 			} else {
 				args = append(args,
-					"--issuer.cert-class="+certClass,
+					"--cert-class="+certClass,
 					"--use-dnsrecords=true",
 				)
 			}
