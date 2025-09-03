@@ -6,12 +6,15 @@ package shared
 
 import (
 	"context"
+	"crypto/x509"
 	_ "embed"
+	"encoding/base64"
 	"reflect"
 	"strings"
 	"time"
 
 	certv1alpha1 "github.com/gardener/cert-management/pkg/apis/cert/v1alpha1"
+	"github.com/gardener/cert-management/pkg/shared/legobridge"
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
 	resourcesv1alpha1 "github.com/gardener/gardener/pkg/apis/resources/v1alpha1"
@@ -1186,7 +1189,7 @@ var _ = Describe("Deployer", func() {
 			})
 		})
 
-		It("should deploy it with additional issuers", func() {
+		var prepareValuesWithIssuers = func() {
 			values.CertConfig.Issuers = []service.IssuerConfig{
 				{
 					Name:                 "bar",
@@ -1213,8 +1216,36 @@ var _ = Describe("Deployer", func() {
 			}
 			values.Resources = []gardencorev1beta1.NamedResourceReference{
 				{Name: "bar-secret", ResourceRef: autoscalingv1.CrossVersionObjectReference{Name: "original-bar-secret", Kind: "Secret"}},
-				{Name: "eab-secret", ResourceRef: autoscalingv1.CrossVersionObjectReference{Name: "original-bar-secret", Kind: "Secret"}},
+				{Name: "eab-secret", ResourceRef: autoscalingv1.CrossVersionObjectReference{Name: "original-eab-secret", Kind: "Secret"}},
 			}
+		}
+
+		It("should deploy it with additional issuers", func() {
+			_, privateKey, err := legobridge.GenerateKey(x509.ECDSA, 256)
+			Expect(err).NotTo(HaveOccurred())
+			barSecret := &corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "ref-original-bar-secret",
+					Namespace: "shoot--foo--bar",
+				},
+				Data: map[string][]byte{
+					"privateKey": privateKey,
+				},
+			}
+			Expect(c.Create(ctx, barSecret)).To(Succeed())
+
+			eabSecret := &corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "ref-original-eab-secret",
+					Namespace: "shoot--foo--bar",
+				},
+				Data: map[string][]byte{
+					"hmacKey": []byte(base64.StdEncoding.EncodeToString([]byte("dummy-key"))),
+				},
+			}
+			Expect(c.Create(ctx, eabSecret)).To(Succeed())
+
+			prepareValuesWithIssuers()
 			resources := append(standardSeedResources(),
 				&certv1alpha1.Issuer{
 					ObjectMeta: metav1.ObjectMeta{
@@ -1233,7 +1264,7 @@ var _ = Describe("Deployer", func() {
 							ExternalAccountBinding: &certv1alpha1.ACMEExternalAccountBinding{
 								KeyID: "key-id",
 								KeySecretRef: &corev1.SecretReference{
-									Name:      "ref-original-bar-secret",
+									Name:      "ref-original-eab-secret",
 									Namespace: "shoot--foo--bar",
 								},
 							},
@@ -1266,8 +1297,41 @@ var _ = Describe("Deployer", func() {
 				},
 			)
 			testSeedManagedResource(resources, func(deployment *appsv1.Deployment) {
-				deployment.Spec.Template.Annotations = map[string]string{"checksum/issuers": "51971e0765b20445e8208abb457f19126570c241cc303c6a37faf82d3f6d79b4"}
+				deployment.Spec.Template.Annotations = map[string]string{"checksum/issuers": "e983e439383a72afff0705063364c5aefcdfbe6ba912bcc6b3d77cdc61be60a0"}
 			})
+		})
+
+		It("should have validation errors for invalid issuer secrets", func() {
+			barSecret := &corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "ref-original-bar-secret",
+					Namespace: "shoot--foo--bar",
+				},
+				Data: map[string][]byte{
+					"invalid-key": []byte("invalid-value"),
+				},
+			}
+			Expect(c.Create(ctx, barSecret)).To(Succeed())
+
+			eabSecret := &corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "ref-original-eab-secret",
+					Namespace: "shoot--foo--bar",
+				},
+				Data: map[string][]byte{
+					"invalid-key2": []byte("invalid-value"),
+				},
+			}
+			Expect(c.Create(ctx, eabSecret)).To(Succeed())
+
+			prepareValuesWithIssuers()
+
+			deployer := NewDeployer(values)
+			err := deployer.DeploySeedManagedResource(ctx, c)
+			Expect(err).To(HaveOccurred())
+			msg := err.Error()
+			Expect(msg).To(HavePrefix("failed to validate issuer secrets: failed to validate ACME private key secret for issuer bar: invalid secret data keys: `invalid-key`"))
+			Expect(msg).To(ContainSubstring("failed to validate EAB key secret for issuer bar: key hmacKey not found in EAB secret shoot--foo--bar/ref-original-eab-secret"))
 		})
 	})
 

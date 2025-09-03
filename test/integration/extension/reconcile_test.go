@@ -6,6 +6,7 @@ package extension_test
 
 import (
 	"context"
+	"crypto/x509"
 	"flag"
 	"fmt"
 	"path/filepath"
@@ -13,6 +14,7 @@ import (
 	"time"
 
 	certv1alpha1 "github.com/gardener/cert-management/pkg/apis/cert/v1alpha1"
+	"github.com/gardener/cert-management/pkg/shared/legobridge"
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
 	resourcesv1alpha1 "github.com/gardener/gardener/pkg/apis/resources/v1alpha1"
@@ -209,6 +211,20 @@ var _ = BeforeSuite(func() {
 
 var _ = Describe("Extension tests", func() {
 	It("it should reconcile extension with own issuer", func() {
+		By("create issuer secret")
+		_, privateKey, err := legobridge.GenerateKey(x509.ECDSA, 256)
+		Expect(err).NotTo(HaveOccurred())
+		secret := &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "ref-my-acme",
+				Namespace: testName,
+			},
+			Data: map[string][]byte{
+				"privateKey": privateKey,
+			},
+		}
+		Expect(c.Create(ctx, secret)).To(Succeed())
+
 		By("creating extension")
 		ext := &extensionsv1alpha1.Extension{
 			ObjectMeta: metav1.ObjectMeta{
