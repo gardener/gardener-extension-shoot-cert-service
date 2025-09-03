@@ -5,3 +5,5 @@ main-source:
         policy: skip
         comment: |
           we use gosec for sast scanning. See attached log.
+componentPrefixes:
+  - europe-docker.pkg.dev/gardener-project
