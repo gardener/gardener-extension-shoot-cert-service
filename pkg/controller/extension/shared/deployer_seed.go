@@ -494,7 +494,7 @@ func (d *Deployer) args() []string {
 	} else {
 		args = append(args,
 			fmt.Sprintf("--namespace=%s", d.values.Namespace),
-			fmt.Sprintf("--issuer.cert-class=%s", d.values.CertClass),
+			fmt.Sprintf("--cert-class=%s", d.values.CertClass),
 			"--use-dnsrecords=true",
 		)
 	}
