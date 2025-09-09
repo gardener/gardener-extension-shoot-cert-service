@@ -1,0 +1,235 @@
+ocm:
+  component_name: github.com/gardener/cert-management
+  component_version: v0.18.0
+release_notes:
+- audience: user
+  author:
+    hostname: github.com
+    type: githubUser
+    username: marc1404
+  category: bugfix
+  contents: Fixed key algorithm and bit size in self-signed certificates from a CA
+    issuer.
+  mimetype: text/markdown
+  reference: '[#451](https://github.com/gardener/cert-management/pull/451)'
+  type: standard
+- audience: operator
+  author:
+    hostname: github.com
+    type: githubUser
+    username: georgibaltiev
+  category: other
+  contents: Containers, which do not require privilege escalations, now forbid privilege
+    escalations explicitly.
+  mimetype: text/markdown
+  reference: '[#468](https://github.com/gardener/cert-management/pull/468)'
+  type: standard
+- audience: operator
+  author:
+    hostname: github.com
+    type: githubUser
+    username: MartinWeindel
+  category: other
+  contents: Support `cert.gardener.cloud/class` annotation for `issuers`
+  mimetype: text/markdown
+  reference: '[#512](https://github.com/gardener/cert-management/pull/512)'
+  type: standard
+- audience: developer
+  author:
+    hostname: github.com
+    type: githubUser
+    username: ccwienk
+  category: other
+  contents: migrate CICD-Pipelines to GitHub-Actions
+  mimetype: text/markdown
+  reference: '[#520](https://github.com/gardener/cert-management/pull/520)'
+  type: standard
+- audience: user
+  author:
+    hostname: github.com
+    type: githubUser
+    username: marc1404
+  category: feature
+  contents: Added `cert.gardener.cloud/not-before` annotation and `IssuanceDate` field
+    to `Certificate`.
+  mimetype: text/markdown
+  reference: '[#489](https://github.com/gardener/cert-management/pull/489)'
+  type: standard
+- audience: user
+  author:
+    hostname: github.com
+    type: githubUser
+    username: MartinWeindel
+  category: other
+  contents: Add validation of data fields for secrets of an ACME issuer secret (private
+    key and external account binding secrets).
+  mimetype: text/markdown
+  reference: '[#554](https://github.com/gardener/cert-management/pull/554)'
+  type: standard
+- audience: operator
+  author:
+    hostname: github.com
+    type: githubUser
+    username: MartinWeindel
+  category: other
+  contents: Update base image from `debian11` to `debian12`.
+  mimetype: text/markdown
+  reference: '[#456](https://github.com/gardener/cert-management/pull/456)'
+  type: standard
+- audience: operator
+  author:
+    hostname: github.com
+    type: githubUser
+    username: matthias-horne
+  category: bugfix
+  contents: 'fix: ClusterRole needs dnsrecord permissions when issuerUseDnsrecords
+    is true'
+  mimetype: text/markdown
+  reference: '[#460](https://github.com/gardener/cert-management/pull/460)'
+  type: standard
+- audience: user
+  author:
+    hostname: github.com
+    type: githubUser
+    username: marc1404
+  category: doc
+  contents: Replaced usages of `secretName` in the `Certificate` spec with `secretRef`.
+  mimetype: text/markdown
+  reference: '[#438](https://github.com/gardener/cert-management/pull/438)'
+  type: standard
+- audience: operator
+  author:
+    hostname: github.com
+    type: githubUser
+    username: marc1404
+  category: feature
+  contents: Introduce multi-arch build for `linux/arm64` images.
+  mimetype: text/markdown
+  reference: '[#405](https://github.com/gardener/cert-management/pull/405)'
+  type: standard
+- audience: operator
+  author:
+    hostname: github.com
+    type: githubUser
+    username: MartinWeindel
+  category: other
+  contents: Support `DNSRecord.spec.class` by annotation `cert.gardener.cloud/dnsrecord-class`
+  mimetype: text/markdown
+  reference: '[#384](https://github.com/gardener/cert-management/pull/384)'
+  type: standard
+- audience: user
+  author:
+    hostname: github.com
+    type: githubUser
+    username: marc1404
+  category: feature
+  contents: 'Added support for subject alternative names (SANs) in the `Certificate`
+    spec and certificate signing requests (CSRs). The following SANs have been added:
+    `emailAddresses`, `ipAddresses`, and `uris`.'
+  mimetype: text/markdown
+  reference: '[#524](https://github.com/gardener/cert-management/pull/524)'
+  type: standard
+- audience: operator
+  author:
+    hostname: github.com
+    type: githubUser
+    username: MartinWeindel
+  category: other
+  contents: Add condition for deployment of CRDs in Helm charts
+  mimetype: text/markdown
+  reference: '[#447](https://github.com/gardener/cert-management/pull/447)'
+  type: standard
+- audience: user
+  author:
+    hostname: github.com
+    type: githubUser
+    username: marc1404
+  category: doc
+  contents: Documented the correct minimum duration of `Certificate`s assuming the
+    default renewal window of 30 days.
+  mimetype: text/markdown
+  reference: '[#495](https://github.com/gardener/cert-management/pull/495)'
+  type: standard
+- audience: dependency
+  author:
+    hostname: github.com
+    type: githubUser
+    username: gardener-ci-robot
+  category: other
+  contents: Update module `gardener/gardener` to `v1.111.1`.
+  mimetype: text/markdown
+  reference: '[#398](https://github.com/gardener/cert-management/pull/398)'
+  type: standard
+- audience: user
+  author:
+    hostname: github.com
+    type: githubUser
+    username: MartinWeindel
+  category: bugfix
+  contents: Fix exhaustion of request quotas on concurrent certificates with same
+    domain name
+  mimetype: text/markdown
+  reference: '[#399](https://github.com/gardener/cert-management/pull/399)'
+  type: standard
+- audience: user
+  author:
+    hostname: github.com
+    type: githubUser
+    username: marc1404
+  category: feature
+  contents: 'Introduced new `Certificate` fields: `.spec.renewBefore`, `.status.renewalDate`.
+    The field `renewBefore` allows specifying whether a `Certificate` should be renewed
+    sooner than the configured renewal window.'
+  mimetype: text/markdown
+  reference: '[#569](https://github.com/gardener/cert-management/pull/569)'
+  type: standard
+- audience: developer
+  author:
+    hostname: github.com
+    type: githubUser
+    username: marc1404
+  category: doc
+  contents: Document gaps between the community `cert-manager` and Gardener's `cert-management`.
+  mimetype: text/markdown
+  reference: '[#379](https://github.com/gardener/cert-management/pull/379)'
+  type: standard
+- audience: user
+  author:
+    hostname: github.com
+    type: githubUser
+    username: marc1404
+  category: doc
+  contents: Added documentation for triggering a manual `Certificate` renewal.
+  mimetype: text/markdown
+  reference: '[#443](https://github.com/gardener/cert-management/pull/443)'
+  type: standard
+- audience: operator
+  author:
+    hostname: github.com
+    type: githubUser
+    username: MartinWeindel
+  category: bugfix
+  contents: Fix panic if target issuer referenced but not allowed
+  mimetype: text/markdown
+  reference: '[#371](https://github.com/gardener/cert-management/pull/371)'
+  type: standard
+- audience: user
+  author:
+    hostname: github.com
+    type: githubUser
+    username: MartinWeindel
+  category: doc
+  contents: Add documentation how to use ACME with external account binding.
+  mimetype: text/markdown
+  reference: '[#539](https://github.com/gardener/cert-management/pull/539)'
+  type: standard
+- audience: operator
+  author:
+    hostname: github.com
+    type: githubUser
+    username: MartinWeindel
+  category: other
+  contents: Fix the `linux/arm64` image build.
+  mimetype: text/markdown
+  reference: '[#531](https://github.com/gardener/cert-management/pull/531)'
+  type: standard
