@@ -4,7 +4,7 @@
 Gardener comes with an extension that enables shoot owners to request X.509 compliant certificates for shoot domains.
 
 ## Extension Installation
-The `shoot-cert-service` extension can be deployed and configured via Gardener's native resource [ControllerRegistration](https://github.com/gardener/gardener/blob/master/docs/extensions/controllerregistration.md).
+The `shoot-cert-service` extension can be deployed and configured via Gardener's native resource [ControllerRegistration](https://github.com/gardener/gardener/blob/master/docs/extensions/registration.md).
 
 ### Prerequisites
 To let the `shoot-cert-service` operate properly, you need to have:
