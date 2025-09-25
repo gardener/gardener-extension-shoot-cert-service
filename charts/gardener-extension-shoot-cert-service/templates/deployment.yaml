@@ -36,6 +36,7 @@ spec:
         networking.gardener.cloud/to-public-networks: allowed
         networking.gardener.cloud/to-private-networks: allowed
         networking.resources.gardener.cloud/to-all-istio-ingresses-istio-ingressgateway-tcp-9443: allowed
+        networking.resources.gardener.cloud/to-garden-virtual-garden-kube-apiserver-tcp-443: allowed
     spec:
       {{- if .Values.gardener.runtimeCluster.enabled }}
       priorityClassName: {{ .Values.gardener.runtimeCluster.priorityClassName }}
