@@ -9,7 +9,7 @@ spec:
     extension:
       helm:
         ociRepository:
-          ref: europe-docker.pkg.dev/gardener-project/public/charts/gardener/extensions/shoot-cert-service:v1.54.0-dev
+          ref: europe-docker.pkg.dev/gardener-project/public/charts/gardener/extensions/shoot-cert-service:v1.54.0
       injectGardenKubeconfig: true
       policy: Always
       runtimeClusterValues:
