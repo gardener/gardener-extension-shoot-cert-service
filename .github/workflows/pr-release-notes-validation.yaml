@@ -11,7 +11,7 @@ permissions:
   pull-requests: read
 
 jobs:
-  validate-releaes-notes:
+  validate-release-notes:
     runs-on: ${{ vars.DEFAULT_RUNNER || 'ubuntu-latest' }}
     steps:
     - name: install-gardener-gha-libs
