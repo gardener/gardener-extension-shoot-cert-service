@@ -2,4 +2,4 @@ images:
 - name: cert-management
   sourceRepository: github.com/gardener/cert-management
   repository: europe-docker.pkg.dev/gardener-project/releases/cert-controller-manager
-  tag: "v0.18.0"
+  tag: "v0.19.0"
