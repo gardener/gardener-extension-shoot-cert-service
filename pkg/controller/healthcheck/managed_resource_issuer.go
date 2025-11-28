@@ -44,13 +44,6 @@ func (healthChecker *IssuerWrapperHealthChecker) SetLoggerSuffix(provider, exten
 	healthChecker.inner.SetLoggerSuffix(provider, extension)
 }
 
-// DeepCopy clones the healthCheck struct by making a copy and returning the pointer to that new copy
-func (healthChecker *IssuerWrapperHealthChecker) DeepCopy() healthcheck.HealthCheck {
-	deepCopy := *healthChecker
-	deepCopy.inner = healthChecker.inner.DeepCopy()
-	return &deepCopy
-}
-
 // Check executes the health check
 func (healthChecker *IssuerWrapperHealthChecker) Check(ctx context.Context, request types.NamespacedName) (*healthcheck.SingleCheckResult, error) {
 	// first check the inner health
