@@ -4,7 +4,7 @@ metadata:
   name: shoot-cert-service
 build:
   insecureRegistries:
-    - garden.local.gardener.cloud:5001
+    - registry.local.gardener.cloud:5000
   tagPolicy:
     customTemplate:
       template: "{{.version}}-{{.sha}}"
