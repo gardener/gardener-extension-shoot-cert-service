@@ -19,6 +19,8 @@ cd "$repo_root/gardener"
 git checkout "$gardener_version"
 source "$repo_root/gardener/hack/ci-common.sh"
 
+ensure_local_gardener_cloud_hosts
+
 echo ">>>>>>>>>>>>>>>>>>>> kind-single-node-up"
 make kind-single-node-up
 trap '{
