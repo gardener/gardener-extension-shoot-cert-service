@@ -14,7 +14,7 @@ ARG EFFECTIVE_VERSION
 RUN make install EFFECTIVE_VERSION=$EFFECTIVE_VERSION
 
 ############# gardener-extension-shoot-cert-service
-FROM gcr.io/distroless/static-debian12:nonroot AS gardener-extension-shoot-cert-service
+FROM gcr.io/distroless/static-debian13:nonroot AS gardener-extension-shoot-cert-service
 WORKDIR /
 
 COPY charts /charts
