@@ -181,7 +181,7 @@ func mergeServers(serversList ...string) string {
 	existing := map[string]struct{}{}
 	merged := []string{}
 	for _, servers := range serversList {
-		for _, item := range strings.Split(servers, ",") {
+		for item := range strings.SplitSeq(servers, ",") {
 			if _, ok := existing[item]; !ok {
 				existing[item] = struct{}{}
 				merged = append(merged, item)
