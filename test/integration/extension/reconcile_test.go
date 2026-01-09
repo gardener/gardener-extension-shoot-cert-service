@@ -334,7 +334,7 @@ func shootToBytes(shoot *gardencorev1beta1.Shoot) []byte {
 
 func createProviderConfig(ref string) *runtime.RawExtension {
 	return &runtime.RawExtension{
-		Raw: []byte(fmt.Sprintf(`{
+		Raw: fmt.Appendf(nil, `{
   "apiVersion": "service.cert.extensions.gardener.cloud/v1alpha1",
   "issuers": [{
     "email": "someone@somewhere.com",
@@ -342,6 +342,6 @@ func createProviderConfig(ref string) *runtime.RawExtension {
     "privateKeySecretName": "%s",
     "server": "https://my-own-acme.somewhere.com/directory"
   }]
-}`, ref)),
+}`, ref),
 	}
 }

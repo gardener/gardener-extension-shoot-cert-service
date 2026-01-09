@@ -10,6 +10,7 @@ import (
 	_ "embed"
 	"encoding/base64"
 	"reflect"
+	"slices"
 	"strings"
 	"time"
 
@@ -1504,13 +1505,7 @@ func insertArgsAfter(afterArgPrefix string, args []string, insertArgs ...string)
 func removeArgs(args []string, removeArgs ...string) []string {
 	var newArgs []string
 	for _, arg := range args {
-		remove := false
-		for _, removeArg := range removeArgs {
-			if arg == removeArg {
-				remove = true
-				break
-			}
-		}
+		remove := slices.Contains(removeArgs, arg)
 		if !remove {
 			newArgs = append(newArgs, arg)
 		}

@@ -8,6 +8,7 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
+	"maps"
 	"time"
 
 	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
@@ -155,9 +156,7 @@ func (d *Deployer) createDeployment() (*appsv1.Deployment, error) {
 		"networking.gardener.cloud/to-runtime-apiserver":                "allowed",
 		"networking.resources.gardener.cloud/to-kube-apiserver-tcp-443": "allowed",
 	}
-	for k, v := range d.values.getLabels() {
-		podLabels[k] = v
-	}
+	maps.Copy(podLabels, d.values.getLabels())
 
 	issuerChecksum, err := d.issuersChecksum()
 	if err != nil {

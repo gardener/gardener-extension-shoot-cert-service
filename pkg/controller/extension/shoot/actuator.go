@@ -198,14 +198,14 @@ func (a *actuator) updateStatus(ctx context.Context, ex *extensionsv1alpha1.Exte
 	return a.client.Status().Patch(ctx, ex, patch)
 }
 
-func (a *actuator) createShootIssuersValues(certConfig *service.CertConfig) map[string]interface{} {
+func (a *actuator) createShootIssuersValues(certConfig *service.CertConfig) map[string]any {
 	shootIssuersEnabled := false
 	if certConfig.ShootIssuers != nil {
 		shootIssuersEnabled = certConfig.ShootIssuers.Enabled
 	} else if a.serviceConfig.ShootIssuers != nil {
 		shootIssuersEnabled = a.serviceConfig.ShootIssuers.Enabled
 	}
-	return map[string]interface{}{
+	return map[string]any{
 		"enabled": shootIssuersEnabled,
 	}
 }

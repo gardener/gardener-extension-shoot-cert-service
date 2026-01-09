@@ -7,6 +7,7 @@ package controlplane
 import (
 	"context"
 	"fmt"
+	"maps"
 
 	certv1alpha1 "github.com/gardener/cert-management/pkg/apis/cert/v1alpha1"
 	"github.com/gardener/cert-management/pkg/cert/source"
@@ -95,9 +96,7 @@ func (r *gardenCert) reconcile(ctx context.Context, ex *extensionsv1alpha1.Exten
 		if cert.Labels == nil {
 			cert.Labels = map[string]string{}
 		}
-		for k, v := range cert.Spec.SecretLabels {
-			cert.Labels[k] = v
-		}
+		maps.Copy(cert.Labels, cert.Spec.SecretLabels)
 		return nil
 	})
 	if err != nil {
