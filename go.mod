@@ -2,7 +2,7 @@ module github.com/gardener/gardener-extension-shoot-cert-service
 
 go 1.24.5
 
-toolchain go1.25.5
+toolchain go1.25.6
 
 require (
 	github.com/ahmetb/gen-crd-api-reference-docs v0.3.0
