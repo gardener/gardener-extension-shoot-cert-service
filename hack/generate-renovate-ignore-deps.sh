@@ -3,6 +3,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+set -euo pipefail
 
 # Takes the content of a go.mod file and an array to add the extracted dependencies to.
 extract_dependencies() {
@@ -19,25 +20,25 @@ echo "🪧 Generating ignoreDeps section for 'renovate.json5'"
 echo "🛜 Downloading the latest 'go.mod' from gardener/gardener..."
 
 # Only the dependencies in a `go.mod` file are indented with a tab.
-extension_go_mod=$(grep -P '^\t' go.mod) # Uses Perl-style regular expressions to match a tab at the beginning of a line.
+local_go_mod=$(grep -P '^\t' go.mod) # Uses Perl-style regular expressions to match a tab at the beginning of a line.
 gardener_go_mod=$(cat $GARDENER_HACK_DIR/../go.mod | grep -P '^\t')
 
-extension_dependencies=()
+local_dependencies=()
 gardener_dependencies=()
 
-extract_dependencies "$extension_go_mod" extension_dependencies
+extract_dependencies "$local_go_mod" local_dependencies
 extract_dependencies "$gardener_go_mod" gardener_dependencies
 
-echo "📜 Found ${#extension_dependencies[@]} extension dependencies."
+echo "📜 Found ${#local_dependencies[@]} local dependencies."
 echo "🚜 Found ${#gardener_dependencies[@]} gardener dependencies."
 
 # Extract the intersection of the two arrays by iterating over them in a nested fashion.
 common_dependencies=()
 
-for extension_dependency in "${extension_dependencies[@]}"; do
+for local_dependency in "${local_dependencies[@]}"; do
     for gardener_dependency in "${gardener_dependencies[@]}"; do
-        if [[ "$extension_dependency" == "$gardener_dependency" ]]; then
-            common_dependencies+=("$extension_dependency")
+        if [[ "$local_dependency" == "$gardener_dependency" ]]; then
+            common_dependencies+=("$local_dependency")
             break # Continue with the next element of the outer loop.
         fi
     done
@@ -48,5 +49,5 @@ echo "☯️ Found ${#common_dependencies[@]} common dependencies."
 ignore_deps=$(printf ',"%s"' "${common_dependencies[@]}") # Add a comma to the beginning of each element and concatenate them.
 ignore_deps="[${ignore_deps:1}]" # Remove the leading comma and wrap the string in square brackets to format it as a JSON array.
 
-# Use sed to replace the lines between the markers
+# Format the JSON array as a string, indent it, and use sed to replace the lines between the markers
 echo "$ignore_deps" | yq -o json '.[]' | sed 's/^/    /; s/$/,/' | sed -i -e '  /  ignoreDeps: \[/,  /\]/{//!d;}' -e '  /  ignoreDeps: \[/r /dev/stdin' renovate.json5
