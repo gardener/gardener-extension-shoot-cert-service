@@ -42,3 +42,5 @@ spec:
 
     #alerting:
     #  certExpirationAlertDays: 13
+
+    #dnsClass: custom-dns-class # optional, if DNS entries in control plane neeed different class

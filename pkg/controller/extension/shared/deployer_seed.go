@@ -558,6 +558,10 @@ func (d *Deployer) args() []string {
 		fmt.Sprintf("--default-ecdsa-private-key-size=%d", sizeECDSA),
 	)
 
+	if cls := ptr.Deref(d.values.CertConfig.DNSClass, ""); cls != "" {
+		args = append(args, fmt.Sprintf("--issuer.dns-class=%s", cls))
+	}
+
 	return args
 }
 

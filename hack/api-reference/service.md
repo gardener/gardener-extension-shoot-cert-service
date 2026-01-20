@@ -126,6 +126,18 @@ This is only relevant for the Garden runtime or seed cluster.
 If not specified, the default value is false.</p>
 </td>
 </tr>
+<tr>
+<td>
+<code>dnsClass</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>DNSClass is the DNS class used for DNS entries created for DNS01 challenges.</p>
+</td>
+</tr>
 </tbody>
 </table>
 <h3 id="service.cert.extensions.gardener.cloud/v1alpha1.ACMEExternalAccountBinding">ACMEExternalAccountBinding

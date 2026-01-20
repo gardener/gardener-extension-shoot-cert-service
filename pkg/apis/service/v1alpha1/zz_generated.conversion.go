@@ -146,6 +146,7 @@ func autoConvert_v1alpha1_CertConfig_To_service_CertConfig(in *CertConfig, out *
 	out.PrecheckNameservers = (*string)(unsafe.Pointer(in.PrecheckNameservers))
 	out.Alerting = (*service.Alerting)(unsafe.Pointer(in.Alerting))
 	out.GenerateControlPlaneCertificate = (*bool)(unsafe.Pointer(in.GenerateControlPlaneCertificate))
+	out.DNSClass = (*string)(unsafe.Pointer(in.DNSClass))
 	return nil
 }
 
@@ -161,6 +162,7 @@ func autoConvert_service_CertConfig_To_v1alpha1_CertConfig(in *service.CertConfi
 	out.PrecheckNameservers = (*string)(unsafe.Pointer(in.PrecheckNameservers))
 	out.Alerting = (*Alerting)(unsafe.Pointer(in.Alerting))
 	out.GenerateControlPlaneCertificate = (*bool)(unsafe.Pointer(in.GenerateControlPlaneCertificate))
+	out.DNSClass = (*string)(unsafe.Pointer(in.DNSClass))
 	return nil
 }
 

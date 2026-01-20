@@ -86,6 +86,11 @@ func (in *CertConfig) DeepCopyInto(out *CertConfig) {
 		*out = new(bool)
 		**out = **in
 	}
+	if in.DNSClass != nil {
+		in, out := &in.DNSClass, &out.DNSClass
+		*out = new(string)
+		**out = **in
+	}
 	return
 }
 

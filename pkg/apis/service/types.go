@@ -36,6 +36,9 @@ type CertConfig struct {
 	// This is only relevant for the Garden runtime or seed cluster.
 	// If not specified, the default value is false.
 	GenerateControlPlaneCertificate *bool
+
+	// DNSClass is the DNS class used for DNS entries created for DNS01 challenges.
+	DNSClass *string `json:"dnsClass,omitempty"`
 }
 
 // Alerting contains configuration for alerting of certificate expiration.

@@ -72,6 +72,10 @@ type CertConfig struct {
 	// If not specified, the default value is false.
 	// +optional
 	GenerateControlPlaneCertificate *bool `json:"generateControlPlaneCertificate,omitempty"`
+
+	// DNSClass is the DNS class used for DNS entries created for DNS01 challenges.
+	// +optional
+	DNSClass *string `json:"dnsClass,omitempty"`
 }
 
 // Alerting contains configuration for alerting of certificate expiration.
