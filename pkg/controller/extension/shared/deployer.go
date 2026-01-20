@@ -30,10 +30,11 @@ type Values struct {
 	RestrictedDomains                string
 	Resources                        []gardencorev1beta1.NamedResourceReference
 
-	ShootDeployment  bool
-	GardenDeployment bool
-	CertClass        string
-	Replicas         int32
+	ShootDeployment        bool
+	GardenDeployment       bool
+	CertClass              string
+	Replicas               int32
+	NextGenDNSShootService bool
 }
 
 func (v Values) getLabels() map[string]string {

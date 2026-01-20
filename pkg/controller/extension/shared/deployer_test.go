@@ -1190,6 +1190,16 @@ var _ = Describe("Deployer", func() {
 			})
 		})
 
+		It("should deploy it with special DNS class for next generation dns-controller-manager", func() {
+			values.NextGenDNSShootService = true
+			testSeedManagedResource(standardSeedResources(), func(deployment *appsv1.Deployment) {
+				deployment.Spec.Template.Spec.Containers[0].Args = append(
+					deployment.Spec.Template.Spec.Containers[0].Args,
+					"--issuer.dns-class=gardendns-next-gen",
+				)
+			})
+		})
+
 		var prepareValuesWithIssuers = func() {
 			values.CertConfig.Issuers = []service.IssuerConfig{
 				{
