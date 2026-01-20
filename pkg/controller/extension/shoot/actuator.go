@@ -22,6 +22,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/yaml"
 	kubernetesscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -126,6 +127,8 @@ func (a *actuator) createValues(
 	cluster *controller.Cluster,
 	namespace string,
 ) (*shared.Values, error) {
+	var err error
+
 	values := shared.Values{
 		ExtensionConfig: a.serviceConfig,
 		CertConfig:      *certConfig,
@@ -133,6 +136,11 @@ func (a *actuator) createValues(
 		Resources:       nil,
 		ShootDeployment: true,
 		Replicas:        1,
+	}
+
+	values.NextGenDNSShootService, err = isNextGenDNSShootServiceEnabled(cluster)
+	if err != nil {
+		return nil, err
 	}
 
 	values.Replicas = int32(controller.GetReplicas(cluster, 1)) // #nosec G115 -- replicas are always small integers
@@ -150,7 +158,6 @@ func (a *actuator) createValues(
 	values.GenericTokenKubeconfigSecretName = extensions.GenericTokenKubeconfigSecretNameFromCluster(cluster)
 	values.Resources = cluster.Shoot.Spec.Resources
 
-	var err error
 	values.Image, err = shared.PrepareCertManagementImage()
 	if err != nil {
 		return nil, err
@@ -251,4 +258,26 @@ func (a *actuator) createGardenClient() (client.Client, error) {
 	return client.New(restConfig, client.Options{
 		Scheme: scheme,
 	})
+}
+
+func isNextGenDNSShootServiceEnabled(cluster *controller.Cluster) (bool, error) {
+	for _, ext := range cluster.Shoot.Spec.Extensions {
+		if ext.Type == "shoot-dns-service" {
+			if ext.ProviderConfig == nil || ext.ProviderConfig.Raw == nil {
+				return false, nil
+			}
+			providerConfig := map[string]any{}
+			if err := yaml.Unmarshal(ext.ProviderConfig.Raw, &providerConfig); err != nil {
+				return false, fmt.Errorf("failed to unmarshal shoot-dns-service provider config: %w", err)
+			}
+			if v, ok := providerConfig["useNextGenerationController"]; ok {
+				useNextGen, ok := v.(bool)
+				if ok && useNextGen {
+					return true, nil
+				}
+			}
+			return false, nil
+		}
+	}
+	return false, nil
 }

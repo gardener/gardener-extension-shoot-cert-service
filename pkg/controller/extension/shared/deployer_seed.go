@@ -44,6 +44,8 @@ const (
 	defaultCertExpirationAlertDays = 15
 
 	shootAccessSecretName = gutil.SecretNamePrefixShootAccess + v1alpha1.ShootAccessSecretName
+
+	nextGenerationDNSClass = "gardendns-next-gen"
 )
 
 var (
@@ -557,6 +559,10 @@ func (d *Deployer) args() []string {
 		fmt.Sprintf("--default-rsa-private-key-size=%d", sizeRSA),
 		fmt.Sprintf("--default-ecdsa-private-key-size=%d", sizeECDSA),
 	)
+
+	if d.values.NextGenDNSShootService {
+		args = append(args, fmt.Sprintf("--issuer.dns-class=%s", nextGenerationDNSClass))
+	}
 
 	return args
 }
