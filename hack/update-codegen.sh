@@ -10,9 +10,6 @@ set -o pipefail
 
 PROJECT_ROOT="$(dirname $0)"/..
 
-# setup virtual GOPATH
-source "$GARDENER_HACK_DIR"/vgopath-setup.sh
-
 CODE_GEN_DIR=$(go list -m -f '{{.Dir}}' k8s.io/code-generator)
 source "${CODE_GEN_DIR}/kube_codegen.sh"
 
