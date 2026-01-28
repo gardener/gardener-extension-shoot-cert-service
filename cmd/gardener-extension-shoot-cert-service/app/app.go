@@ -12,13 +12,11 @@ import (
 	extensionscontroller "github.com/gardener/gardener/extensions/pkg/controller"
 	"github.com/gardener/gardener/extensions/pkg/controller/heartbeat"
 	"github.com/gardener/gardener/extensions/pkg/util"
-	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
 	operatorv1alpha1 "github.com/gardener/gardener/pkg/apis/operator/v1alpha1"
 	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
 	componentbaseconfigv1alpha1 "k8s.io/component-base/config/v1alpha1"
 	"k8s.io/component-base/version/verflag"
-	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
@@ -104,8 +102,8 @@ func (o *Options) run(ctx context.Context) error {
 	o.controlPlaneControllerOptions.Completed().Apply(&controlplane.DefaultAddOptions.ControllerOptions)
 	o.healthOptions.Completed().Apply(&healthcheck.DefaultAddOptions.Controller)
 	reconcilerConfig := o.reconcileOptions.Completed()
-	reconcilerConfig.Apply(&shoot.DefaultAddOptions.IgnoreOperationAnnotation, ptr.To([]extensionsv1alpha1.ExtensionClass{shoot.DefaultAddOptions.ExtensionClass}))
-	reconcilerConfig.Apply(&controlplane.DefaultAddOptions.IgnoreOperationAnnotation, ptr.To([]extensionsv1alpha1.ExtensionClass{controlplane.DefaultAddOptions.ExtensionClass}))
+	reconcilerConfig.Apply(&shoot.DefaultAddOptions.IgnoreOperationAnnotation, &shoot.DefaultAddOptions.ExtensionClasses)
+	reconcilerConfig.Apply(&controlplane.DefaultAddOptions.IgnoreOperationAnnotation, &controlplane.DefaultAddOptions.ExtensionClasses)
 	o.heartbeatOptions.Completed().Apply(&heartbeat.DefaultAddOptions)
 
 	if err := o.controllerSwitches.Completed().AddToManager(ctx, mgr); err != nil {
