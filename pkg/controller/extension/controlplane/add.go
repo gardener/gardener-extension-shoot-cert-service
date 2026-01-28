@@ -8,6 +8,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
+	"slices"
 
 	extensionscontroller "github.com/gardener/gardener/extensions/pkg/controller"
 	"github.com/gardener/gardener/extensions/pkg/controller/extension"
@@ -54,8 +55,8 @@ type AddOptions struct {
 	ServiceConfig config.Configuration
 	// IgnoreOperationAnnotation specifies whether to ignore the operation annotation or not.
 	IgnoreOperationAnnotation bool
-	// ExtensionClass defines the main extension class this extension is responsible for.
-	ExtensionClass extensionsv1alpha1.ExtensionClass
+	// ExtensionClasses defines the main extension classes this extension is responsible for.
+	ExtensionClasses []extensionsv1alpha1.ExtensionClass
 }
 
 // AddToManager adds a second controller with the default Options to the given Controller Manager.
@@ -72,7 +73,7 @@ func AddToManagerWithOptions(ctx context.Context, mgr manager.Manager, opts AddO
 		watchBuilder     extensionscontroller.WatchBuilder
 	)
 
-	if opts.ExtensionClass == extensionsv1alpha1.ExtensionClassGarden {
+	if slices.Contains(opts.ExtensionClasses, extensionsv1alpha1.ExtensionClassGarden) {
 		extensionClasses = []extensionsv1alpha1.ExtensionClass{extensionsv1alpha1.ExtensionClassGarden}
 		watchBuilder = extensionscontroller.NewWatchBuilder(func(c controller.Controller) error {
 			return c.Watch(source.Kind(

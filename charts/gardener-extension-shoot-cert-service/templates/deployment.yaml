@@ -57,7 +57,7 @@ spec:
         - --heartbeat-namespace={{ .Release.Namespace }} 
         - --heartbeat-renew-interval-seconds={{ .Values.controllers.heartbeat.renewIntervalSeconds }}
         {{- if .Values.gardener.runtimeCluster.enabled }}
-        - --extension-class=garden
+        - --extension-classes=garden
         - --controllers=controlplane-cert-service
         {{- else }}
         - --controllers=shoot-cert-service,controlplane-cert-service,healthcheck,heartbeat

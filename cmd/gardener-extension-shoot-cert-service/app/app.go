@@ -102,8 +102,8 @@ func (o *Options) run(ctx context.Context) error {
 	o.controlPlaneControllerOptions.Completed().Apply(&controlplane.DefaultAddOptions.ControllerOptions)
 	o.healthOptions.Completed().Apply(&healthcheck.DefaultAddOptions.Controller)
 	reconcilerConfig := o.reconcileOptions.Completed()
-	reconcilerConfig.Apply(&shoot.DefaultAddOptions.IgnoreOperationAnnotation, &shoot.DefaultAddOptions.ExtensionClass)
-	reconcilerConfig.Apply(&controlplane.DefaultAddOptions.IgnoreOperationAnnotation, &controlplane.DefaultAddOptions.ExtensionClass)
+	reconcilerConfig.Apply(&shoot.DefaultAddOptions.IgnoreOperationAnnotation, &shoot.DefaultAddOptions.ExtensionClasses)
+	reconcilerConfig.Apply(&controlplane.DefaultAddOptions.IgnoreOperationAnnotation, &controlplane.DefaultAddOptions.ExtensionClasses)
 	o.heartbeatOptions.Completed().Apply(&heartbeat.DefaultAddOptions)
 
 	if err := o.controllerSwitches.Completed().AddToManager(ctx, mgr); err != nil {
