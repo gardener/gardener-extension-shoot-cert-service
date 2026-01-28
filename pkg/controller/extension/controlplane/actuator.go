@@ -129,7 +129,19 @@ func (a *actuator) Reconcile(ctx context.Context, log logr.Logger, ex *extension
 			handler.dnsProviderType = seed.Spec.DNS.Provider.Type
 			handler.dnsProviderSecretData = nil
 			if seed.Spec.DNS.Provider != nil {
-				secret, err := a.fetchSeedSecret(ctx, gardenClient, seedName, seed.Spec.DNS.Provider.SecretRef)
+				var secretRef corev1.SecretReference
+				if seed.Spec.DNS.Provider.CredentialsRef != nil {
+					if seed.Spec.DNS.Provider.CredentialsRef.Kind != "Secret" || seed.Spec.DNS.Provider.CredentialsRef.APIVersion != "v1" {
+						return fmt.Errorf("unsupported credentialsRef kind %q or apiVersion %q for seed %s", seed.Spec.DNS.Provider.CredentialsRef.Kind, seed.Spec.DNS.Provider.CredentialsRef.APIVersion, seedName)
+					}
+					secretRef = corev1.SecretReference{
+						Name:      seed.Spec.DNS.Provider.CredentialsRef.Name,
+						Namespace: seed.Spec.DNS.Provider.CredentialsRef.Namespace,
+					}
+				} else {
+					secretRef = seed.Spec.DNS.Provider.SecretRef //nolint:staticcheck
+				}
+				secret, err := a.fetchSeedSecret(ctx, gardenClient, seedName, secretRef)
 				if err != nil {
 					return fmt.Errorf("failed to get DNS provider secret data for %s: %w", seedName, err)
 				}
