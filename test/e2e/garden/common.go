@@ -20,7 +20,6 @@ import (
 
 	certv1alpha1 "github.com/gardener/cert-management/pkg/apis/cert/v1alpha1"
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
-	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
 	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
 	operatorv1alpha1 "github.com/gardener/gardener/pkg/apis/operator/v1alpha1"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
@@ -109,6 +108,16 @@ func waitForOperatorExtensionToBeDeleted(ctx context.Context, extension *operato
 	}).WithPolling(2 * time.Second).Should(BeNotFoundError())
 }
 
+func triggerExtensionReconcile(ctx context.Context, extension *extensionsv1alpha1.Extension) {
+	Expect(runtimeClient.Get(ctx, client.ObjectKeyFromObject(extension), extension)).To(Succeed())
+	patch := client.MergeFrom(extension.DeepCopy())
+	if extension.Annotations == nil {
+		extension.Annotations = make(map[string]string)
+	}
+	extension.Annotations["gardener.cloud/operation"] = "reconcile"
+	Expect(runtimeClient.Patch(ctx, extension, patch)).To(Succeed())
+}
+
 func waitForExtensionToBeReconciled(ctx context.Context, extension *extensionsv1alpha1.Extension) {
 	CEventually(ctx, func(g Gomega) gardencorev1beta1.LastOperationState {
 		g.Expect(runtimeClient.Get(ctx, client.ObjectKeyFromObject(extension), extension)).To(Succeed())
@@ -124,6 +133,14 @@ func waitForCertificateToBeReconciled(ctx context.Context, cert *certv1alpha1.Ce
 		g.Expect(runtimeClient.Get(ctx, client.ObjectKeyFromObject(cert), cert)).To(Succeed())
 		return cert.Status
 	}).WithPolling(2 * time.Second).Should(statusMatcher)
+}
+
+func checkDNSProviderSecretLabels(ctx context.Context, namespace, name string, labelMatcher gomegatypes.GomegaMatcher) {
+	CEventually(ctx, func(g Gomega) map[string]string {
+		secret := &corev1.Secret{}
+		g.Expect(runtimeClient.Get(ctx, client.ObjectKey{Namespace: namespace, Name: name}, secret)).To(Succeed())
+		return secret.Labels
+	}).WithPolling(2 * time.Second).Should(labelMatcher)
 }
 
 func createDummyTLSSecret(ctx context.Context, certificate *certv1alpha1.Certificate) error {
@@ -175,16 +192,6 @@ func createSelfSignedTLSSecret() ([]byte, []byte, error) {
 	certDerBytes, _ := x509.CreateCertificate(rand.Reader, &template, &template, certPrivateKey.Public(), certPrivateKey)
 	certPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: certDerBytes})
 	return certPEM, certPrivateKeyPEM, nil
-}
-
-func getExtensionNamespace(ctx context.Context, controllerRegistrationName string) string {
-	namespaces := &corev1.NamespaceList{}
-	Expect(runtimeClient.List(ctx, namespaces, client.MatchingLabels{
-		v1beta1constants.GardenRole:                      v1beta1constants.GardenRoleExtension,
-		v1beta1constants.LabelControllerRegistrationName: controllerRegistrationName,
-	})).To(Succeed())
-	Expect(namespaces.Items).To(HaveLen(1))
-	return namespaces.Items[0].Name
 }
 
 // ExecMake executes one or multiple make targets.
