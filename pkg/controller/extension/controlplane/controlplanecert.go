@@ -11,6 +11,7 @@ import (
 	certv1alpha1 "github.com/gardener/cert-management/pkg/apis/cert/v1alpha1"
 	"github.com/gardener/cert-management/pkg/cert/source"
 	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
+	"github.com/gardener/gardener/pkg/component/extensions/dnsrecord"
 	"github.com/gardener/gardener/pkg/controllerutils"
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
@@ -27,7 +28,7 @@ type controlPlaneCert struct {
 
 	domain                string
 	dnsProviderType       string
-	dnsProviderSecretData map[string][]byte
+	credentialsDeployFunc dnsrecord.CredentialsDeployFunc
 }
 
 func newControlPlaneCert(client client.Client, log logr.Logger) *controlPlaneCert {
@@ -44,15 +45,10 @@ func (r *controlPlaneCert) reconcile(ctx context.Context) error {
 	}
 
 	secret := r.newDNSProviderSecret()
-	_, err := controllerutils.CreateOrGetAndMergePatch(ctx, r.client, secret, func() error {
-		secret.Labels = map[string]string{
-			ManagedByLabel: ManagedByValue,
+	if r.credentialsDeployFunc != nil {
+		if err := r.credentialsDeployFunc(ctx, r.client, secret); err != nil {
+			return fmt.Errorf("failed to deploy DNS provider secret: %w", err)
 		}
-		secret.Data = r.dnsProviderSecretData
-		return nil
-	})
-	if err != nil {
-		return fmt.Errorf("failed to create or update secret: %w", err)
 	}
 
 	annotations := map[string]string{

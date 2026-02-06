@@ -19,6 +19,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	. "github.com/onsi/gomega/gstruct"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -29,8 +30,8 @@ var _ = Describe("Shoot-Cert-Service Tests", func() {
 		garden             = &operatorv1alpha1.Garden{ObjectMeta: metav1.ObjectMeta{Name: "local"}}
 		seed               = &gardencorev1beta1.Seed{ObjectMeta: metav1.ObjectMeta{Name: "local"}}
 		operatorExtension  = &operatorv1alpha1.Extension{ObjectMeta: metav1.ObjectMeta{Name: "extension-shoot-cert-service"}}
-		runtimeExtension   = &extensionsv1alpha1.Extension{ObjectMeta: metav1.ObjectMeta{Namespace: "garden", Name: "controlplane-cert-service"}}
-		seedExtension      = &extensionsv1alpha1.Extension{ObjectMeta: metav1.ObjectMeta{Name: "controlplane-cert-service"}}
+		runtimeExtension   = &extensionsv1alpha1.Extension{ObjectMeta: metav1.ObjectMeta{Namespace: "garden", Name: "garden-controlplane-cert-service"}}
+		seedExtension      = &extensionsv1alpha1.Extension{ObjectMeta: metav1.ObjectMeta{Namespace: "garden", Name: "controlplane-cert-service"}}
 		runtimeCertificate = &certv1alpha1.Certificate{ObjectMeta: metav1.ObjectMeta{Namespace: "garden", Name: "tls"}}
 		seedCertificate    = &certv1alpha1.Certificate{ObjectMeta: metav1.ObjectMeta{Namespace: "garden", Name: "ingress-wildcard-cert"}}
 
@@ -107,8 +108,7 @@ var _ = Describe("Shoot-Cert-Service Tests", func() {
 		waitForExtensionToBeReconciled(ctx, runtimeExtension)
 
 		By("Check Seed Extension")
-		seedExtension.Namespace = getExtensionNamespace(ctx, "extension-shoot-cert-service")
-		waitForExtensionToBeReconciled(ctx, runtimeExtension)
+		waitForExtensionToBeReconciled(ctx, seedExtension)
 
 		By("Check Virtual Garden/Ingress TLS Certificate")
 		waitForCertificateToBeReconciled(ctx, runtimeCertificate, MatchFields(IgnoreExtras, Fields{
@@ -121,6 +121,30 @@ var _ = Describe("Shoot-Cert-Service Tests", func() {
 			"State":      Equal("Ready"),
 			"CommonName": PointTo(Equal("*.ingress.local.seed.local.gardener.cloud")),
 		}))
+
+		By("Check DNS Provider Secret for Seed Ingress TLS Certificate")
+		Expect(seedCertificate.Annotations["cert.gardener.cloud/dnsrecord-secret-ref"]).To(Equal("garden/ingress-wildcard-cert-dns-provider"))
+		checkDNSProviderSecretLabels(ctx, seedCertificate.Namespace, "ingress-wildcard-cert-dns-provider", BeEmpty())
+
+		By("Patch Seed: use WorkloadIdentity for DNS provider")
+		Expect(virtualClusterClient.Client().Get(ctx, client.ObjectKeyFromObject(seed), seed)).To(Succeed())
+		seedPatch = client.MergeFrom(seed.DeepCopy())
+		seed.Spec.DNS.Provider.SecretRef = corev1.SecretReference{} //nolint:staticcheck
+		seed.Spec.DNS.Provider.CredentialsRef = &corev1.ObjectReference{
+			APIVersion: "security.gardener.cloud/v1alpha1",
+			Kind:       "WorkloadIdentity",
+			Name:       "local",
+			Namespace:  "garden-local",
+		}
+		Expect(virtualClusterClient.Client().Patch(ctx, seed, seedPatch)).To(Succeed())
+
+		By("Trigger Seed Extension Reconcile")
+		triggerExtensionReconcile(ctx, seedExtension)
+		waitForExtensionToBeReconciled(ctx, seedExtension)
+
+		By("Check DNS Provider WorkloadIdentity Secret for Seed Ingress TLS Certificate")
+		checkDNSProviderSecretLabels(ctx, seedCertificate.Namespace, "ingress-wildcard-cert-dns-provider",
+			HaveKeyWithValue("security.gardener.cloud/purpose", "workload-identity-token-requestor"))
 
 		By("Patch Garden: Remove garden extension")
 		Expect(runtimeClient.Get(ctx, client.ObjectKeyFromObject(garden), garden)).To(Succeed())
