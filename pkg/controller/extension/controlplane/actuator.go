@@ -23,7 +23,6 @@ import (
 	"github.com/gardener/gardener/pkg/utils/managedresources"
 	"github.com/go-logr/logr"
 	autoscalingv1 "k8s.io/api/autoscaling/v1"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	kubernetesscheme "k8s.io/client-go/kubernetes/scheme"
@@ -251,20 +250,6 @@ func (a *actuator) fetchSeedFromVirtualGarden(ctx context.Context, gardenClient 
 	return seed, nil
 }
 
-func (a *actuator) fetchSeedSecret(ctx context.Context, gardenClient client.Client, seedName string, ref corev1.SecretReference) (*corev1.Secret, error) {
-	seedNamespace := gardenerutils.ComputeGardenNamespace(seedName)
-	secret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      ref.Name,
-			Namespace: seedNamespace,
-		},
-	}
-	if err := gardenClient.Get(ctx, client.ObjectKeyFromObject(secret), secret); err != nil {
-		return nil, fmt.Errorf("failed to get secret %s/%s: %w", ref.Namespace, ref.Name, err)
-	}
-	return secret, nil
-}
-
 func (a *actuator) getOrCreateGardenClient() (client.Client, error) {
 	a.gardenClientLock.Lock()
 	defer a.gardenClientLock.Unlock()
@@ -294,7 +279,7 @@ func (a *actuator) createGardenClient() (client.Client, error) {
 		return nil, fmt.Errorf("failed to add gardencorev1beta1 scheme: %w", err)
 	}
 	if err := securityv1alpha1.AddToScheme(scheme); err != nil {
-		return nil, fmt.Errorf("failed to add gardencorev1beta1 scheme: %w", err)
+		return nil, fmt.Errorf("failed to add securityv1alpha1 scheme: %w", err)
 	}
 	return client.New(restConfig, client.Options{
 		Scheme: scheme,

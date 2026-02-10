@@ -19,7 +19,6 @@ import (
 	"github.com/gardener/gardener/pkg/utils/managedresources"
 	"github.com/go-logr/logr"
 	autoscalingv1 "k8s.io/api/autoscaling/v1"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/yaml"
@@ -227,20 +226,6 @@ func (a *actuator) fetchSeedFromVirtualGarden(ctx context.Context, gardenClient 
 		return nil, fmt.Errorf("failed to get seed %s: %w", seedName, err)
 	}
 	return seed, nil
-}
-
-func (a *actuator) fetchSeedSecret(ctx context.Context, gardenClient client.Client, seedName string, ref corev1.SecretReference) (*corev1.Secret, error) {
-	seedNamespace := gardenerutils.ComputeGardenNamespace(seedName)
-	secret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      ref.Name,
-			Namespace: seedNamespace,
-		},
-	}
-	if err := gardenClient.Get(ctx, client.ObjectKeyFromObject(secret), secret); err != nil {
-		return nil, fmt.Errorf("failed to get secret %s/%s: %w", ref.Namespace, ref.Name, err)
-	}
-	return secret, nil
 }
 
 func (a *actuator) createGardenClient() (client.Client, error) {
