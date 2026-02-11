@@ -212,7 +212,7 @@ var _ = BeforeSuite(func() {
 var _ = Describe("Extension tests", func() {
 	It("it should reconcile extension with own issuer", func() {
 		By("create issuer secret")
-		_, privateKey, err := legobridge.GenerateKey(x509.ECDSA, 256)
+		_, privateKey, err := legobridge.GenerateKey(x509.ECDSA, 256, false)
 		Expect(err).NotTo(HaveOccurred())
 		secret := &corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{

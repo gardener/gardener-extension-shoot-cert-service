@@ -1232,7 +1232,7 @@ var _ = Describe("Deployer", func() {
 		}
 
 		It("should deploy it with additional issuers", func() {
-			_, privateKey, err := legobridge.GenerateKey(x509.ECDSA, 256)
+			_, privateKey, err := legobridge.GenerateKey(x509.ECDSA, 256, false)
 			Expect(err).NotTo(HaveOccurred())
 			barSecret := &corev1.Secret{
 				ObjectMeta: metav1.ObjectMeta{
