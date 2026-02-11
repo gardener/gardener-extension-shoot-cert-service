@@ -15,12 +15,14 @@ import (
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
 	extensionsv1alpha1helper "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1/helper"
+	securityv1alpha1 "github.com/gardener/gardener/pkg/apis/security/v1alpha1"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
+	"github.com/gardener/gardener/pkg/component/extensions/dnsrecord"
 	gardenerutils "github.com/gardener/gardener/pkg/utils/gardener"
+	kubernetesutils "github.com/gardener/gardener/pkg/utils/kubernetes"
 	"github.com/gardener/gardener/pkg/utils/managedresources"
 	"github.com/go-logr/logr"
 	autoscalingv1 "k8s.io/api/autoscaling/v1"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	kubernetesscheme "k8s.io/client-go/kubernetes/scheme"
@@ -127,25 +129,9 @@ func (a *actuator) Reconcile(ctx context.Context, log logr.Logger, ex *extension
 
 			handler.domain = seed.Spec.Ingress.Domain
 			handler.dnsProviderType = seed.Spec.DNS.Provider.Type
-			handler.dnsProviderSecretData = nil
-			if seed.Spec.DNS.Provider != nil {
-				var secretRef corev1.SecretReference
-				if seed.Spec.DNS.Provider.CredentialsRef != nil {
-					if seed.Spec.DNS.Provider.CredentialsRef.Kind != "Secret" || seed.Spec.DNS.Provider.CredentialsRef.APIVersion != "v1" {
-						return fmt.Errorf("unsupported credentialsRef kind %q or apiVersion %q for seed %s", seed.Spec.DNS.Provider.CredentialsRef.Kind, seed.Spec.DNS.Provider.CredentialsRef.APIVersion, seedName)
-					}
-					secretRef = corev1.SecretReference{
-						Name:      seed.Spec.DNS.Provider.CredentialsRef.Name,
-						Namespace: seed.Spec.DNS.Provider.CredentialsRef.Namespace,
-					}
-				} else {
-					secretRef = seed.Spec.DNS.Provider.SecretRef //nolint:staticcheck
-				}
-				secret, err := a.fetchSeedSecret(ctx, gardenClient, seedName, secretRef)
-				if err != nil {
-					return fmt.Errorf("failed to get DNS provider secret data for %s: %w", seedName, err)
-				}
-				handler.dnsProviderSecretData = secret.Data
+			handler.credentialsDeployFunc, err = getDNSProviderCredentialsDeployer(ctx, gardenClient, seed)
+			if err != nil {
+				return fmt.Errorf("failed to get DNS provider credentials deployer for seed %s: %w", seedName, err)
 			}
 			if err := handler.reconcile(ctx); err != nil {
 				return err
@@ -264,20 +250,6 @@ func (a *actuator) fetchSeedFromVirtualGarden(ctx context.Context, gardenClient 
 	return seed, nil
 }
 
-func (a *actuator) fetchSeedSecret(ctx context.Context, gardenClient client.Client, seedName string, ref corev1.SecretReference) (*corev1.Secret, error) {
-	seedNamespace := gardenerutils.ComputeGardenNamespace(seedName)
-	secret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      ref.Name,
-			Namespace: seedNamespace,
-		},
-	}
-	if err := gardenClient.Get(ctx, client.ObjectKeyFromObject(secret), secret); err != nil {
-		return nil, fmt.Errorf("failed to get secret %s/%s: %w", ref.Namespace, ref.Name, err)
-	}
-	return secret, nil
-}
-
 func (a *actuator) getOrCreateGardenClient() (client.Client, error) {
 	a.gardenClientLock.Lock()
 	defer a.gardenClientLock.Unlock()
@@ -306,6 +278,9 @@ func (a *actuator) createGardenClient() (client.Client, error) {
 	if err := gardencorev1beta1.AddToScheme(scheme); err != nil {
 		return nil, fmt.Errorf("failed to add gardencorev1beta1 scheme: %w", err)
 	}
+	if err := securityv1alpha1.AddToScheme(scheme); err != nil {
+		return nil, fmt.Errorf("failed to add securityv1alpha1 scheme: %w", err)
+	}
 	return client.New(restConfig, client.Options{
 		Scheme: scheme,
 	})
@@ -324,4 +299,15 @@ func setValuesForGardenOrSeed(ex *extensionsv1alpha1.Extension, values *shared.V
 		values.Namespace = os.Getenv(shared.EnvLeaderElectionNamespace)
 	}
 	return nil
+}
+
+func getDNSProviderCredentialsDeployer(ctx context.Context, gardenClient client.Reader, seed *gardencorev1beta1.Seed) (dnsrecord.CredentialsDeployFunc, error) {
+	if dnsConfig := seed.Spec.DNS; dnsConfig.Provider != nil {
+		credentials, err := kubernetesutils.GetCredentialsByObjectReference(ctx, gardenClient, *dnsConfig.Provider.CredentialsRef)
+		if err != nil {
+			return nil, err
+		}
+		return dnsrecord.CredentialsDeployerFromCredentials(credentials, seed), nil
+	}
+	return nil, nil
 }
