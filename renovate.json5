@@ -15,7 +15,6 @@
   // DO NOT EDIT THIS SECTION MANUALLY.
   ignoreDeps: [
     "github.com/ahmetb/gen-crd-api-reference-docs",
-    "github.com/gardener/cert-management",
     "github.com/go-logr/logr",
     "github.com/onsi/ginkgo/v2",
     "github.com/onsi/gomega",

@@ -36,6 +36,10 @@ echo "🚜 Found ${#gardener_dependencies[@]} gardener dependencies."
 common_dependencies=()
 
 for local_dependency in "${local_dependencies[@]}"; do
+    if [[ "$local_dependency" == "github.com/gardener/cert-management" ]]; then
+        # cert-management should be updated by renovate early
+        continue
+    fi
     for gardener_dependency in "${gardener_dependencies[@]}"; do
         if [[ "$local_dependency" == "$gardener_dependency" ]]; then
             common_dependencies+=("$local_dependency")
