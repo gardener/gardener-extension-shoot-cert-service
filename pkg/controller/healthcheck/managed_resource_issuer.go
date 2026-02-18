@@ -25,16 +25,16 @@ func NewIssuerWrapperHealthChecker(inner healthcheck.HealthCheck) *IssuerWrapper
 
 // IssuerWrapperHealthChecker contains all the information for the HealthCheck wrapper
 type IssuerWrapperHealthChecker struct {
-	logger     logr.Logger
-	seedClient client.Client
-	inner      healthcheck.HealthCheck
+	logger       logr.Logger
+	sourceClient client.Client
+	inner        healthcheck.HealthCheck
 }
 
-// InjectSeedClient injects the seed client
-func (healthChecker *IssuerWrapperHealthChecker) InjectSeedClient(seedClient client.Client) {
-	healthChecker.seedClient = seedClient
-	if itf, ok := healthChecker.inner.(healthcheck.SeedClient); ok {
-		itf.InjectSeedClient(seedClient)
+// InjectSourceClient injects the seed client
+func (healthChecker *IssuerWrapperHealthChecker) InjectSourceClient(sourceClient client.Client) {
+	healthChecker.sourceClient = sourceClient
+	if itf, ok := healthChecker.inner.(healthcheck.SourceClient); ok {
+		itf.InjectSourceClient(sourceClient)
 	}
 }
 
@@ -53,7 +53,7 @@ func (healthChecker *IssuerWrapperHealthChecker) Check(ctx context.Context, requ
 	}
 
 	list := &certv1alpha1.IssuerList{}
-	if err := healthChecker.seedClient.List(ctx, list, client.InNamespace(request.Namespace)); err != nil {
+	if err := healthChecker.sourceClient.List(ctx, list, client.InNamespace(request.Namespace)); err != nil {
 		err := fmt.Errorf("check issuers failed. Unable to retrieve list of issuers in namespace '%s': %v", request.Namespace, err)
 		healthChecker.logger.Error(err, "Health check failed")
 		return nil, err
