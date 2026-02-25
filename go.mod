@@ -5,7 +5,7 @@ go 1.26.0
 require (
 	github.com/ahmetb/gen-crd-api-reference-docs v0.3.0
 	github.com/gardener/cert-management v0.20.0
-	github.com/gardener/gardener v1.136.2
+	github.com/gardener/gardener v1.136.3
 	github.com/go-logr/logr v1.4.3
 	github.com/onsi/ginkgo/v2 v2.28.1
 	github.com/onsi/gomega v1.39.0
@@ -76,7 +76,7 @@ require (
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/fxamacker/cbor/v2 v2.9.0 // indirect
 	github.com/gardener/controller-manager-library v0.2.1-0.20251212135449-45ab4fb75a4e // indirect
-	github.com/gardener/etcd-druid/api v0.35.0 // indirect
+	github.com/gardener/etcd-druid/api v0.35.1 // indirect
 	github.com/gardener/external-dns-management v0.34.0 // indirect
 	github.com/gardener/machine-controller-manager v0.61.2 // indirect
 	github.com/go-acme/lego/v4 v4.31.0 // indirect
