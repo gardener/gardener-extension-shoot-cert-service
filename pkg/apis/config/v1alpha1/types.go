@@ -71,7 +71,7 @@ type ACME struct {
 	Server string `json:"server"`
 	// PrivateKey is the key used for the ACME issuer.
 	// +optional
-	PrivateKey *string `json:"privateKey,omitempty"`
+	PrivateKey *string `json:"privateKey,omitempty"` // #nosec G117 -- false positive: optional field to provide private key for ACME issuer
 	// PropagationTimeout is the timeout for DNS01 challenges.
 	// +optional
 	PropagationTimeout *metav1.Duration `json:"propagationTimeout,omitempty"`
