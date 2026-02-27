@@ -16,7 +16,7 @@ type Issuer struct {
 // ACME is the model for ACME configuration.
 type ACME struct {
 	Email                      string
-	PrivateKey                 *string
+	PrivateKey                 *string // #nosec G117 -- false positive: optional field to provide private key for ACME issuer
 	Server                     string
 	PrivateKeySecretName       string
 	ExternalAccountBinding     *ExternalAccountBinding

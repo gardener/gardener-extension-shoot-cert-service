@@ -12,9 +12,9 @@ import (
 
 	extensionscontroller "github.com/gardener/gardener/extensions/pkg/controller"
 	"github.com/gardener/gardener/extensions/pkg/controller/extension"
+	extensionsv1alpha1helper "github.com/gardener/gardener/pkg/api/extensions/v1alpha1/helper"
 	"github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
 	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
-	extensionsv1alpha1helper "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1/helper"
 	operatorv1alpha1 "github.com/gardener/gardener/pkg/apis/operator/v1alpha1"
 	operatorpredicate "github.com/gardener/gardener/pkg/operator/predicate"
 	"github.com/go-logr/logr"

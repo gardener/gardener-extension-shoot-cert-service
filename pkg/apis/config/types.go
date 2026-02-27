@@ -58,7 +58,7 @@ type ACME struct {
 	// Server is the server address used for the ACME issuer.
 	Server string
 	// PrivateKey is the key used for the ACME issuer.
-	PrivateKey *string
+	PrivateKey *string // #nosec G117 -- false positive: optional field to provide private key for ACME issuer
 	// PropagationTimeout is the timeout for DNS01 challenges.
 	PropagationTimeout *metav1.Duration
 	// PrecheckNameservers is used to specify a comma-separated list of DNS servers for checking availability for DNS
