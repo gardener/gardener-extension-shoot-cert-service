@@ -1,0 +1,14 @@
+ocm:
+  component_name: github.com/gardener/cert-management
+  component_version: v0.21.0
+release_notes:
+- audience: user
+  author:
+    hostname: github.com
+    type: githubUser
+    username: MartinWeindel
+  category: bugfix
+  contents: Allow to specify the same domain name in `.spec.CommonName` and `.spec.DNSNames`
+  mimetype: text/markdown
+  reference: '[#682](https://github.com/gardener/cert-management/pull/682)'
+  type: standard
