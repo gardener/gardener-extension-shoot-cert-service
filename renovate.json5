@@ -161,7 +161,6 @@
     "github.com/spf13/afero",
     "github.com/spf13/cast",
     "github.com/spf13/viper",
-    "github.com/stoewer/go-strcase",
     "github.com/subosito/gotenv",
     "github.com/valyala/bytebufferpool",
     "github.com/valyala/fastjson",
