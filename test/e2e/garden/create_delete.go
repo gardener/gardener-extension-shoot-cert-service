@@ -129,7 +129,6 @@ var _ = Describe("Shoot-Cert-Service Tests", func() {
 		By("Patch Seed: use WorkloadIdentity for DNS provider")
 		Expect(virtualClusterClient.Client().Get(ctx, client.ObjectKeyFromObject(seed), seed)).To(Succeed())
 		seedPatch = client.MergeFrom(seed.DeepCopy())
-		seed.Spec.DNS.Provider.SecretRef = corev1.SecretReference{} //nolint:staticcheck
 		seed.Spec.DNS.Provider.CredentialsRef = &corev1.ObjectReference{
 			APIVersion: "security.gardener.cloud/v1alpha1",
 			Kind:       "WorkloadIdentity",

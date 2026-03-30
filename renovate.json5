@@ -15,7 +15,6 @@
   // DO NOT EDIT THIS SECTION MANUALLY.
   ignoreDeps: [
     "github.com/ahmetb/gen-crd-api-reference-docs",
-    "github.com/gardener/gardener/pkg/apis",
     "github.com/go-logr/logr",
     "github.com/onsi/ginkgo/v2",
     "github.com/onsi/gomega",
@@ -161,7 +160,6 @@
     "github.com/spf13/afero",
     "github.com/spf13/cast",
     "github.com/spf13/viper",
-    "github.com/stoewer/go-strcase",
     "github.com/subosito/gotenv",
     "github.com/valyala/bytebufferpool",
     "github.com/valyala/fastjson",
