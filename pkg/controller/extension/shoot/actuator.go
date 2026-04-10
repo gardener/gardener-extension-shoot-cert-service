@@ -94,7 +94,18 @@ func (a *actuator) Delete(ctx context.Context, log logr.Logger, ex *extensionsv1
 	log.Info("Component is being deleted", "component", "cert-management", "namespace", namespace)
 
 	if err := a.deleteShootResourcesForShoot(ctx, log, namespace); err != nil {
-		return err
+		// If there are foreign finalizers on certificate resources on the cluster, the deletion of
+		// its CRD may be blocked. As no external resources need to be cleaned up, it is safe to ignore it by
+		// removing the finalizer from the shoot managed resource.
+		// This will only be applied if shoot is deleting since more than 10 min.
+		cluster, _ := controller.GetCluster(ctx, a.client, namespace)
+		if cluster != nil && cluster.Shoot != nil && cluster.Shoot.DeletionTimestamp != nil && time.Since(cluster.Shoot.DeletionTimestamp.Time) > 10*time.Minute {
+			err = a.dropShootResourcesForShoot(ctx, log, namespace)
+		}
+
+		if err != nil {
+			return err
+		}
 	}
 	return a.deleteSeedResourcesForShoot(ctx, log, namespace)
 }
@@ -183,6 +194,11 @@ func (a *actuator) deleteSeedResourcesForShoot(ctx context.Context, log logr.Log
 func (a *actuator) deleteShootResourcesForShoot(ctx context.Context, log logr.Logger, namespace string) error {
 	log.Info("Deleting managed resource for shoot", "namespace", namespace)
 	return shared.NewDeployer(shared.Values{Namespace: namespace, ShootDeployment: true}).DeleteShootManagedResourceAndWait(ctx, a.client, 2*time.Minute)
+}
+
+func (a *actuator) dropShootResourcesForShoot(ctx context.Context, log logr.Logger, namespace string) error {
+	log.Info("Dropping managed resource for shoot", "namespace", namespace)
+	return shared.NewDeployer(shared.Values{Namespace: namespace, ShootDeployment: true}).DropShootManagedResource(ctx, a.client)
 }
 
 func (a *actuator) updateStatus(ctx context.Context, ex *extensionsv1alpha1.Extension, certConfig *service.CertConfig) error {
