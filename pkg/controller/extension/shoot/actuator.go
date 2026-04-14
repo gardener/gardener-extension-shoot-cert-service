@@ -94,6 +94,8 @@ func (a *actuator) Delete(ctx context.Context, log logr.Logger, ex *extensionsv1
 	log.Info("Component is being deleted", "component", "cert-management", "namespace", namespace)
 
 	if err := a.deleteShootResourcesForShoot(ctx, log, namespace); err != nil {
+		// TODO(MartinWeindel) Revert PR #535, when gardener/gardener#14568 is implemented.
+
 		// If there are foreign finalizers on certificate resources on the cluster, the deletion of
 		// its CRD may be blocked. As no external resources need to be cleaned up, it is safe to ignore it by
 		// removing the finalizer from the shoot managed resource.

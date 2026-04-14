@@ -80,6 +80,7 @@ func (d *Deployer) DeleteShootManagedResourceAndWait(ctx context.Context, c clie
 	return managedresources.WaitUntilDeleted(timeoutCtx, c, d.values.Namespace, v1alpha1.CertManagementResourceNameShoot)
 }
 
+// TODO(MartinWeindel) Revert PR #535, when gardener/gardener#14568 is implemented.
 func (d *Deployer) DropShootManagedResource(ctx context.Context, c client.Client) error {
 	if !d.values.ShootDeployment {
 		return fmt.Errorf("only supported for shoot deployment")
