@@ -11,6 +11,7 @@ import (
 	"time"
 
 	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
+	resourcesv1alpha1 "github.com/gardener/gardener/pkg/apis/resources/v1alpha1"
 	"github.com/gardener/gardener/pkg/utils/managedresources"
 	rbacv1 "k8s.io/api/rbac/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -77,6 +78,21 @@ func (d *Deployer) DeleteShootManagedResourceAndWait(ctx context.Context, c clie
 	timeoutCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 	return managedresources.WaitUntilDeleted(timeoutCtx, c, d.values.Namespace, v1alpha1.CertManagementResourceNameShoot)
+}
+
+// TODO(MartinWeindel) Revert PR #535, when gardener/gardener#14568 is implemented.
+func (d *Deployer) DropShootManagedResource(ctx context.Context, c client.Client) error {
+	if !d.values.ShootDeployment {
+		return fmt.Errorf("only supported for shoot deployment")
+	}
+
+	mr := &resourcesv1alpha1.ManagedResource{ObjectMeta: metav1.ObjectMeta{Name: v1alpha1.CertManagementResourceNameShoot, Namespace: d.values.Namespace}}
+	if err := c.Get(ctx, client.ObjectKeyFromObject(mr), mr); err != nil {
+		return err
+	}
+	patch := client.MergeFrom(mr.DeepCopy())
+	mr.Finalizers = nil
+	return c.Patch(ctx, mr, patch)
 }
 
 func (d *Deployer) createShootRole() *rbacv1.Role {

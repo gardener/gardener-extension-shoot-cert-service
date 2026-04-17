@@ -1046,6 +1046,73 @@ var _ = Describe("Deployer", func() {
 		}
 	})
 
+	Describe("DropShootManagedResource", func() {
+		BeforeEach(func() {
+			values = Values{
+				Namespace:       "shoot--foo--bar",
+				ShootDeployment: true,
+			}
+		})
+
+		It("should remove finalizers from the shoot managed resource", func() {
+			// Create a managed resource with finalizers
+			mr := &resourcesv1alpha1.ManagedResource{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       servicev1alpha1.CertManagementResourceNameShoot,
+					Namespace:  values.Namespace,
+					Finalizers: []string{"resources.gardener.cloud/gardener", "custom-finalizer"},
+				},
+			}
+			Expect(c.Create(ctx, mr)).To(Succeed())
+
+			// Verify finalizers are present
+			Expect(c.Get(ctx, client.ObjectKeyFromObject(mr), mr)).To(Succeed())
+			Expect(mr.Finalizers).To(HaveLen(2))
+
+			// Call DropShootManagedResource
+			deployer := NewDeployer(values)
+			Expect(deployer.DropShootManagedResource(ctx, c)).To(Succeed())
+
+			// Verify finalizers are removed
+			Expect(c.Get(ctx, client.ObjectKeyFromObject(mr), mr)).To(Succeed())
+			Expect(mr.Finalizers).To(BeEmpty())
+		})
+
+		It("should return an error if managed resource does not exist", func() {
+			deployer := NewDeployer(values)
+			err := deployer.DropShootManagedResource(ctx, c)
+			Expect(err).To(HaveOccurred())
+			Expect(errors.IsNotFound(err)).To(BeTrue())
+		})
+
+		It("should return an error if not configured for shoot deployment", func() {
+			values.ShootDeployment = false
+			deployer := NewDeployer(values)
+			err := deployer.DropShootManagedResource(ctx, c)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("only supported for shoot deployment"))
+		})
+
+		It("should handle managed resource with no finalizers", func() {
+			// Create a managed resource without finalizers
+			mr := &resourcesv1alpha1.ManagedResource{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      servicev1alpha1.CertManagementResourceNameShoot,
+					Namespace: values.Namespace,
+				},
+			}
+			Expect(c.Create(ctx, mr)).To(Succeed())
+
+			// Call DropShootManagedResource
+			deployer := NewDeployer(values)
+			Expect(deployer.DropShootManagedResource(ctx, c)).To(Succeed())
+
+			// Verify it still succeeds (no-op)
+			Expect(c.Get(ctx, client.ObjectKeyFromObject(mr), mr)).To(Succeed())
+			Expect(mr.Finalizers).To(BeEmpty())
+		})
+	})
+
 	Describe("DeployShootManagedResource", func() {
 		It("should deploy the standard shoot managed resource", func() {
 			testShootManagedResource(standardShootResources(), false)
