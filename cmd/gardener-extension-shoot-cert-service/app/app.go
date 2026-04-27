@@ -102,10 +102,11 @@ func (o *Options) run(ctx context.Context) error {
 	o.controlPlaneControllerOptions.Completed().Apply(&controlplane.DefaultAddOptions.ControllerOptions)
 	o.healthOptions.Completed().Apply(&healthcheck.DefaultAddOptions.Controller)
 	reconcilerConfig := o.reconcileOptions.Completed()
-	reconcilerConfig.Apply(&shoot.DefaultAddOptions.IgnoreOperationAnnotation, &shoot.DefaultAddOptions.ExtensionClasses)
-	reconcilerConfig.Apply(&controlplane.DefaultAddOptions.IgnoreOperationAnnotation, &controlplane.DefaultAddOptions.ExtensionClasses)
+	reconcilerConfig.Apply(&shoot.DefaultAddOptions.IgnoreOperationAnnotation)
+	reconcilerConfig.Apply(&controlplane.DefaultAddOptions.IgnoreOperationAnnotation)
 	o.heartbeatOptions.Completed().Apply(&heartbeat.DefaultAddOptions)
-
+	controlplane.DefaultAddOptions.ExtensionClasses = o.generalOptions.Completed().ExtensionClasses
+	shoot.DefaultAddOptions.ExtensionClasses = o.generalOptions.Completed().ExtensionClasses
 	if err := o.controllerSwitches.Completed().AddToManager(ctx, mgr); err != nil {
 		return fmt.Errorf("could not add controllers to manager: %w", err)
 	}
