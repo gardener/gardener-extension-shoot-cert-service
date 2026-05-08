@@ -48,7 +48,7 @@ build:
     - image: local-skaffold/gardener-extension-shoot-cert-service/charts/extension
       custom:
         buildCommand: |
-          bash {{.EXTENSION_GARDENER_HACK_DIR}}/push-helm.sh charts/gardener-extension-shoot-cert-service .skaffoldImage
+          bash {{.EXTENSION_GARDENER_DEV_SETUP_DIR}}/push-helm.sh charts/gardener-extension-shoot-cert-service .skaffoldImage
         dependencies:
           paths:
             - charts/gardener-extension-shoot-cert-service
