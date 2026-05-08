@@ -33,9 +33,9 @@ echo ">>>>>>>>>>>>>>>>>>>> operator-up"
 make operator-up
 echo "<<<<<<<<<<<<<<<<<<<< operator-up done"
 
-echo ">>>>>>>>>>>>>>>>>>>> operator-seed-up"
-make operator-seed-up
-echo "<<<<<<<<<<<<<<<<<<<< operator-seed-up done"
+echo ">>>>>>>>>>>>>>>>>>>> gardener-up"
+make gardener-up
+echo "<<<<<<<<<<<<<<<<<<<< gardener-up done"
 
 cd $repo_root
 
