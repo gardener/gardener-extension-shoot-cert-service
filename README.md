@@ -1,4 +1,4 @@
-# [Gardener Extension for certificate services](https://gardener.cloud)
+# Gardener Extension for certificate services
 
 [![REUSE status](https://api.reuse.software/badge/github.com/gardener/gardener-extension-shoot-cert-service)](https://api.reuse.software/info/github.com/gardener/gardener-extension-shoot-cert-service)
 [![Build](https://github.com/gardener/gardener-extension-shoot-cert-service/actions/workflows/non-release.yaml/badge.svg)](https://github.com/gardener/gardener-extension-shoot-cert-service/actions/workflows/non-release.yaml)
