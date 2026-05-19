@@ -19,9 +19,10 @@ resources: {}
 
 vpa:
   enabled: true
-  # resourcePolicy:
-  #   minAllowed:
-  #     memory: 128Mi
+  resourcePolicy:
+    minAllowed:
+      memory: 50Mi
+    controlledValues: RequestsOnly
   updatePolicy:
     updateMode: "Recreate"
 
