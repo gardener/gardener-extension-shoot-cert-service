@@ -18,7 +18,6 @@ import (
 	. "github.com/onsi/gomega/gstruct"
 	gomegatypes "github.com/onsi/gomega/types"
 	"k8s.io/apimachinery/pkg/util/validation/field"
-	"k8s.io/utils/ptr"
 
 	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/config"
 	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/config/validation"
@@ -88,8 +87,8 @@ var _ = Describe("Validation", func() {
 			ACME: &config.ACME{
 				Email:               validACME.Email,
 				Server:              validACME.Server,
-				PrecheckNameservers: ptr.To("8.8.8.8,foo.com"),
-				CACertificates:      ptr.To("blabla"),
+				PrecheckNameservers: new("8.8.8.8,foo.com"),
+				CACertificates:      new("blabla"),
 			},
 		}, ConsistOf(
 			PointTo(MatchFields(IgnoreExtras, Fields{
@@ -106,13 +105,13 @@ var _ = Describe("Validation", func() {
 			ACME: &config.ACME{
 				Email:               validACME.Email,
 				Server:              validACME.Server,
-				PrecheckNameservers: ptr.To("8.8.8.8,172.11.22.253"),
-				CACertificates:      ptr.To(validCACerts()),
+				PrecheckNameservers: new("8.8.8.8,172.11.22.253"),
+				CACertificates:      new(validCACerts()),
 			},
 		}, BeEmpty()),
 		Entry("Invalid DefaultRequestsPerDayQuota", config.Configuration{
 			IssuerName:                 "gardener",
-			DefaultRequestsPerDayQuota: ptr.To(int32(0)),
+			DefaultRequestsPerDayQuota: new(int32(0)),
 			ACME:                       validACME,
 		}, ConsistOf(
 			PointTo(MatchFields(IgnoreExtras, Fields{
@@ -122,27 +121,27 @@ var _ = Describe("Validation", func() {
 		)),
 		Entry("Valid configuration", config.Configuration{
 			IssuerName:                 "gardener",
-			DefaultRequestsPerDayQuota: ptr.To(int32(50)),
+			DefaultRequestsPerDayQuota: new(int32(50)),
 			ACME:                       validACME,
 		}, BeEmpty()),
 		Entry("Valid PrivateKeyDefaults", config.Configuration{
 			IssuerName:                 "gardener",
-			DefaultRequestsPerDayQuota: ptr.To(int32(50)),
+			DefaultRequestsPerDayQuota: new(int32(50)),
 			ACME:                       validACME,
 			PrivateKeyDefaults: &config.PrivateKeyDefaults{
-				Algorithm: ptr.To("ECDSA"),
-				SizeRSA:   ptr.To(2048),
-				SizeECDSA: ptr.To(256),
+				Algorithm: new("ECDSA"),
+				SizeRSA:   new(2048),
+				SizeECDSA: new(256),
 			},
 		}, BeEmpty()),
 		Entry("Invalid PrivateKeyDefaults", config.Configuration{
 			IssuerName:                 "gardener",
-			DefaultRequestsPerDayQuota: ptr.To(int32(50)),
+			DefaultRequestsPerDayQuota: new(int32(50)),
 			ACME:                       validACME,
 			PrivateKeyDefaults: &config.PrivateKeyDefaults{
-				Algorithm: ptr.To("X"),
-				SizeRSA:   ptr.To(999),
-				SizeECDSA: ptr.To(444),
+				Algorithm: new("X"),
+				SizeRSA:   new(999),
+				SizeECDSA: new(444),
 			},
 		}, ConsistOf(
 			PointTo(MatchFields(IgnoreExtras, Fields{

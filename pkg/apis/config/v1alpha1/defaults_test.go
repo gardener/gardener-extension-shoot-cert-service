@@ -9,7 +9,6 @@ import (
 	. "github.com/onsi/gomega"
 	. "github.com/onsi/gomega/gstruct"
 	gomegatypes "github.com/onsi/gomega/types"
-	"k8s.io/utils/ptr"
 
 	. "github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/config/v1alpha1"
 )
@@ -21,8 +20,8 @@ var _ = Describe("Defaults", func() {
 			Expect(config.RestrictIssuer).To(matcher)
 		},
 			Entry("should set restriction to true if nil", &Configuration{}, PointTo(BeTrue())),
-			Entry("should remain true", &Configuration{RestrictIssuer: ptr.To(true)}, PointTo(BeTrue())),
-			Entry("should remain false", &Configuration{RestrictIssuer: ptr.To(false)}, PointTo(BeFalse())),
+			Entry("should remain true", &Configuration{RestrictIssuer: new(true)}, PointTo(BeTrue())),
+			Entry("should remain false", &Configuration{RestrictIssuer: new(false)}, PointTo(BeFalse())),
 		)
 	})
 })

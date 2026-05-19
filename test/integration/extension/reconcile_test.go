@@ -119,7 +119,7 @@ var _ = BeforeSuite(func() {
 	shoot = &gardencorev1beta1.Shoot{
 		Spec: gardencorev1beta1.ShootSpec{
 			DNS: &gardencorev1beta1.DNS{
-				Domain: ptr.To(testName + "example.com"),
+				Domain: new(testName + "example.com"),
 			},
 			Kubernetes: gardencorev1beta1.Kubernetes{
 				Version: "1.31.0",

@@ -173,7 +173,7 @@ func (d *Deployer) createDeployment() (*appsv1.Deployment, error) {
 		},
 		Spec: appsv1.DeploymentSpec{
 			RevisionHistoryLimit: ptr.To[int32](2),
-			Replicas:             ptr.To(d.values.Replicas),
+			Replicas:             new(d.values.Replicas),
 			Selector: &metav1.LabelSelector{
 				MatchLabels: d.values.getSelectLabels(),
 			},
@@ -192,7 +192,7 @@ func (d *Deployer) createDeployment() (*appsv1.Deployment, error) {
 							Image:           d.values.Image,
 							ImagePullPolicy: corev1.PullIfNotPresent,
 							SecurityContext: &corev1.SecurityContext{
-								AllowPrivilegeEscalation: ptr.To(false),
+								AllowPrivilegeEscalation: new(false),
 							},
 							VolumeMounts: d.volumeMounts(),
 							Args:         d.args(),
@@ -239,7 +239,7 @@ func (d *Deployer) createPodDisruptionBudget() *policyv1.PodDisruptionBudget {
 			Labels:    d.values.getLabels(),
 		},
 		Spec: policyv1.PodDisruptionBudgetSpec{
-			MaxUnavailable: ptr.To(intstr.FromInt32(1)),
+			MaxUnavailable: new(intstr.FromInt32(1)),
 			Selector: &metav1.LabelSelector{
 				MatchLabels: d.values.getSelectLabels(),
 			},
@@ -398,7 +398,7 @@ func (d *Deployer) createServiceAccount() *corev1.ServiceAccount {
 			Namespace: d.values.Namespace,
 			Labels:    d.values.getLabels(),
 		},
-		AutomountServiceAccountToken: ptr.To(false),
+		AutomountServiceAccountToken: new(false),
 	}
 }
 
@@ -463,7 +463,7 @@ func (d *Deployer) createVPA() *vpaautoscalingv1.VerticalPodAutoscaler {
 					{
 						ContainerName:       "*",
 						ControlledValues:    ptr.To(vpaautoscalingv1.ContainerControlledValues("RequestsOnly")),
-						ControlledResources: ptr.To([]corev1.ResourceName{corev1.ResourceMemory}),
+						ControlledResources: new([]corev1.ResourceName{corev1.ResourceMemory}),
 						MinAllowed: corev1.ResourceList{
 							corev1.ResourceMemory: vpaMinAllowed,
 						},
@@ -600,7 +600,7 @@ func (d *Deployer) volumes() []corev1.Volume {
 								LocalObjectReference: corev1.LocalObjectReference{
 									Name: d.values.GenericTokenKubeconfigSecretName,
 								},
-								Optional: ptr.To(false),
+								Optional: new(false),
 								Items: []corev1.KeyToPath{
 									{
 										Key:  "kubeconfig",
@@ -614,7 +614,7 @@ func (d *Deployer) volumes() []corev1.Volume {
 								LocalObjectReference: corev1.LocalObjectReference{
 									Name: shootAccessSecretName,
 								},
-								Optional: ptr.To(false),
+								Optional: new(false),
 								Items: []corev1.KeyToPath{
 									{
 										Key:  "token",

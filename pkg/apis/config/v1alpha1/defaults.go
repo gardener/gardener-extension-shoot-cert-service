@@ -6,7 +6,6 @@ package v1alpha1
 
 import (
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/utils/ptr"
 )
 
 func addDefaultingFuncs(scheme *runtime.Scheme) error {
@@ -16,6 +15,6 @@ func addDefaultingFuncs(scheme *runtime.Scheme) error {
 // SetDefaults_Configuration sets default values for Configuration objects.
 func SetDefaults_Configuration(obj *Configuration) {
 	if obj.RestrictIssuer == nil {
-		obj.RestrictIssuer = ptr.To(true)
+		obj.RestrictIssuer = new(true)
 	}
 }
