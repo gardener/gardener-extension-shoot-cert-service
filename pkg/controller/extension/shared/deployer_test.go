@@ -287,7 +287,7 @@ var _ = Describe("Deployer", func() {
 									Image:           "example.com/gardener-project/releases/cert-controller-manager:v0.0.0",
 									ImagePullPolicy: corev1.PullIfNotPresent,
 									SecurityContext: &corev1.SecurityContext{
-										AllowPrivilegeEscalation: ptr.To(false),
+										AllowPrivilegeEscalation: new(false),
 									},
 									VolumeMounts: []corev1.VolumeMount{
 										{
@@ -340,7 +340,7 @@ var _ = Describe("Deployer", func() {
 															},
 														},
 														LocalObjectReference: corev1.LocalObjectReference{Name: "generic-token-kubeconfig-71a3f1a4"},
-														Optional:             ptr.To(false),
+														Optional:             new(false),
 													},
 												},
 												{
@@ -352,7 +352,7 @@ var _ = Describe("Deployer", func() {
 															},
 														},
 														LocalObjectReference: corev1.LocalObjectReference{Name: "shoot-access-extension-shoot-cert-service"},
-														Optional:             ptr.To(false),
+														Optional:             new(false),
 													},
 												},
 											},
@@ -538,7 +538,7 @@ var _ = Describe("Deployer", func() {
 							"app.kubernetes.io/instance": instance,
 						},
 					},
-					AutomountServiceAccountToken: ptr.To(false),
+					AutomountServiceAccountToken: new(false),
 				},
 				&rbacv1.Role{
 					ObjectMeta: metav1.ObjectMeta{
@@ -686,7 +686,7 @@ var _ = Describe("Deployer", func() {
 							"app.kubernetes.io/instance": "shoot-cert-management-seed",
 						},
 					},
-					AutomountServiceAccountToken: ptr.To(false),
+					AutomountServiceAccountToken: new(false),
 				},
 				&certv1alpha1.Issuer{
 					ObjectMeta: metav1.ObjectMeta{
@@ -841,7 +841,7 @@ var _ = Describe("Deployer", func() {
 								{
 									ContainerName:    "*",
 									ControlledValues: ptr.To(vpaautoscalingv1.ContainerControlledValuesRequestsOnly),
-									ControlledResources: ptr.To([]corev1.ResourceName{
+									ControlledResources: new([]corev1.ResourceName{
 										corev1.ResourceMemory,
 									}),
 									MinAllowed: corev1.ResourceList{
@@ -1033,9 +1033,9 @@ var _ = Describe("Deployer", func() {
 				ACME: &config.ACME{
 					Email:                    "foo@example.com",
 					Server:                   "https://acme-v02.api.letsencrypt.org/directory",
-					PrivateKey:               ptr.To("<private-key>"),
-					CACertificates:           ptr.To("cert1\ncert2\n"),
-					DeactivateAuthorizations: ptr.To(true),
+					PrivateKey:               new("<private-key>"),
+					CACertificates:           new("cert1\ncert2\n"),
+					DeactivateAuthorizations: new(true),
 				},
 			},
 			ShootDeployment: true,
@@ -1165,7 +1165,7 @@ var _ = Describe("Deployer", func() {
 		})
 
 		It("should deploy it with restricted default issuer", func() {
-			values.ExtensionConfig.RestrictIssuer = ptr.To(true)
+			values.ExtensionConfig.RestrictIssuer = new(true)
 			values.RestrictedDomains = "sub1.example.com,sub2.example.com"
 			testSeedManagedResource(standardSeedResources(), func(deployment *appsv1.Deployment) {
 				deployment.Spec.Template.Spec.Containers[0].Args = insertArgsAfter(
@@ -1179,7 +1179,7 @@ var _ = Describe("Deployer", func() {
 		It("should deploy it with DNS challenges on shoot", func() {
 			values.CertConfig.DNSChallengeOnShoot = &service.DNSChallengeOnShoot{
 				Enabled:   true,
-				DNSClass:  ptr.To("my-dns-class"),
+				DNSClass:  new("my-dns-class"),
 				Namespace: "my-ns",
 			}
 			testSeedManagedResource(standardSeedResources(), func(deployment *appsv1.Deployment) {
@@ -1195,7 +1195,7 @@ var _ = Describe("Deployer", func() {
 		})
 
 		It("should deploy it with precheck nameservers", func() {
-			values.ExtensionConfig.ACME.PrecheckNameservers = ptr.To("8.8.8.8,8.8.4.4")
+			values.ExtensionConfig.ACME.PrecheckNameservers = new("8.8.8.8,8.8.4.4")
 			testSeedManagedResource(standardSeedResources(), func(deployment *appsv1.Deployment) {
 				deployment.Spec.Template.Spec.Containers[0].Args = insertArgsAfter(
 					"--issuer.default-requests-per-day-quota=",
@@ -1219,16 +1219,16 @@ var _ = Describe("Deployer", func() {
 		})
 
 		It("should deploy it resource without alerting", func() {
-			values.CertConfig.Alerting = &service.Alerting{CertExpirationAlertDays: ptr.To(0)}
+			values.CertConfig.Alerting = &service.Alerting{CertExpirationAlertDays: new(0)}
 			resources := excludeResourcesByType(standardSeedResources(), &monitoringv1.PrometheusRule{})
 			testSeedManagedResource(resources, nil)
 		})
 
 		It("should deploy it resource with overwritten private key defaults", func() {
 			values.ExtensionConfig.PrivateKeyDefaults = &config.PrivateKeyDefaults{
-				Algorithm: ptr.To("ECDSA"),
-				SizeRSA:   ptr.To(2048),
-				SizeECDSA: ptr.To(256),
+				Algorithm: new("ECDSA"),
+				SizeRSA:   new(2048),
+				SizeECDSA: new(256),
 			}
 			testSeedManagedResource(standardSeedResources(), func(deployment *appsv1.Deployment) {
 				deployment.Spec.Template.Spec.Containers[0].Args = removeArgs(deployment.Spec.Template.Spec.Containers[0].Args,
@@ -1273,13 +1273,13 @@ var _ = Describe("Deployer", func() {
 					Name:                 "bar",
 					Server:               "https://acme.example.com/directory",
 					Email:                "bar@example.com",
-					RequestsPerDayQuota:  ptr.To(999),
-					PrivateKeySecretName: ptr.To("bar-secret"),
+					RequestsPerDayQuota:  new(999),
+					PrivateKeySecretName: new("bar-secret"),
 					ExternalAccountBinding: &service.ACMEExternalAccountBinding{
 						KeyID:         "key-id",
 						KeySecretName: "eab-secret",
 					},
-					SkipDNSChallengeValidation: ptr.To(true),
+					SkipDNSChallengeValidation: new(true),
 					Domains: &service.DNSSelection{
 						Include: []string{"example.com"},
 						Exclude: []string{"sub.example.com"},
@@ -1346,14 +1346,14 @@ var _ = Describe("Deployer", func() {
 									Namespace: "shoot--foo--bar",
 								},
 							},
-							SkipDNSChallengeValidation: ptr.To(true),
+							SkipDNSChallengeValidation: new(true),
 							Domains: &certv1alpha1.DNSSelection{
 								Include: []string{"example.com"},
 								Exclude: []string{"sub.example.com"},
 							},
 							PrecheckNameservers: []string{"1.1.1.1", "2.2.2.2"},
 						},
-						RequestsPerDayQuota: ptr.To(999),
+						RequestsPerDayQuota: new(999),
 					},
 				},
 				&certv1alpha1.Issuer{

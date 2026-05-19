@@ -205,7 +205,7 @@ func (d *Deployer) createACMESpec(issuer Issuer) *certv1alpha1.ACMESpec {
 		}
 	}
 	if input.SkipDNSChallengeValidation {
-		acme.SkipDNSChallengeValidation = ptr.To(input.SkipDNSChallengeValidation)
+		acme.SkipDNSChallengeValidation = new(input.SkipDNSChallengeValidation)
 	}
 	if input.Domains != nil {
 		acme.Domains = &certv1alpha1.DNSSelection{

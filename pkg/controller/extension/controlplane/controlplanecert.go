@@ -16,7 +16,6 @@ import (
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
@@ -63,7 +62,7 @@ func (r *controlPlaneCert) reconcile(ctx context.Context) error {
 		cert.Labels = labels
 		dnsName := "*." + r.domain
 		if len(dnsName) <= 64 {
-			cert.Spec.CommonName = ptr.To(dnsName)
+			cert.Spec.CommonName = new(dnsName)
 			cert.Spec.DNSNames = nil
 		} else {
 			cert.Spec.CommonName = nil
