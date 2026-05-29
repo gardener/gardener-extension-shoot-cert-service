@@ -19,9 +19,9 @@ import (
 	"github.com/gardener/gardener/pkg/utils/managedresources"
 	"github.com/go-logr/logr"
 	autoscalingv1 "k8s.io/api/autoscaling/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/util/yaml"
 	kubernetesscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -150,7 +150,7 @@ func (a *actuator) createValues(
 		Replicas:        1,
 	}
 
-	values.NextGenDNSShootService, err = isNextGenDNSShootServiceEnabled(cluster)
+	values.NextGenDNSShootService, err = a.isNextGenDNSShootServiceEnabled(ctx, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -263,24 +263,13 @@ func (a *actuator) createGardenClient() (client.Client, error) {
 	})
 }
 
-func isNextGenDNSShootServiceEnabled(cluster *controller.Cluster) (bool, error) {
-	for _, ext := range cluster.Shoot.Spec.Extensions {
-		if ext.Type == "shoot-dns-service" {
-			if ext.ProviderConfig == nil || ext.ProviderConfig.Raw == nil {
-				return false, nil
-			}
-			providerConfig := map[string]any{}
-			if err := yaml.Unmarshal(ext.ProviderConfig.Raw, &providerConfig); err != nil {
-				return false, fmt.Errorf("failed to unmarshal shoot-dns-service provider config: %w", err)
-			}
-			if v, ok := providerConfig["useNextGenerationController"]; ok {
-				useNextGen, ok := v.(bool)
-				if ok && useNextGen {
-					return true, nil
-				}
-			}
+func (a *actuator) isNextGenDNSShootServiceEnabled(ctx context.Context, namespace string) (bool, error) {
+	dnsExtension := &extensionsv1alpha1.Extension{}
+	if err := a.client.Get(ctx, client.ObjectKey{Namespace: namespace, Name: dnsServiceExtensionName}, dnsExtension); err != nil {
+		if apierrors.IsNotFound(err) {
 			return false, nil
 		}
+		return false, fmt.Errorf("fetching shoot-dns-service extension failed: %w", err)
 	}
-	return false, nil
+	return dnsExtension.Annotations[useNextGenerationControllerAnnotation] == "true", nil
 }
