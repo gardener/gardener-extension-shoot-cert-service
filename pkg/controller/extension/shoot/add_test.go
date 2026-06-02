@@ -5,11 +5,15 @@
 package shoot
 
 import (
+	"context"
+
 	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 var _ = Describe("dnsServiceExtensionPredicate", func() {
@@ -113,5 +117,47 @@ var _ = Describe("dnsServiceExtensionPredicate", func() {
 				Object: makeExtension(dnsServiceExtensionName, nil),
 			})).To(BeFalse())
 		})
+	})
+})
+
+var _ = Describe("mapDNSServiceExtensionToCertServiceExtension", func() {
+	var (
+		ctx     = context.Background()
+		mapFunc = mapDNSServiceExtensionToCertServiceExtension()
+
+		makeExtension = func(name, namespace string) *extensionsv1alpha1.Extension {
+			return &extensionsv1alpha1.Extension{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      name,
+					Namespace: namespace,
+				},
+			}
+		}
+	)
+
+	It("should map a shoot-dns-service Extension to a request for the shoot-cert-service Extension in the same namespace", func() {
+		Expect(mapFunc(ctx, makeExtension(dnsServiceExtensionName, "shoot--foo--bar"))).To(Equal([]reconcile.Request{{
+			NamespacedName: client.ObjectKey{
+				Name:      Type,
+				Namespace: "shoot--foo--bar",
+			},
+		}}))
+	})
+
+	It("should return nil for an Extension with a different name", func() {
+		Expect(mapFunc(ctx, makeExtension("shoot-other-service", "shoot--foo--bar"))).To(BeNil())
+	})
+
+	It("should return nil for a nil Extension", func() {
+		Expect(mapFunc(ctx, nil)).To(BeNil())
+	})
+
+	It("should preserve the namespace from the source Extension", func() {
+		Expect(mapFunc(ctx, makeExtension(dnsServiceExtensionName, "shoot--other--ns"))).To(Equal([]reconcile.Request{{
+			NamespacedName: client.ObjectKey{
+				Name:      Type,
+				Namespace: "shoot--other--ns",
+			},
+		}}))
 	})
 })
