@@ -7,11 +7,14 @@ package shoot
 import (
 	"context"
 
+	extensionscontroller "github.com/gardener/gardener/extensions/pkg/controller"
 	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	fakeclient "sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
@@ -160,4 +163,73 @@ var _ = Describe("mapDNSServiceExtensionToCertServiceExtension", func() {
 			},
 		}}))
 	})
+})
+
+var _ = Describe("isNextGenDNSShootServiceEnabled", func() {
+	const namespace = "shoot--foo--bar"
+
+	var (
+		ctx = context.Background()
+
+		scheme *runtime.Scheme
+		c      client.Client
+		a      *actuator
+	)
+
+	BeforeEach(func() {
+		scheme = runtime.NewScheme()
+		Expect(extensionscontroller.AddToScheme(scheme)).To(Succeed())
+
+		c = fakeclient.NewClientBuilder().WithScheme(scheme).Build()
+		a = &actuator{client: c}
+	})
+
+	DescribeTable("should return whether the next-gen DNS controller is enabled",
+		func(existing *extensionsv1alpha1.Extension, expected bool) {
+			if existing != nil {
+				Expect(c.Create(ctx, existing)).To(Succeed())
+			}
+
+			enabled, err := a.isNextGenDNSShootServiceEnabled(ctx, namespace)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(enabled).To(Equal(expected))
+		},
+		Entry("Extension does not exist", nil, false),
+		Entry("Extension has no annotations",
+			&extensionsv1alpha1.Extension{
+				ObjectMeta: metav1.ObjectMeta{Name: dnsServiceExtensionName, Namespace: namespace},
+			}, false),
+		Entry("annotation value is 'false'",
+			&extensionsv1alpha1.Extension{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        dnsServiceExtensionName,
+					Namespace:   namespace,
+					Annotations: map[string]string{useNextGenerationControllerAnnotation: "false"},
+				},
+			}, false),
+		Entry("annotation value is some other string",
+			&extensionsv1alpha1.Extension{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        dnsServiceExtensionName,
+					Namespace:   namespace,
+					Annotations: map[string]string{useNextGenerationControllerAnnotation: "True"},
+				},
+			}, false),
+		Entry("annotation value is 'true'",
+			&extensionsv1alpha1.Extension{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        dnsServiceExtensionName,
+					Namespace:   namespace,
+					Annotations: map[string]string{useNextGenerationControllerAnnotation: "true"},
+				},
+			}, true),
+		Entry("Extension with the same name lives in another namespace",
+			&extensionsv1alpha1.Extension{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        dnsServiceExtensionName,
+					Namespace:   "shoot--other--ns",
+					Annotations: map[string]string{useNextGenerationControllerAnnotation: "true"},
+				},
+			}, false),
+	)
 })
