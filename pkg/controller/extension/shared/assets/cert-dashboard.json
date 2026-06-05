@@ -659,7 +659,7 @@
       ],
       "timeFrom": null,
       "timeShift": null,
-      "title": "Expire dates of certficaate objects",
+      "title": "Expire dates of certificate objects",
       "type": "bargauge"
     },
     {
@@ -745,7 +745,7 @@
       },
       "targets": [
         {
-          "expr": "{pod_name=~\"cert-controller-manager-(.+)\", severity=~\"$severity\"} |~ \"$search\"",
+          "expr": "{pod_name=~\"cert-controller-manager-(.+)\"} |~ \"$search\"",
           "refId": "A"
         }
       ],
@@ -765,63 +765,6 @@
   ],
   "templating": {
     "list": [
-      {
-        "allValue": ".+",
-        "current": {
-          "selected": true,
-          "tags": [],
-          "text": "All",
-          "value": [
-            "$__all"
-          ]
-        },
-        "hide": 0,
-        "includeAll": true,
-        "label": "Severity",
-        "multi": true,
-        "name": "severity",
-        "options": [
-          {
-            "selected": true,
-            "text": "All",
-            "value": "$__all"
-          },
-          {
-            "selected": false,
-            "text": "INFO",
-            "value": "INFO"
-          },
-          {
-            "selected": false,
-            "text": "WARN",
-            "value": "WARN"
-          },
-          {
-            "selected": false,
-            "text": "ERR",
-            "value": "ERR"
-          },
-          {
-            "selected": false,
-            "text": "DBG",
-            "value": "DBG"
-          },
-          {
-            "selected": false,
-            "text": "NOTICE",
-            "value": "NOTICE"
-          },
-          {
-            "selected": false,
-            "text": "FATAL",
-            "value": "FATAL"
-          }
-        ],
-        "query": "INFO,WARN,ERR,DBG,NOTICE,FATAL",
-        "queryValue": "",
-        "skipUrlSync": false,
-        "type": "custom"
-      },
       {
         "current": {
           "selected": false,
