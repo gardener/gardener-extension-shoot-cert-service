@@ -162,8 +162,8 @@ github.com/fsnotify/fsnotify v1.10.1 h1:b0/UzAf9yR5rhf3RPm9gf3ehBPpf0oZKIjtpKrx5
 github.com/fsnotify/fsnotify v1.10.1/go.mod h1:TLheqan6HD6GBK6PrDWyDPBaEV8LspOxvPSjC+bVfgo=
 github.com/fxamacker/cbor/v2 v2.9.0 h1:NpKPmjDBgUfBms6tr6JZkTHtfFGcMKsw3eGcmD/sapM=
 github.com/fxamacker/cbor/v2 v2.9.0/go.mod h1:vM4b+DJCtHn+zz7h3FFp/hDAI9WNWCsZj23V5ytsSxQ=
-github.com/gardener/cert-management v0.24.0 h1:CXovhAfk2T23Xyq2WA2LAqbXhAtZTnbapGwzdgFdXlk=
-github.com/gardener/cert-management v0.24.0/go.mod h1:attE0qxRrnxri93sqz5jmv9FKY81Azr3tF+symM8lMk=
+github.com/gardener/cert-management v0.24.1 h1:i26hhw1O1rFUOoD5rKha8WJ1t+q9kC882SUgsUGtrYg=
+github.com/gardener/cert-management v0.24.1/go.mod h1:attE0qxRrnxri93sqz5jmv9FKY81Azr3tF+symM8lMk=
 github.com/gardener/controller-manager-library v0.2.1-0.20260508123052-a693015425a8 h1:tyJR34gj1i1iRGFnPegcJSI4VAJOaQK8PZjTGWOLnr8=
 github.com/gardener/controller-manager-library v0.2.1-0.20260508123052-a693015425a8/go.mod h1:sEsCdxzh/VcfSD2z0g7ssxxNZesrXARRaOSdHfehcs8=
 github.com/gardener/etcd-druid/api v0.36.4 h1:o/17ciPrbh/w+igKMUuglW7N9XLjoMh7AvRKTzsBEVs=
