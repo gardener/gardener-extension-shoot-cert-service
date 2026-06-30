@@ -4,7 +4,7 @@ go 1.26.0
 
 require (
 	github.com/elastic/crd-ref-docs v0.3.0
-	github.com/gardener/cert-management v0.24.1
+	github.com/gardener/cert-management v0.25.0
 	github.com/gardener/gardener v1.145.0
 	github.com/gardener/gardener/pkg/apis v1.145.0
 	github.com/go-logr/logr v1.4.3
