@@ -1,0 +1,28 @@
+ocm:
+  component_name: github.com/gardener/cert-management
+  component_version: v0.25.0
+release_notes:
+- audience: user
+  author:
+    hostname: github.com
+    type: githubUser
+    username: MartinWeindel
+  category: bugfix
+  contents: ACME-issued certificates now include the correct Subject Common Name again.
+    The recent lego v5 upgrade had silently dropped the CN from issued certificates,
+    breaking consumers that pin to or parse `Subject.CommonName`. The CN is now populated
+    from `spec.commonName` (or the first DNS name when CN is unset and ≤64 characters).
+  mimetype: text/markdown
+  reference: '[#744](https://github.com/gardener/cert-management/pull/744)'
+  type: standard
+- audience: developer
+  author:
+    hostname: github.com
+    type: githubUser
+    username: MartinWeindel
+  category: breaking
+  contents: 'The package `github.com/gardener/cert-manament/pkg/apis` has been made
+    a Go submodule. '
+  mimetype: text/markdown
+  reference: '[#754](https://github.com/gardener/cert-management/pull/754)'
+  type: standard
