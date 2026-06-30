@@ -16,6 +16,11 @@
       groupName: 'gardener/gardener',
       matchPackageNames: ['/^(github\\.com\\/)?gardener\\/gardener(\\/.*)?$/'],
       enabled: true
+    },
+    {
+      groupName: 'gardener/cert-management',
+      matchPackageNames: ['/^(github\\.com\\/)?gardener\\/cert-management(\\/.*)?$/'],
+      enabled: true
     }
   ],
   // The following list of dependencies to ignore is updated by `make generate`.
