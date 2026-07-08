@@ -23,7 +23,6 @@ build:
             - cmd/gardener-extension-shoot-cert-service
             - cmd/gardener-extension-shoot-cert-service/app
             - imagevector
-            - imagevector/images.yaml
             - pkg/apis/config
             - pkg/apis/config/v1alpha1
             - pkg/apis/config/validation
@@ -35,10 +34,6 @@ build:
             - pkg/cmd
             - pkg/controller/extension/controlplane
             - pkg/controller/extension/shared
-            - pkg/controller/extension/shared/assets/cert-dashboard.json
-            - pkg/controller/extension/shared/assets/crd-cert.gardener.cloud_certificaterevocations.yaml
-            - pkg/controller/extension/shared/assets/crd-cert.gardener.cloud_certificates.yaml
-            - pkg/controller/extension/shared/assets/crd-cert.gardener.cloud_issuers.yaml
             - pkg/controller/extension/shoot
             - pkg/controller/healthcheck
             - VERSION
