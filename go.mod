@@ -19,6 +19,7 @@ require (
 	k8s.io/apimachinery v0.36.2
 	k8s.io/autoscaler/vertical-pod-autoscaler v1.6.0
 	k8s.io/client-go v0.36.2
+	k8s.io/code-generator v0.36.2
 	k8s.io/component-base v0.36.2
 	k8s.io/utils v0.0.0-20260507154919-ff6756f316d2
 	sigs.k8s.io/controller-runtime v0.24.1
@@ -199,6 +200,7 @@ require (
 	helm.sh/helm/v4 v4.1.4 // indirect
 	istio.io/api v1.29.5 // indirect
 	istio.io/client-go v1.29.2 // indirect
+	k8s.io/gengo/v2 v2.0.0-20251215205346-5ee0d033ba5b // indirect
 	k8s.io/klog/v2 v2.140.0 // indirect
 	k8s.io/kube-aggregator v0.36.2 // indirect
 	k8s.io/kube-openapi v0.0.0-20260427204847-8949caaa1199 // indirect

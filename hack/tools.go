@@ -2,6 +2,9 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-package tools
+package hack
 
-import _ "github.com/gardener/gardener/hack/tools/tool"
+import (
+	_ "github.com/gardener/gardener/hack/tools/tool"
+	_ "k8s.io/code-generator"
+)
