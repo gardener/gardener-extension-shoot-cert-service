@@ -5,13 +5,13 @@ go 1.26.0
 require (
 	github.com/gardener/cert-management v0.25.0
 	github.com/gardener/cert-management/pkg/apis v0.25.0
-	github.com/gardener/gardener v1.146.1
-	github.com/gardener/gardener/hack/tools/tool v1.146.0
-	github.com/gardener/gardener/pkg/apis v1.146.1
+	github.com/gardener/gardener v1.145.0
+	github.com/gardener/gardener/hack/tools v1.146.0
+	github.com/gardener/gardener/pkg/apis v1.145.0
 	github.com/go-logr/logr v1.4.3
 	github.com/onsi/ginkgo/v2 v2.32.0
 	github.com/onsi/gomega v1.42.0
-	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.91.0
+	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.92.1
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/pflag v1.0.10
 	k8s.io/api v0.36.2
@@ -21,14 +21,16 @@ require (
 	k8s.io/client-go v0.36.2
 	k8s.io/code-generator v0.36.2
 	k8s.io/component-base v0.36.2
-	k8s.io/utils v0.0.0-20260507154919-ff6756f316d2
+	k8s.io/utils v0.0.0-20260707023825-cf1189d6abe3
 	sigs.k8s.io/controller-runtime v0.24.1
 	sigs.k8s.io/yaml v1.6.0
 )
 
-replace github.com/gardener/gardener => github.com/LucaBernstein/gardener v1.99.2607081548
+replace github.com/gardener/gardener => github.com/LucaBernstein/gardener v1.99.2607101033
 
-replace github.com/gardener/gardener/hack/tools/tool => github.com/LucaBernstein/gardener/hack/tools/tool v1.99.2607081548
+replace github.com/gardener/gardener/pkg/apis => github.com/LucaBernstein/gardener/pkg/apis v1.99.2607101033
+
+replace github.com/gardener/gardener/hack/tools => github.com/LucaBernstein/gardener/hack/tools v1.99.2607101033
 
 require (
 	cel.dev/expr v0.25.1 // indirect
@@ -77,9 +79,9 @@ require (
 	github.com/fatih/color v1.19.0 // indirect
 	github.com/fluent/fluent-operator/v3 v3.7.0 // indirect
 	github.com/fsnotify/fsnotify v1.10.1 // indirect
-	github.com/fxamacker/cbor/v2 v2.9.1 // indirect
+	github.com/fxamacker/cbor/v2 v2.9.2 // indirect
 	github.com/gardener/controller-manager-library v0.2.1-0.20260508123052-a693015425a8 // indirect
-	github.com/gardener/etcd-druid/api v0.36.4 // indirect
+	github.com/gardener/etcd-druid/api v0.37.0 // indirect
 	github.com/gardener/external-dns-management v0.46.0 // indirect
 	github.com/gardener/machine-controller-manager v0.61.3 // indirect
 	github.com/go-acme/lego/v5 v5.2.2 // indirect
@@ -120,7 +122,7 @@ require (
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jpillora/backoff v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.13-0.20220915233716-71ac16282d12 // indirect
-	github.com/klauspost/compress v1.18.7 // indirect
+	github.com/klauspost/compress v1.19.0 // indirect
 	github.com/kubernetes-csi/external-snapshotter/client/v4 v4.2.0 // indirect
 	github.com/labstack/echo/v4 v4.15.1 // indirect
 	github.com/labstack/gommon v0.4.2 // indirect
@@ -137,7 +139,7 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f // indirect
 	github.com/nexucis/lamenv v0.5.2 // indirect
-	github.com/open-telemetry/opentelemetry-operator/apis v0.153.0 // indirect
+	github.com/open-telemetry/opentelemetry-operator/apis v0.154.0 // indirect
 	github.com/pavlo-v-chernykh/keystore-go/v4 v4.5.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.3.1 // indirect
 	github.com/perses/common v0.30.2 // indirect
@@ -146,7 +148,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/prometheus/alertmanager v0.29.0 // indirect
-	github.com/prometheus/client_golang v1.23.3-0.20260702112354-832cec72badf // indirect
+	github.com/prometheus/client_golang v1.23.3-0.20260708163044-20355eb4487c // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
 	github.com/prometheus/common v0.69.0 // indirect
 	github.com/prometheus/procfs v0.21.1 // indirect
@@ -178,15 +180,15 @@ require (
 	go.yaml.in/yaml/v2 v2.4.4 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	go.yaml.in/yaml/v4 v4.0.0-rc.2 // indirect
-	golang.org/x/crypto v0.53.0 // indirect
+	golang.org/x/crypto v0.54.0 // indirect
 	golang.org/x/exp v0.0.0-20260527015227-08cc5374adb3 // indirect
 	golang.org/x/mod v0.37.0 // indirect
 	golang.org/x/net v0.56.0 // indirect
 	golang.org/x/oauth2 v0.36.0 // indirect
-	golang.org/x/sync v0.21.0 // indirect
-	golang.org/x/sys v0.46.0 // indirect
-	golang.org/x/term v0.44.0 // indirect
-	golang.org/x/text v0.39.0 // indirect
+	golang.org/x/sync v0.22.0 // indirect
+	golang.org/x/sys v0.47.0 // indirect
+	golang.org/x/term v0.45.0 // indirect
+	golang.org/x/text v0.40.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
 	golang.org/x/tools v0.47.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.5.0 // indirect
@@ -197,13 +199,13 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	helm.sh/helm/v4 v4.1.4 // indirect
+	helm.sh/helm/v4 v4.2.2 // indirect
 	istio.io/api v1.29.5 // indirect
 	istio.io/client-go v1.29.2 // indirect
 	k8s.io/gengo/v2 v2.0.0-20251215205346-5ee0d033ba5b // indirect
 	k8s.io/klog/v2 v2.140.0 // indirect
 	k8s.io/kube-aggregator v0.36.2 // indirect
-	k8s.io/kube-openapi v0.0.0-20260427204847-8949caaa1199 // indirect
+	k8s.io/kube-openapi v0.0.0-20260603220949-865597e52e25 // indirect
 	k8s.io/kubelet v0.36.2 // indirect
 	k8s.io/metrics v0.36.2 // indirect
 	k8s.io/pod-security-admission v0.36.2 // indirect

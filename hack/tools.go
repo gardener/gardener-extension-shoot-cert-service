@@ -5,6 +5,6 @@
 package hack
 
 import (
-	_ "github.com/gardener/gardener/hack/tools/tool"
+	_ "github.com/gardener/gardener/hack/tools"
 	_ "k8s.io/code-generator"
 )
