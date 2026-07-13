@@ -34,12 +34,6 @@ github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03
 github.com/BurntSushi/toml v1.6.0 h1:dRaEfpa2VI55EwlIW72hMRHdWouJeRF7TPYhI+AUQjk=
 github.com/BurntSushi/toml v1.6.0/go.mod h1:ukJfTF/6rtPPRCnwkur4qwRxa8vTRFBF0uk2lLoLwho=
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
-github.com/LucaBernstein/gardener v1.99.2607101033 h1:2O03kH/ScvSeVu+pjLMBfrQdVFumaNosdt4RD8oA3PQ=
-github.com/LucaBernstein/gardener v1.99.2607101033/go.mod h1:DezWgtNMJCrCbx9ljqMG7ISd6uAyAaAbYez1/E+AQFw=
-github.com/LucaBernstein/gardener/hack/tools v1.99.2607101033 h1:iJtrUClfmmZvhYU/nuFXdo+mEHec3+l1WnOb3QLou6I=
-github.com/LucaBernstein/gardener/hack/tools v1.99.2607101033/go.mod h1:L5tK+XSekm/adIF2Qm0GDUH3ETppCLNJhshU3GlYCjo=
-github.com/LucaBernstein/gardener/pkg/apis v1.99.2607101033 h1:mnKQXPL1CHSmBvLHoh1JeMhzCGjUaSvGHYudSSmgGdM=
-github.com/LucaBernstein/gardener/pkg/apis v1.99.2607101033/go.mod h1:qaMyCp4H/Gjct9tF57r5GoaV8YI0IrO6snnQQA9pgEo=
 github.com/Masterminds/goutils v1.1.1 h1:5nUrii3FMTL5diU80unEVvNevw1nH4+ZV4DSLVJLSYI=
 github.com/Masterminds/goutils v1.1.1/go.mod h1:8cTjp+g8YejhMuvIA5y2vz3BpJxksy863GQaJW2MFNU=
 github.com/Masterminds/semver/v3 v3.5.0 h1:kQceYJfbupGfZOKZQg0kou0DgAKhzDg2NZPAwZ/2OOE=
@@ -172,6 +166,12 @@ github.com/gardener/etcd-druid/api v0.37.0 h1:qnix78KixCHjKGYQ0tT2wGzgVyO996feIF
 github.com/gardener/etcd-druid/api v0.37.0/go.mod h1:nFKkRStJEXoYE0xGf2Y5Ela1EayAdsfZAqfK+bBXV/M=
 github.com/gardener/external-dns-management v0.46.0 h1:pygq3JBSdwh7P8aggnnqcKD3JviY8JT+dOUqVDxMKPU=
 github.com/gardener/external-dns-management v0.46.0/go.mod h1:bLlRts4pjCHnp4pVF6BmmfQqnedY9MWQTrpTrrQYJIE=
+github.com/gardener/gardener v1.146.3 h1:mb5IrUC/iCnK828QmoFQwHv3eUGcYwFFQEYMBEWaXD8=
+github.com/gardener/gardener v1.146.3/go.mod h1:BL4tsbuXJkgPlotTOFcU0BKQHAf21l6z/OQo7A3grTU=
+github.com/gardener/gardener/hack/tools v1.146.3 h1:zM4Z1PocDRVRDgFgeuuUyuNaYXMgttbLlrDqWeKaE2A=
+github.com/gardener/gardener/hack/tools v1.146.3/go.mod h1:AYY/L1q1uzpKUYUN+KWHj4Ke6OUxcc6k9RyRkUVFYFc=
+github.com/gardener/gardener/pkg/apis v1.146.3 h1:9VM5K4vh6YI/MzMIut7AdpOqNMXTVycqXyLIVmQ2Tms=
+github.com/gardener/gardener/pkg/apis v1.146.3/go.mod h1:S6v1kxYVnqIYsGE2P3emsTUs27bduXEHRYpLx4Zpd9I=
 github.com/gardener/machine-controller-manager v0.61.3 h1:w0JuHCKLmcK7B8E7mx3TvE3e0hSYwikchsMSiMhocqw=
 github.com/gardener/machine-controller-manager v0.61.3/go.mod h1:8eE1qLztrWIbOM71mHSQGaC6Q+pl5lvOyN08qP39D7o=
 github.com/ghodss/yaml v0.0.0-20150909031657-73d445a93680/go.mod h1:4dBDuWmgqj2HViK6kFavaiC9ZROes6MMH2rRYeMEF04=

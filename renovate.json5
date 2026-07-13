@@ -26,7 +26,6 @@
   // The following list of dependencies to ignore is updated by `make generate`.
   // DO NOT EDIT THIS SECTION MANUALLY.
   ignoreDeps: [
-    "github.com/gardener/cert-management/pkg/apis",
     "github.com/go-logr/logr",
     "github.com/onsi/ginkgo/v2",
     "github.com/onsi/gomega",
@@ -209,7 +208,6 @@
     "k8s.io/kubelet",
     "k8s.io/metrics",
     "k8s.io/pod-security-admission",
-    "k8s.io/streaming",
     "sigs.k8s.io/gateway-api",
     "sigs.k8s.io/json",
     "sigs.k8s.io/randfill",

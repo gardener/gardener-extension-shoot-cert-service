@@ -5,9 +5,9 @@ go 1.26.0
 require (
 	github.com/gardener/cert-management v0.25.0
 	github.com/gardener/cert-management/pkg/apis v0.25.0
-	github.com/gardener/gardener v1.145.0
-	github.com/gardener/gardener/hack/tools v1.146.0
-	github.com/gardener/gardener/pkg/apis v1.145.0
+	github.com/gardener/gardener v1.146.3
+	github.com/gardener/gardener/hack/tools v1.146.3
+	github.com/gardener/gardener/pkg/apis v1.146.3
 	github.com/go-logr/logr v1.4.3
 	github.com/onsi/ginkgo/v2 v2.32.0
 	github.com/onsi/gomega v1.42.0
@@ -24,12 +24,6 @@ require (
 	sigs.k8s.io/controller-runtime v0.24.1
 	sigs.k8s.io/yaml v1.6.0
 )
-
-replace github.com/gardener/gardener => github.com/LucaBernstein/gardener v1.99.2607101033
-
-replace github.com/gardener/gardener/pkg/apis => github.com/LucaBernstein/gardener/pkg/apis v1.99.2607101033
-
-replace github.com/gardener/gardener/hack/tools => github.com/LucaBernstein/gardener/hack/tools v1.99.2607101033
 
 require (
 	cel.dev/expr v0.25.1 // indirect
