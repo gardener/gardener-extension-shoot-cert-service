@@ -1,6 +1,5 @@
 #!/bin/bash
-#
-# SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company and Gardener contributors
+# SPDX-FileCopyrightText: SAP SE or an SAP affiliate company and Gardener contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 
@@ -10,8 +9,9 @@ set -o pipefail
 
 PROJECT_ROOT="$(dirname $0)"/..
 
-go mod download k8s.io/code-generator
-CODE_GEN_DIR=$(go list -m -f '{{.Dir}}' k8s.io/code-generator)
+MODFILE="$(go list -m -f '{{.Dir}}' github.com/gardener/gardener/hack/tools)/go.mod"
+GOWORK=off go mod download -modfile "${MODFILE}" k8s.io/code-generator
+CODE_GEN_DIR=$(GOWORK=off go list -m -modfile "${MODFILE}" -f '{{.Dir}}' k8s.io/code-generator)
 source "${CODE_GEN_DIR}/kube_codegen.sh"
 
 kube::codegen::gen_helpers \
