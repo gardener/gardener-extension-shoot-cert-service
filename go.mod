@@ -1,13 +1,13 @@
 module github.com/gardener/gardener-extension-shoot-cert-service
 
-go 1.26.0
+go 1.26.2
 
 require (
 	github.com/gardener/cert-management v0.25.0
 	github.com/gardener/cert-management/pkg/apis v0.25.0
-	github.com/gardener/gardener v1.146.4
-	github.com/gardener/gardener/hack/tools v1.146.4
-	github.com/gardener/gardener/pkg/apis v1.146.4
+	github.com/gardener/gardener v1.147.0
+	github.com/gardener/gardener/hack/tools v1.147.0
+	github.com/gardener/gardener/pkg/apis v1.147.0
 	github.com/go-logr/logr v1.4.3
 	github.com/onsi/ginkgo/v2 v2.32.0
 	github.com/onsi/gomega v1.42.0
@@ -66,7 +66,7 @@ require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/cyphar/filepath-securejoin v0.6.1 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
-	github.com/elliotchance/orderedmap/v3 v3.1.0 // indirect
+	github.com/elliotchance/orderedmap/v3 v3.1.1 // indirect
 	github.com/emicklei/go-restful/v3 v3.13.0 // indirect
 	github.com/evanphx/json-patch/v5 v5.9.11 // indirect
 	github.com/fatih/color v1.19.0 // indirect
@@ -76,7 +76,8 @@ require (
 	github.com/gardener/controller-manager-library v0.2.1-0.20260508123052-a693015425a8 // indirect
 	github.com/gardener/etcd-druid/api v0.37.0 // indirect
 	github.com/gardener/external-dns-management v0.46.0 // indirect
-	github.com/gardener/machine-controller-manager v0.61.3 // indirect
+	github.com/gardener/machine-controller-manager v0.62.1 // indirect
+	github.com/gardener/pvc-autoscaler v0.2.0 // indirect
 	github.com/go-acme/lego/v5 v5.2.2 // indirect
 	github.com/go-asn1-ber/asn1-ber v1.5.8-0.20250403174932-29230038a667 // indirect
 	github.com/go-jose/go-jose/v4 v4.1.4 // indirect
@@ -141,9 +142,9 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/prometheus/alertmanager v0.29.0 // indirect
-	github.com/prometheus/client_golang v1.23.3-0.20260708163044-20355eb4487c // indirect
+	github.com/prometheus/client_golang v1.23.3-0.20260710134234-de192175ccd6 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
-	github.com/prometheus/common v0.69.0 // indirect
+	github.com/prometheus/common v0.70.0 // indirect
 	github.com/prometheus/procfs v0.21.1 // indirect
 	github.com/prometheus/sigv4 v0.3.0 // indirect
 	github.com/sagikazarmark/locafero v0.11.0 // indirect
@@ -192,7 +193,7 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	helm.sh/helm/v4 v4.2.2 // indirect
+	helm.sh/helm/v4 v4.2.3 // indirect
 	istio.io/api v1.29.5 // indirect
 	istio.io/client-go v1.29.2 // indirect
 	k8s.io/klog/v2 v2.140.0 // indirect
