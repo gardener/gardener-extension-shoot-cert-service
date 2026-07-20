@@ -4,7 +4,7 @@ go 1.26.2
 
 require (
 	github.com/gardener/cert-management v0.26.0
-	github.com/gardener/cert-management/pkg/apis v0.25.0
+	github.com/gardener/cert-management/pkg/apis v0.26.0
 	github.com/gardener/gardener v1.147.0
 	github.com/gardener/gardener/hack/tools v1.147.0
 	github.com/gardener/gardener/pkg/apis v1.147.0
