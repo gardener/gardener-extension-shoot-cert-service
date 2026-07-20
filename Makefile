@@ -89,6 +89,7 @@ check: $(GOIMPORTS) $(GOLANGCI_LINT) $(HELM)
 .PHONY: generate
 generate: $(CONTROLLER_GEN) $(CRD_REF_DOCS) $(HELM) $(MOCKGEN) $(KUSTOMIZE) $(YQ) $(EXTENSION_GEN) $(KUBECTL)
 	@REPO_ROOT=$(REPO_ROOT) CONTROLLER_GEN=$(CONTROLLER_GEN) GARDENER_HACK_DIR=$(GARDENER_HACK_DIR) bash $(GARDENER_HACK_DIR)/generate-sequential.sh ./charts/... ./cmd/... ./example/... ./pkg/... ./test/...
+	@$(REPO_ROOT)/hack/copy-crds.sh
 	$(MAKE) format
 	@GARDENER_HACK_DIR=$(GARDENER_HACK_DIR) EXCLUDE_DEPS=github.com/gardener/cert-management bash $(GARDENER_HACK_DIR)/generate-renovate-ignore-deps.sh
 
