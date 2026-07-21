@@ -24,7 +24,7 @@ vpa:
       memory: 50Mi
     controlledValues: RequestsOnly
   updatePolicy:
-    updateMode: "Recreate"
+    updateMode: "InPlaceOrRecreate"
 
 controllers:
   concurrentSyncs: 5
