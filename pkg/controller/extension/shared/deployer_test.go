@@ -834,7 +834,7 @@ var _ = Describe("Deployer", func() {
 							Name:       "cert-controller-manager",
 						},
 						UpdatePolicy: &vpaautoscalingv1.PodUpdatePolicy{
-							UpdateMode: ptr.To(vpaautoscalingv1.UpdateModeRecreate),
+							UpdateMode: ptr.To(vpaautoscalingv1.UpdateModeInPlaceOrRecreate),
 						},
 						ResourcePolicy: &vpaautoscalingv1.PodResourcePolicy{
 							ContainerPolicies: []vpaautoscalingv1.ContainerResourcePolicy{

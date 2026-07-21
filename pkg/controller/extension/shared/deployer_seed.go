@@ -36,7 +36,7 @@ const (
 	ingressCertWorkers = 5
 	certWorkers        = 5
 	issuerWorkers      = 2
-	vpaUpdateMode      = "Recreate"
+	vpaUpdateMode      = "InPlaceOrRecreate"
 
 	defaultAlgorithm               = "RSA"
 	defaultSizeRSA                 = 3072
