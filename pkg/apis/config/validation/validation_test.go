@@ -82,31 +82,72 @@ var _ = Describe("Validation", func() {
 				"Field": Equal("acme.email"),
 			})),
 		)),
-		Entry("Invalid precheck nameservers and caCertificates", config.Configuration{
+		Entry("Invalid precheck caCertificates", config.Configuration{
+			IssuerName: "gardener",
+			ACME: &config.ACME{
+				Email:          validACME.Email,
+				Server:         validACME.Server,
+				CACertificates: new("blabla"),
+			},
+		}, ConsistOf(
+			PointTo(MatchFields(IgnoreExtras, Fields{
+				"Type":  Equal(field.ErrorTypeInvalid),
+				"Field": Equal("acme.caCertificates"),
+			})),
+		)),
+		Entry("Invalid precheck nameservers (empty)", config.Configuration{
 			IssuerName: "gardener",
 			ACME: &config.ACME{
 				Email:               validACME.Email,
 				Server:              validACME.Server,
-				PrecheckNameservers: new("8.8.8.8,foo.com"),
-				CACertificates:      new("blabla"),
+				PrecheckNameservers: new(""),
 			},
 		}, ConsistOf(
 			PointTo(MatchFields(IgnoreExtras, Fields{
 				"Type":  Equal(field.ErrorTypeInvalid),
 				"Field": Equal("acme.precheckNameservers"),
 			})),
-			PointTo(MatchFields(IgnoreExtras, Fields{
-				"Type":  Equal(field.ErrorTypeInvalid),
-				"Field": Equal("acme.caCertificates"),
-			})),
 		)),
-		Entry("Valid precheck nameservers and caCertificates", config.Configuration{
+		Entry("Invalid precheck nameservers", config.Configuration{
 			IssuerName: "gardener",
 			ACME: &config.ACME{
 				Email:               validACME.Email,
 				Server:              validACME.Server,
-				PrecheckNameservers: new("8.8.8.8,172.11.22.253"),
-				CACertificates:      new(validCACerts()),
+				PrecheckNameservers: new("-foo-.com"),
+			},
+		}, ConsistOf(
+			PointTo(MatchFields(IgnoreExtras, Fields{
+				"Type":  Equal(field.ErrorTypeInvalid),
+				"Field": Equal("acme.precheckNameservers"),
+			})),
+		)),
+		Entry("Valid precheck nameservers", config.Configuration{
+			IssuerName: "gardener",
+			ACME: &config.ACME{
+				Email:               validACME.Email,
+				Server:              validACME.Server,
+				PrecheckNameservers: new("8.8.8.8,172.11.22.253,8.8.8.8:53,2001:db8::1,[::1],[::1]:53,foo.com,foo-2.bla.net.,ns1.example.com:5353"),
+			},
+		}, BeEmpty()),
+		Entry("Invalid precheck nameservers (bad domain with port)", config.Configuration{
+			IssuerName: "gardener",
+			ACME: &config.ACME{
+				Email:               validACME.Email,
+				Server:              validACME.Server,
+				PrecheckNameservers: new("-bad-.com:53"),
+			},
+		}, ConsistOf(
+			PointTo(MatchFields(IgnoreExtras, Fields{
+				"Type":  Equal(field.ErrorTypeInvalid),
+				"Field": Equal("acme.precheckNameservers"),
+			})),
+		)),
+		Entry("Valid caCertificates", config.Configuration{
+			IssuerName: "gardener",
+			ACME: &config.ACME{
+				Email:          validACME.Email,
+				Server:         validACME.Server,
+				CACertificates: new(validCACerts()),
 			},
 		}, BeEmpty()),
 		Entry("Invalid DefaultRequestsPerDayQuota", config.Configuration{

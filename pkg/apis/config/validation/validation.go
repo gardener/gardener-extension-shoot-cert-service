@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/gardener/gardener/pkg/utils"
+	k8svalidation "k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/config"
@@ -65,8 +66,8 @@ func validateACME(acme *config.ACME, fldPath *field.Path) field.ErrorList {
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("precheckNameservers"), *acme.PrecheckNameservers, "must contain at least one DNS server IP"))
 		} else {
 			for i, server := range servers {
-				if net.ParseIP(server) == nil {
-					allErrs = append(allErrs, field.Invalid(fldPath.Child("precheckNameservers"), *acme.PrecheckNameservers, fmt.Sprintf("invalid IP for %d. DNS server", i+1)))
+				if err := checkIPOrDomain(server, i); err != nil {
+					allErrs = append(allErrs, field.Invalid(fldPath.Child("precheckNameservers"), *acme.PrecheckNameservers, err.Error()))
 				}
 			}
 		}
@@ -78,6 +79,23 @@ func validateACME(acme *config.ACME, fldPath *field.Path) field.ErrorList {
 		}
 	}
 	return allErrs
+}
+
+func checkIPOrDomain(server string, idx int) error {
+	// Accept host or host:port. net.SplitHostPort handles [::1]:53 and bare IPs/domains.
+	// For bare bracketed IPv6 like [::1] (no port), SplitHostPort fails; strip the brackets manually.
+	host, _, err := net.SplitHostPort(server)
+	if err != nil {
+		host = strings.TrimSuffix(strings.TrimPrefix(server, "["), "]")
+	}
+	if net.ParseIP(host) != nil {
+		return nil
+	}
+	fqdn := strings.TrimSuffix(host, ".")
+	if errs := k8svalidation.IsDNS1123Subdomain(fqdn); len(errs) > 0 {
+		return fmt.Errorf("invalid IP or domain name for DNS server #%d: '%s' (%s)", idx+1, server, strings.Join(errs, "; "))
+	}
+	return nil
 }
 
 func validateCA(ca *config.CA, fldPath *field.Path) field.ErrorList {
