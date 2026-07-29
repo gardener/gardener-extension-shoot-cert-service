@@ -270,15 +270,15 @@ var _ = Describe("Validation", func() {
 		}, ConsistOf(
 			PointTo(MatchFields(IgnoreExtras, Fields{
 				"Type":     Equal(field.ErrorTypeInvalid),
-				"Field":    Equal("precheckNameservers"),
-				"BadValue": Equal(invalid_ns),
-				"Detail":   Equal("invalid value for 1. DNS server dns.server.te%st: 'dns.server.te%st' is no valid IP address or domain name"),
+				"Field":    Equal("precheckNameservers[0]"),
+				"BadValue": Equal("dns.server.te%st"),
+				"Detail":   ContainSubstring("'dns.server.te%st' is no valid IP address or domain name"),
 			})),
 			PointTo(MatchFields(IgnoreExtras, Fields{
 				"Type":     Equal(field.ErrorTypeInvalid),
-				"Field":    Equal("precheckNameservers"),
-				"BadValue": Equal(invalid_ns),
-				"Detail":   Equal("invalid value for 2. DNS server dns.server.test:123456: '123456' is no valid port number"),
+				"Field":    Equal("precheckNameservers[1]"),
+				"BadValue": Equal("dns.server.test:123456"),
+				"Detail":   Equal("'123456' is no valid port number"),
 			})),
 		)),
 		Entry("Empty PrecheckNameservers", service.CertConfig{
@@ -287,7 +287,7 @@ var _ = Describe("Validation", func() {
 			PointTo(MatchFields(IgnoreExtras, Fields{
 				"Type":   Equal(field.ErrorTypeInvalid),
 				"Field":  Equal("precheckNameservers"),
-				"Detail": Equal("must contain at least one DNS server IP"),
+				"Detail": Equal("must contain at least one DNS server address"),
 			})),
 		)),
 	)

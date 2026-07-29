@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"net"
 	"net/url"
+	"strconv"
 	"strings"
 
 	"github.com/gardener/gardener/pkg/utils"
@@ -63,10 +64,10 @@ func validateACME(acme *config.ACME, fldPath *field.Path) field.ErrorList {
 	if acme.PrecheckNameservers != nil {
 		servers := strings.Split(*acme.PrecheckNameservers, ",")
 		if len(servers) == 1 && len(servers[0]) == 0 {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("precheckNameservers"), *acme.PrecheckNameservers, "must contain at least one DNS server IP"))
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("precheckNameservers"), *acme.PrecheckNameservers, "must contain at least one DNS server address"))
 		} else {
-			for i, server := range servers {
-				if err := checkIPOrDomain(server, i); err != nil {
+			for _, server := range servers {
+				if err := ValidateNameserver(server); err != nil {
 					allErrs = append(allErrs, field.Invalid(fldPath.Child("precheckNameservers"), *acme.PrecheckNameservers, err.Error()))
 				}
 			}
@@ -81,19 +82,38 @@ func validateACME(acme *config.ACME, fldPath *field.Path) field.ErrorList {
 	return allErrs
 }
 
-func checkIPOrDomain(server string, idx int) error {
-	// Accept host or host:port. net.SplitHostPort handles [::1]:53 and bare IPs/domains.
-	// For bare bracketed IPv6 like [::1] (no port), SplitHostPort fails; strip the brackets manually.
-	host, _, err := net.SplitHostPort(server)
+// ValidateNameserver validates a nameserver address, accepting an IP address or domain name with an optional port (host:port format).
+func ValidateNameserver(server string) error {
+	host, port, err := net.SplitHostPort(server)
 	if err != nil {
-		host = strings.TrimSuffix(strings.TrimPrefix(server, "["), "]")
+		// Handle bare bracketed IPv6 like [::1] — valid but SplitHostPort requires a port.
+		if inner, ok := strings.CutPrefix(server, "["); ok {
+			inner = strings.TrimSuffix(inner, "]")
+			if !strings.HasSuffix(server, "]") || net.ParseIP(inner) == nil {
+				return fmt.Errorf("'%s' is no valid nameserver address", server)
+			}
+			host = inner
+		} else {
+			host = server
+		}
+		port = "53"
 	}
-	if net.ParseIP(host) != nil {
-		return nil
+	if net.ParseIP(host) == nil {
+		if errs := k8svalidation.IsDNS1123Subdomain(strings.TrimSuffix(host, ".")); len(errs) > 0 || len(strings.Trim(host, "0123456789.")) == 0 {
+			details := ""
+			if len(errs) > 0 {
+				details = fmt.Sprintf(" (%s)", strings.Join(errs, "; "))
+			}
+			return fmt.Errorf("'%s' is no valid IP address or domain name%s", host, details)
+		}
 	}
-	fqdn := strings.TrimSuffix(host, ".")
-	if errs := k8svalidation.IsDNS1123Subdomain(fqdn); len(errs) > 0 {
-		return fmt.Errorf("invalid IP or domain name for DNS server #%d: '%s' (%s)", idx+1, server, strings.Join(errs, "; "))
+
+	n, err := strconv.Atoi(port)
+	if err != nil {
+		return fmt.Errorf("'%s' is no valid port", port)
+	}
+	if n < 1 || n > 65535 {
+		return fmt.Errorf("'%s' is no valid port number", port)
 	}
 	return nil
 }
