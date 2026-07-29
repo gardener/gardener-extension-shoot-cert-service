@@ -10,9 +10,11 @@ import (
 	"fmt"
 	"net"
 	"net/url"
+	"strconv"
 	"strings"
 
 	"github.com/gardener/gardener/pkg/utils"
+	k8svalidation "k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/config"
@@ -62,11 +64,11 @@ func validateACME(acme *config.ACME, fldPath *field.Path) field.ErrorList {
 	if acme.PrecheckNameservers != nil {
 		servers := strings.Split(*acme.PrecheckNameservers, ",")
 		if len(servers) == 1 && len(servers[0]) == 0 {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("precheckNameservers"), *acme.PrecheckNameservers, "must contain at least one DNS server IP"))
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("precheckNameservers"), *acme.PrecheckNameservers, "must contain at least one DNS server address"))
 		} else {
-			for i, server := range servers {
-				if net.ParseIP(server) == nil {
-					allErrs = append(allErrs, field.Invalid(fldPath.Child("precheckNameservers"), *acme.PrecheckNameservers, fmt.Sprintf("invalid IP for %d. DNS server", i+1)))
+			for _, server := range servers {
+				if err := ValidateNameserver(server); err != nil {
+					allErrs = append(allErrs, field.Invalid(fldPath.Child("precheckNameservers"), *acme.PrecheckNameservers, err.Error()))
 				}
 			}
 		}
@@ -78,6 +80,42 @@ func validateACME(acme *config.ACME, fldPath *field.Path) field.ErrorList {
 		}
 	}
 	return allErrs
+}
+
+// ValidateNameserver validates a nameserver address, accepting an IP address or domain name with an optional port (host:port format).
+func ValidateNameserver(server string) error {
+	host, port, err := net.SplitHostPort(server)
+	if err != nil {
+		// Handle bare bracketed IPv6 like [::1] — valid but SplitHostPort requires a port.
+		if inner, ok := strings.CutPrefix(server, "["); ok {
+			inner = strings.TrimSuffix(inner, "]")
+			if !strings.HasSuffix(server, "]") || net.ParseIP(inner) == nil {
+				return fmt.Errorf("'%s' is no valid nameserver address", server)
+			}
+			host = inner
+		} else {
+			host = server
+		}
+		port = "53"
+	}
+	if net.ParseIP(host) == nil {
+		if errs := k8svalidation.IsDNS1123Subdomain(strings.TrimSuffix(host, ".")); len(errs) > 0 || len(strings.Trim(host, "0123456789.")) == 0 {
+			details := ""
+			if len(errs) > 0 {
+				details = fmt.Sprintf(" (%s)", strings.Join(errs, "; "))
+			}
+			return fmt.Errorf("'%s' is no valid IP address or domain name%s", host, details)
+		}
+	}
+
+	n, err := strconv.Atoi(port)
+	if err != nil {
+		return fmt.Errorf("'%s' is no valid port", port)
+	}
+	if n < 1 || n > 65535 {
+		return fmt.Errorf("'%s' is no valid port number", port)
+	}
+	return nil
 }
 
 func validateCA(ca *config.CA, fldPath *field.Path) field.ErrorList {
