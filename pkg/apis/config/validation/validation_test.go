@@ -44,6 +44,36 @@ var _ = Describe("Validation", func() {
 		}
 	)
 
+	DescribeTable("#ValidateNameserver",
+		func(server string, errMatcher gomegatypes.GomegaMatcher) {
+			err := validation.ValidateNameserver(server)
+			Expect(err).To(errMatcher)
+		},
+		// valid IP addresses
+		Entry("IPv4", "8.8.8.8", BeNil()),
+		Entry("IPv4 with port", "8.8.8.8:53", BeNil()),
+		Entry("IPv6", "2001:db8::1", BeNil()),
+		Entry("IPv6 with brackets", "[::1]", BeNil()),
+		Entry("IPv6 with brackets and port", "[::1]:53", BeNil()),
+		Entry("IPv6 with brackets and custom port", "[2001:db8::1]:5353", BeNil()),
+		// valid domain names
+		Entry("domain name", "foo.com", BeNil()),
+		Entry("domain name with hyphen", "foo-2.bla.net", BeNil()),
+		Entry("FQDN with trailing dot", "foo-2.bla.net.", BeNil()),
+		Entry("domain name with custom port", "ns1.example.com:5353", BeNil()),
+		Entry("FQDN with port", "ns1.example.com.:53", BeNil()),
+		// invalid host
+		Entry("invalid domain (leading hyphen)", "-foo-.com", MatchError(ContainSubstring("is no valid IP address or domain name"))),
+		Entry("invalid domain (percent-encoded char)", "dns.server.te%st", MatchError(ContainSubstring("is no valid IP address or domain name"))),
+		Entry("pure numeric dotted string", "1.2.3", MatchError(ContainSubstring("is no valid IP address or domain name"))),
+		// invalid port
+		Entry("port out of range", "8.8.8.8:123456", MatchError(ContainSubstring("is no valid port number"))),
+		Entry("non-numeric port", "8.8.8.8:abc", MatchError(ContainSubstring("is no valid port"))),
+		// malformed brackets
+		Entry("unclosed bracket", "[::1", MatchError(ContainSubstring("is no valid nameserver address"))),
+		Entry("brackets around non-IP", "[notanip]", MatchError(ContainSubstring("is no valid nameserver address"))),
+	)
+
 	DescribeTable("#ValidateConfiguration",
 		func(config config.Configuration, match gomegatypes.GomegaMatcher) {
 			err := validation.ValidateConfiguration(&config)
