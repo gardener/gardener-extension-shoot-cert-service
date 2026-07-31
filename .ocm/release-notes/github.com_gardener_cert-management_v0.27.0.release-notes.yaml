@@ -1,0 +1,39 @@
+ocm:
+  component_name: github.com/gardener/cert-management
+  component_version: v0.27.0
+release_notes:
+- audience: operator
+  author:
+    hostname: github.com
+    type: githubUser
+    username: MartinWeindel
+  category: other
+  contents: '[chore] Update pkg/apis/go.sum to fix outdated module checksums.'
+  mimetype: text/markdown
+  reference: '[#771](https://github.com/gardener/cert-management/pull/771)'
+  type: standard
+- audience: user
+  author:
+    hostname: github.com
+    type: githubUser
+    username: amendezsap
+  category: bugfix
+  contents: Certificates issued by CA issuers now include the common name in the subject
+    alternative names (SANs), matching the behavior of the ACME issuer. This fixes
+    certificates that specify only `commonName` (and no `dnsNames`) being rejected
+    by clients that validate the hostname against SANs only.
+  mimetype: text/markdown
+  reference: '[#775](https://github.com/gardener/cert-management/pull/775)'
+  type: standard
+- audience: user
+  author:
+    hostname: github.com
+    type: githubUser
+    username: amendezsap
+  category: bugfix
+  contents: Certificates issued by CA issuers now include the CA's full chain in `tls.crt`
+    when the issuer's CA secret contains a certificate chain (e.g. an intermediate
+    CA and its root). Self-signed root certificates are excluded from the served chain.
+  mimetype: text/markdown
+  reference: '[#774](https://github.com/gardener/cert-management/pull/774)'
+  type: standard
