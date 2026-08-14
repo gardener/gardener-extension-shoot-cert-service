@@ -15,15 +15,16 @@ var (
 	//go:embed images.yaml
 	imagesYAML  string
 	imageVector imagevector.ImageVector
+	caBundle    *imagevector.CABundle
 )
 
 func init() {
 	var err error
 
-	imageVector, err = imagevector.Read([]byte(imagesYAML))
+	imageVector, caBundle, err = imagevector.Read([]byte(imagesYAML))
 	runtime.Must(err)
 
-	imageVector, err = imagevector.WithEnvOverride(imageVector, imagevector.OverrideEnv)
+	imageVector, caBundle, err = imagevector.WithEnvOverride(imageVector, caBundle, imagevector.OverrideEnv)
 	runtime.Must(err)
 }
 
