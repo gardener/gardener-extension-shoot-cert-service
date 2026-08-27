@@ -260,3 +260,8 @@ spec:
   - type: shoot-cert-service
 ...
 ```
+
+## Further Configuration
+
+- [DNS01 Challenge on Shoot](../usage/dns_challenge_on_shoot.md) — Route ACME DNS01 challenge entries to the shoot cluster instead of the seed.
+- [Custom Issuers](../usage/custom_shoot_issuer.md) — Configure per-shoot or in-cluster ACME issuers.
