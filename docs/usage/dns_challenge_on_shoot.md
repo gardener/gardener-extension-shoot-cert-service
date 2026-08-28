@@ -1,13 +1,3 @@
----
-title: DNS01 Challenge on Shoot
-level: advanced
-category: Networking
-scope: operator
-publishdate: 2026-08-27
-tags: ["task"]
-description: Configure DNS01 ACME challenges to be handled on the shoot cluster instead of the seed
----
-
 # DNS01 Challenge on Shoot
 
 ## Overview
@@ -36,14 +26,14 @@ spec:
       kind: CertConfig
       dnsChallengeOnShoot:
         enabled: true
-        namespace: kube-system   # optional, defaults to kube-system
-        dnsClass: gardendns       # optional, selects a specific DNS controller instance
+        namespace: mynamespace   # required
+        dnsClass: myclass        # optional, selects a specific DNS controller instance
 ```
 
 | Field        | Type     | Required | Description                                                                                                                            |
 |--------------|----------|----------|----------------------------------------------------------------------------------------------------------------------------------------|
 | `enabled`    | `bool`   | yes      | Enables DNS01 challenge entries on the shoot cluster. When `false` (default), entries are created in the seed control plane namespace. |
-| `namespace`  | `string` | no       | Namespace in the shoot cluster where DNS challenge entries are created. Defaults to `kube-system`.                                     |
+| `namespace`  | `string` | yes      | Namespace in the shoot cluster where DNS challenge entries are created.                                                                |
 | `dnsClass`   | `string` | no       | DNS class annotation set on created `DNSEntry` objects. Use this to select a specific DNS controller instance in the shoot cluster.    |
 
 When `enabled` is `true`, `cert-controller-manager` uses a separate kubeconfig pointing to the shoot cluster for DNS operations. The shoot's DNS controllers (e.g. `shoot-dns-service`) then handle TXT record propagation instead of the seed-level DNS management.
@@ -72,6 +62,5 @@ spec:
         - dns1.private.company-net:53
       dnsChallengeOnShoot:
         enabled: true
-        namespace: kube-system
-        dnsClass: gardendns
+        namespace: my-namespace
 ```
