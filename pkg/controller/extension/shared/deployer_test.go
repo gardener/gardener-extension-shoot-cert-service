@@ -1046,7 +1046,7 @@ var _ = Describe("Deployer", func() {
 		}
 	})
 
-	Describe("DropShootManagedResource", func() {
+	Describe("DropShootManagedResourceIfInDeletion", func() {
 		BeforeEach(func() {
 			values = Values{
 				Namespace:       "shoot--foo--bar",
@@ -1054,7 +1054,7 @@ var _ = Describe("Deployer", func() {
 			}
 		})
 
-		It("should remove finalizers from the shoot managed resource", func() {
+		It("should remove finalizers from the shoot managed resource after MR is deleted and waiting time", func() {
 			// Create a managed resource with finalizers
 			mr := &resourcesv1alpha1.ManagedResource{
 				ObjectMeta: metav1.ObjectMeta{
@@ -1069,18 +1069,33 @@ var _ = Describe("Deployer", func() {
 			Expect(c.Get(ctx, client.ObjectKeyFromObject(mr), mr)).To(Succeed())
 			Expect(mr.Finalizers).To(HaveLen(2))
 
-			// Call DropShootManagedResource
 			deployer := NewDeployer(values)
-			Expect(deployer.DropShootManagedResource(ctx, c)).To(Succeed())
+			// should not be dropped if not deleted
+			dropped, err := deployer.DropShootManagedResourceIfInDeletion(ctx, c, 0)
+			Expect(dropped).To(BeFalse())
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(c.Delete(ctx, mr)).To(Succeed())
+			time.Sleep(10 * time.Millisecond)
+			Expect(c.Get(ctx, client.ObjectKeyFromObject(mr), mr)).To(Succeed())
+
+			// should not be dropped if wait time not reached
+			dropped, err = deployer.DropShootManagedResourceIfInDeletion(ctx, c, 1000*time.Second)
+			Expect(dropped).To(BeFalse())
+			Expect(err).NotTo(HaveOccurred())
+
+			dropped, err = deployer.DropShootManagedResourceIfInDeletion(ctx, c, 1*time.Millisecond)
+			Expect(dropped).To(BeTrue())
+			Expect(err).NotTo(HaveOccurred())
 
 			// Verify finalizers are removed
-			Expect(c.Get(ctx, client.ObjectKeyFromObject(mr), mr)).To(Succeed())
-			Expect(mr.Finalizers).To(BeEmpty())
+			Expect(client.IgnoreNotFound(c.Get(ctx, client.ObjectKeyFromObject(mr), mr))).To(Succeed())
 		})
 
 		It("should return an error if managed resource does not exist", func() {
 			deployer := NewDeployer(values)
-			err := deployer.DropShootManagedResource(ctx, c)
+			dropped, err := deployer.DropShootManagedResourceIfInDeletion(ctx, c, 0)
+			Expect(dropped).To(BeFalse())
 			Expect(err).To(HaveOccurred())
 			Expect(errors.IsNotFound(err)).To(BeTrue())
 		})
@@ -1088,7 +1103,8 @@ var _ = Describe("Deployer", func() {
 		It("should return an error if not configured for shoot deployment", func() {
 			values.ShootDeployment = false
 			deployer := NewDeployer(values)
-			err := deployer.DropShootManagedResource(ctx, c)
+			dropped, err := deployer.DropShootManagedResourceIfInDeletion(ctx, c, 0)
+			Expect(dropped).To(BeFalse())
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(ContainSubstring("only supported for shoot deployment"))
 		})
@@ -1105,7 +1121,9 @@ var _ = Describe("Deployer", func() {
 
 			// Call DropShootManagedResource
 			deployer := NewDeployer(values)
-			Expect(deployer.DropShootManagedResource(ctx, c)).To(Succeed())
+			dropped, err := deployer.DropShootManagedResourceIfInDeletion(ctx, c, 0)
+			Expect(dropped).To(BeFalse())
+			Expect(err).NotTo(HaveOccurred())
 
 			// Verify it still succeeds (no-op)
 			Expect(c.Get(ctx, client.ObjectKeyFromObject(mr), mr)).To(Succeed())
