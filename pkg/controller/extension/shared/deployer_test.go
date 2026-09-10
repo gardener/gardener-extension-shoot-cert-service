@@ -1119,7 +1119,7 @@ var _ = Describe("Deployer", func() {
 			}
 			Expect(c.Create(ctx, mr)).To(Succeed())
 
-			// Call DropShootManagedResource
+			// Call DropShootManagedResourceIfInDeletion
 			deployer := NewDeployer(values)
 			dropped, err := deployer.DropShootManagedResourceIfInDeletion(ctx, c, 0)
 			Expect(dropped).To(BeFalse())
