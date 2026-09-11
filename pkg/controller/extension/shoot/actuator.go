@@ -6,6 +6,7 @@ package shoot
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -102,7 +103,12 @@ func (a *actuator) Delete(ctx context.Context, log logr.Logger, ex *extensionsv1
 		// This will only be applied if shoot is deleting since more than 10 min.
 		cluster, _ := controller.GetCluster(ctx, a.client, namespace)
 		if cluster != nil && cluster.Shoot != nil && cluster.Shoot.DeletionTimestamp != nil && time.Since(cluster.Shoot.DeletionTimestamp.Time) > 10*time.Minute {
-			err = a.dropShootResourcesForShoot(ctx, log, namespace)
+			dropped, err2 := a.dropShootResourcesForShootIfInDeletion(ctx, log, namespace, 10*time.Minute)
+			if dropped {
+				err = nil
+			} else if err2 != nil {
+				err = errors.Join(err, err2)
+			}
 		}
 
 		if err != nil {
@@ -198,9 +204,12 @@ func (a *actuator) deleteShootResourcesForShoot(ctx context.Context, log logr.Lo
 	return shared.NewDeployer(shared.Values{Namespace: namespace, ShootDeployment: true}).DeleteShootManagedResourceAndWait(ctx, a.client, 2*time.Minute)
 }
 
-func (a *actuator) dropShootResourcesForShoot(ctx context.Context, log logr.Logger, namespace string) error {
-	log.Info("Dropping managed resource for shoot", "namespace", namespace)
-	return shared.NewDeployer(shared.Values{Namespace: namespace, ShootDeployment: true}).DropShootManagedResource(ctx, a.client)
+func (a *actuator) dropShootResourcesForShootIfInDeletion(ctx context.Context, log logr.Logger, namespace string, waitTime time.Duration) (bool, error) {
+	dropped, err := shared.NewDeployer(shared.Values{Namespace: namespace, ShootDeployment: true}).DropShootManagedResourceIfInDeletion(ctx, a.client, waitTime)
+	if dropped {
+		log.Info("Dropped managed resource for shoot", "namespace", namespace)
+	}
+	return dropped, err
 }
 
 func (a *actuator) updateStatus(ctx context.Context, ex *extensionsv1alpha1.Extension, certConfig *service.CertConfig) error {

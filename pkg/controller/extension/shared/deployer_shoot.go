@@ -80,19 +80,29 @@ func (d *Deployer) DeleteShootManagedResourceAndWait(ctx context.Context, c clie
 	return managedresources.WaitUntilDeleted(timeoutCtx, c, d.values.Namespace, v1alpha1.CertManagementResourceNameShoot)
 }
 
+// DropShootManagedResourceIfInDeletion force-removes the shoot ManagedResource by clearing its finalizers
+// if it has been stuck in deletion for longer than waitTime. This is a workaround for the gardenlet not
+// cleaning up shoot ManagedResources when a transient error occurs during extension deletion.
+// Returns true if the finalizers were removed, false if the resource is not yet eligible.
 // TODO(MartinWeindel) Revert PR #535, when gardener/gardener#14568 is implemented.
-func (d *Deployer) DropShootManagedResource(ctx context.Context, c client.Client) error {
+func (d *Deployer) DropShootManagedResourceIfInDeletion(ctx context.Context, c client.Client, waitTime time.Duration) (bool, error) {
 	if !d.values.ShootDeployment {
-		return fmt.Errorf("only supported for shoot deployment")
+		return false, fmt.Errorf("only supported for shoot deployment")
 	}
 
 	mr := &resourcesv1alpha1.ManagedResource{ObjectMeta: metav1.ObjectMeta{Name: v1alpha1.CertManagementResourceNameShoot, Namespace: d.values.Namespace}}
 	if err := c.Get(ctx, client.ObjectKeyFromObject(mr), mr); err != nil {
-		return err
+		return false, err
+	}
+	if mr.DeletionTimestamp == nil || time.Since(mr.DeletionTimestamp.Time) < waitTime {
+		return false, nil
 	}
 	patch := client.MergeFrom(mr.DeepCopy())
 	mr.Finalizers = nil
-	return c.Patch(ctx, mr, patch)
+	if err := c.Patch(ctx, mr, patch); err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 func (d *Deployer) createShootRole() *rbacv1.Role {
