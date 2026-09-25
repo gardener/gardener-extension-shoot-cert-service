@@ -1168,6 +1168,34 @@ var _ = Describe("Deployer", func() {
 			}
 			testShootManagedResource(resources, true)
 		})
+
+		It("should deploy the shoot managed resource with the CA injector enabled", func() {
+			values.CertConfig.CAInjector = &service.CAInjector{
+				Enabled: true,
+			}
+			resources := standardShootResources()
+			role := resources[2].(*rbacv1.ClusterRole)
+			role.Rules = append(role.Rules,
+				rbacv1.PolicyRule{
+					APIGroups: []string{"admissionregistration.k8s.io"},
+					Resources: []string{"validatingwebhookconfigurations", "mutatingwebhookconfigurations"},
+					Verbs:     []string{"get", "list", "update", "watch"},
+				},
+				rbacv1.PolicyRule{
+					APIGroups: []string{"apiregistration.k8s.io"},
+					Resources: []string{"apiservices"},
+					Verbs:     []string{"get", "list", "update", "watch"},
+				},
+			)
+			testShootManagedResource(resources, false)
+		})
+
+		It("should not add CA injector rules when the CA injector is explicitly disabled", func() {
+			values.CertConfig.CAInjector = &service.CAInjector{
+				Enabled: false,
+			}
+			testShootManagedResource(standardShootResources(), false)
+		})
 	})
 
 	Describe("DeploySeedManagedResource", func() {
@@ -1234,6 +1262,26 @@ var _ = Describe("Deployer", func() {
 					"--allow-target-issuers",
 				)
 			})
+		})
+
+		It("should deploy it with the CA injector controllers enabled", func() {
+			values.CertConfig.CAInjector = &service.CAInjector{
+				Enabled: true,
+			}
+			testSeedManagedResource(standardSeedResources(), func(deployment *appsv1.Deployment) {
+				deployment.Spec.Template.Spec.Containers[0].Args = insertArgsAfter(
+					"--name=",
+					deployment.Spec.Template.Spec.Containers[0].Args,
+					"--controllers=all,cainjector-validatingwebhook,cainjector-mutatingwebhook,cainjector-crd,cainjector-apiservice",
+				)
+			})
+		})
+
+		It("should not add the controllers arg when the CA injector is explicitly disabled", func() {
+			values.CertConfig.CAInjector = &service.CAInjector{
+				Enabled: false,
+			}
+			testSeedManagedResource(standardSeedResources(), nil)
 		})
 
 		It("should deploy it resource without alerting", func() {

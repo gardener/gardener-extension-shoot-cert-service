@@ -36,6 +36,9 @@ type CertConfig struct {
 	// This is only relevant for the Garden runtime or seed cluster.
 	// If not specified, the default value is false.
 	GenerateControlPlaneCertificate *bool
+
+	// CAInjector holds enablement for the CA injector feature.
+	CAInjector *CAInjector `json:"caInjector,omitempty"`
 }
 
 // Alerting contains configuration for alerting of certificate expiration.
@@ -102,5 +105,16 @@ type ACMEExternalAccountBinding struct {
 // ShootIssuers holds enablement for issuers on shoot cluster
 // If specified, it overwrites the ShootIssuers settings of the service configuration.
 type ShootIssuers struct {
+	Enabled bool
+}
+
+// CAInjector holds enablement for the CA injector controllers.
+// When enabled, the cert-controller-manager runs additional controllers that automatically
+// populate the caBundle field of ValidatingWebhookConfiguration, MutatingWebhookConfiguration,
+// CustomResourceDefinition (conversion webhooks), and APIService resources.
+// The CA source is determined by annotations on these resources:
+//   - cert.gardener.cloud/inject-ca-from: <namespace>/<certificate> — injects from a Certificate resource
+//   - cert.gardener.cloud/inject-ca-from-secret: <namespace>/<secret> — injects directly from a Secret
+type CAInjector struct {
 	Enabled bool
 }
