@@ -119,6 +119,10 @@ func (v Values) precheckNameservers() string {
 	return precheckNameservers
 }
 
+func (v Values) caInjectorEnabled() bool {
+	return v.CertConfig.CAInjector != nil && v.CertConfig.CAInjector.Enabled
+}
+
 func (v Values) caCertificates() string {
 	if v.ExtensionConfig.ACME != nil {
 		return ptr.Deref(v.ExtensionConfig.ACME.CACertificates, "")

@@ -492,6 +492,9 @@ func (d *Deployer) env() []corev1.EnvVar {
 
 func (d *Deployer) args() []string {
 	args := []string{fmt.Sprintf("--name=%s", d.values.fullName())}
+	if d.values.caInjectorEnabled() {
+		args = append(args, "--controllers=all,cainjector-validatingwebhook,cainjector-mutatingwebhook,cainjector-crd,cainjector-apiservice")
+	}
 	if d.values.ShootDeployment {
 		args = append(args,
 			"--namespace=kube-system",
