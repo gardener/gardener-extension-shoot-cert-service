@@ -1,0 +1,48 @@
+ocm:
+  component_name: github.com/gardener/cert-management
+  component_version: v0.28.0
+release_notes:
+- audience: user
+  author:
+    hostname: github.com
+    type: githubUser
+    username: MartinWeindel
+  category: feature
+  contents: |-
+    Add opt-in CA injector to populate the caBundle of `ValidatingWebhookConfiguration`, `MutatingWebhookConfiguration`,
+    `CustomResourceDefinition` conversion webhooks and `APIServices` from a CA source driven by annotations
+  mimetype: text/markdown
+  reference: '[#826](https://github.com/gardener/cert-management/pull/826)'
+  type: standard
+- audience: user
+  author:
+    hostname: github.com
+    type: githubUser
+    username: MartinWeindel
+  category: feature
+  contents: Support `subject`, `literalSubject`, and `usages` for CA and self-signed
+    certificates.
+  mimetype: text/markdown
+  reference: '[#813](https://github.com/gardener/cert-management/pull/813)'
+  type: standard
+- audience: dependency
+  author:
+    hostname: github.com
+    type: githubUser
+    username: marc1404
+  category: other
+  contents: Bumped Go to 1.26.7
+  mimetype: text/markdown
+  reference: '[#808](https://github.com/gardener/cert-management/pull/808)'
+  type: standard
+- audience: user
+  author:
+    hostname: github.com
+    type: githubUser
+    username: MartinWeindel
+  category: bugfix
+  contents: '[k8s gateway source controllers] Assign HTTPRoute hosts to matching listener
+    by section name.'
+  mimetype: text/markdown
+  reference: '[#820](https://github.com/gardener/cert-management/pull/820)'
+  type: standard
