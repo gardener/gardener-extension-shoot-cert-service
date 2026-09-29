@@ -214,6 +214,18 @@ func (d *Deployer) createShootClusterRole() *rbacv1.ClusterRole {
 			Verbs:     []string{"get", "list", "update", "watch", "create", "delete"},
 		})
 	}
+
+	if d.values.caInjectorEnabled() {
+		role.Rules = append(role.Rules, rbacv1.PolicyRule{
+			APIGroups: []string{"admissionregistration.k8s.io"},
+			Resources: []string{"validatingwebhookconfigurations", "mutatingwebhookconfigurations"},
+			Verbs:     []string{"get", "list", "update", "watch"},
+		}, rbacv1.PolicyRule{
+			APIGroups: []string{"apiregistration.k8s.io"},
+			Resources: []string{"apiservices"},
+			Verbs:     []string{"get", "list", "update", "watch"},
+		})
+	}
 	return role
 }
 

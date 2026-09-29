@@ -96,6 +96,49 @@ integer
 </table>
 
 
+<h3 id="cainjector">CAInjector
+</h3>
+
+
+<p>
+(<em>Appears on:</em><a href="#certconfig">CertConfig</a>)
+</p>
+
+<p>
+CAInjector holds enablement for the CA injector controllers.
+When enabled, the cert-controller-manager runs additional controllers that automatically
+populate the caBundle field of ValidatingWebhookConfiguration, MutatingWebhookConfiguration,
+CustomResourceDefinition (conversion webhooks), and APIService resources.
+The CA source is determined by annotations on these resources:
+  - cert.gardener.cloud/inject-ca-from: <namespace>/<certificate> — injects from a Certificate resource
+  - cert.gardener.cloud/inject-ca-from-secret: <namespace>/<secret> — injects directly from a Secret
+</p>
+
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+
+<tr>
+<td>
+<code>enabled</code></br>
+<em>
+boolean
+</em>
+</td>
+<td>
+<p></p>
+</td>
+</tr>
+
+</tbody>
+</table>
+
+
 <h3 id="certconfig">CertConfig
 </h3>
 
@@ -182,6 +225,17 @@ boolean
 <td>
 <em>(Optional)</em>
 <p>GenerateControlPlaneCertificate is a boolean flag to indicate if the control plane certificate should be generated.<br />This is only relevant for the Garden runtime or seed cluster.<br />If not specified, the default value is false.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>caInjector</code></br>
+<em>
+<a href="#cainjector">CAInjector</a>
+</em>
+</td>
+<td>
+<p>CAInjector holds enablement for the CA injector feature.</p>
 </td>
 </tr>
 
