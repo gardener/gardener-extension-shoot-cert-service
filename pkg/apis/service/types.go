@@ -38,7 +38,7 @@ type CertConfig struct {
 	GenerateControlPlaneCertificate *bool
 
 	// CAInjector holds enablement for the CA injector feature.
-	CAInjector *CAInjector `json:"caInjector,omitempty"`
+	CAInjector *CAInjector
 }
 
 // Alerting contains configuration for alerting of certificate expiration.
