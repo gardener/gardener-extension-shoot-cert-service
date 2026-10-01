@@ -7,3 +7,7 @@ aliases:
   shoot-cert-service-approvers:
   - MartinWeindel
   - marc1404
+  documentation-approvers: # Approvers for the Gardener documentation and its aggregate sources, see https://gardener.cloud/contribute/contribution-process/documentation-roles/#documentation-approver
+  - BoHristova
+  - VelmiraS
+  - klocke-io
