@@ -108,8 +108,7 @@ func RegisterConversions(s *runtime.Scheme) error {
 }
 
 func autoConvert_v1alpha1_ACMEExternalAccountBinding_To_service_ACMEExternalAccountBinding(in *ACMEExternalAccountBinding, out *service.ACMEExternalAccountBinding, s conversion.Scope) error {
-	out.KeyID = in.KeyID
-	out.KeySecretName = in.KeySecretName
+	*out = *(*service.ACMEExternalAccountBinding)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -119,8 +118,7 @@ func Convert_v1alpha1_ACMEExternalAccountBinding_To_service_ACMEExternalAccountB
 }
 
 func autoConvert_service_ACMEExternalAccountBinding_To_v1alpha1_ACMEExternalAccountBinding(in *service.ACMEExternalAccountBinding, out *ACMEExternalAccountBinding, s conversion.Scope) error {
-	out.KeyID = in.KeyID
-	out.KeySecretName = in.KeySecretName
+	*out = *(*ACMEExternalAccountBinding)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -130,7 +128,7 @@ func Convert_service_ACMEExternalAccountBinding_To_v1alpha1_ACMEExternalAccountB
 }
 
 func autoConvert_v1alpha1_Alerting_To_service_Alerting(in *Alerting, out *service.Alerting, s conversion.Scope) error {
-	out.CertExpirationAlertDays = (*int)(unsafe.Pointer(in.CertExpirationAlertDays))
+	*out = *(*service.Alerting)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -140,7 +138,7 @@ func Convert_v1alpha1_Alerting_To_service_Alerting(in *Alerting, out *service.Al
 }
 
 func autoConvert_service_Alerting_To_v1alpha1_Alerting(in *service.Alerting, out *Alerting, s conversion.Scope) error {
-	out.CertExpirationAlertDays = (*int)(unsafe.Pointer(in.CertExpirationAlertDays))
+	*out = *(*Alerting)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -150,7 +148,7 @@ func Convert_service_Alerting_To_v1alpha1_Alerting(in *service.Alerting, out *Al
 }
 
 func autoConvert_v1alpha1_CAInjector_To_service_CAInjector(in *CAInjector, out *service.CAInjector, s conversion.Scope) error {
-	out.Enabled = in.Enabled
+	*out = *(*service.CAInjector)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -160,7 +158,7 @@ func Convert_v1alpha1_CAInjector_To_service_CAInjector(in *CAInjector, out *serv
 }
 
 func autoConvert_service_CAInjector_To_v1alpha1_CAInjector(in *service.CAInjector, out *CAInjector, s conversion.Scope) error {
-	out.Enabled = in.Enabled
+	*out = *(*CAInjector)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -202,9 +200,7 @@ func Convert_service_CertConfig_To_v1alpha1_CertConfig(in *service.CertConfig, o
 }
 
 func autoConvert_v1alpha1_DNSChallengeOnShoot_To_service_DNSChallengeOnShoot(in *DNSChallengeOnShoot, out *service.DNSChallengeOnShoot, s conversion.Scope) error {
-	out.Enabled = in.Enabled
-	out.Namespace = in.Namespace
-	out.DNSClass = (*string)(unsafe.Pointer(in.DNSClass))
+	*out = *(*service.DNSChallengeOnShoot)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -214,9 +210,7 @@ func Convert_v1alpha1_DNSChallengeOnShoot_To_service_DNSChallengeOnShoot(in *DNS
 }
 
 func autoConvert_service_DNSChallengeOnShoot_To_v1alpha1_DNSChallengeOnShoot(in *service.DNSChallengeOnShoot, out *DNSChallengeOnShoot, s conversion.Scope) error {
-	out.Enabled = in.Enabled
-	out.Namespace = in.Namespace
-	out.DNSClass = (*string)(unsafe.Pointer(in.DNSClass))
+	*out = *(*DNSChallengeOnShoot)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -226,8 +220,7 @@ func Convert_service_DNSChallengeOnShoot_To_v1alpha1_DNSChallengeOnShoot(in *ser
 }
 
 func autoConvert_v1alpha1_DNSSelection_To_service_DNSSelection(in *DNSSelection, out *service.DNSSelection, s conversion.Scope) error {
-	out.Include = *(*[]string)(unsafe.Pointer(&in.Include))
-	out.Exclude = *(*[]string)(unsafe.Pointer(&in.Exclude))
+	*out = *(*service.DNSSelection)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -237,8 +230,7 @@ func Convert_v1alpha1_DNSSelection_To_service_DNSSelection(in *DNSSelection, out
 }
 
 func autoConvert_service_DNSSelection_To_v1alpha1_DNSSelection(in *service.DNSSelection, out *DNSSelection, s conversion.Scope) error {
-	out.Include = *(*[]string)(unsafe.Pointer(&in.Include))
-	out.Exclude = *(*[]string)(unsafe.Pointer(&in.Exclude))
+	*out = *(*DNSSelection)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -248,15 +240,7 @@ func Convert_service_DNSSelection_To_v1alpha1_DNSSelection(in *service.DNSSelect
 }
 
 func autoConvert_v1alpha1_IssuerConfig_To_service_IssuerConfig(in *IssuerConfig, out *service.IssuerConfig, s conversion.Scope) error {
-	out.Name = in.Name
-	out.Server = in.Server
-	out.Email = in.Email
-	out.RequestsPerDayQuota = (*int)(unsafe.Pointer(in.RequestsPerDayQuota))
-	out.PrivateKeySecretName = (*string)(unsafe.Pointer(in.PrivateKeySecretName))
-	out.ExternalAccountBinding = (*service.ACMEExternalAccountBinding)(unsafe.Pointer(in.ExternalAccountBinding))
-	out.SkipDNSChallengeValidation = (*bool)(unsafe.Pointer(in.SkipDNSChallengeValidation))
-	out.Domains = (*service.DNSSelection)(unsafe.Pointer(in.Domains))
-	out.PrecheckNameservers = *(*[]string)(unsafe.Pointer(&in.PrecheckNameservers))
+	*out = *(*service.IssuerConfig)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -266,15 +250,7 @@ func Convert_v1alpha1_IssuerConfig_To_service_IssuerConfig(in *IssuerConfig, out
 }
 
 func autoConvert_service_IssuerConfig_To_v1alpha1_IssuerConfig(in *service.IssuerConfig, out *IssuerConfig, s conversion.Scope) error {
-	out.Name = in.Name
-	out.Server = in.Server
-	out.Email = in.Email
-	out.RequestsPerDayQuota = (*int)(unsafe.Pointer(in.RequestsPerDayQuota))
-	out.PrivateKeySecretName = (*string)(unsafe.Pointer(in.PrivateKeySecretName))
-	out.ExternalAccountBinding = (*ACMEExternalAccountBinding)(unsafe.Pointer(in.ExternalAccountBinding))
-	out.SkipDNSChallengeValidation = (*bool)(unsafe.Pointer(in.SkipDNSChallengeValidation))
-	out.Domains = (*DNSSelection)(unsafe.Pointer(in.Domains))
-	out.PrecheckNameservers = *(*[]string)(unsafe.Pointer(&in.PrecheckNameservers))
+	*out = *(*IssuerConfig)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -284,7 +260,7 @@ func Convert_service_IssuerConfig_To_v1alpha1_IssuerConfig(in *service.IssuerCon
 }
 
 func autoConvert_v1alpha1_ShootIssuers_To_service_ShootIssuers(in *ShootIssuers, out *service.ShootIssuers, s conversion.Scope) error {
-	out.Enabled = in.Enabled
+	*out = *(*service.ShootIssuers)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -294,7 +270,7 @@ func Convert_v1alpha1_ShootIssuers_To_service_ShootIssuers(in *ShootIssuers, out
 }
 
 func autoConvert_service_ShootIssuers_To_v1alpha1_ShootIssuers(in *service.ShootIssuers, out *ShootIssuers, s conversion.Scope) error {
-	out.Enabled = in.Enabled
+	*out = *(*ShootIssuers)(unsafe.Pointer(in))
 	return nil
 }
 
