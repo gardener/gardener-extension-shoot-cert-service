@@ -14,7 +14,6 @@ import (
 
 	config "github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/config"
 	configv1alpha1 "github.com/gardener/gardener/extensions/pkg/apis/config/v1alpha1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	conversion "k8s.io/apimachinery/pkg/conversion"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
@@ -80,14 +79,7 @@ func RegisterConversions(s *runtime.Scheme) error {
 }
 
 func autoConvert_v1alpha1_ACME_To_config_ACME(in *ACME, out *config.ACME, s conversion.Scope) error {
-	out.Email = in.Email
-	out.Server = in.Server
-	out.PrivateKey = (*string)(unsafe.Pointer(in.PrivateKey))
-	out.PropagationTimeout = (*v1.Duration)(unsafe.Pointer(in.PropagationTimeout))
-	out.PrecheckNameservers = (*string)(unsafe.Pointer(in.PrecheckNameservers))
-	out.CACertificates = (*string)(unsafe.Pointer(in.CACertificates))
-	out.DeactivateAuthorizations = (*bool)(unsafe.Pointer(in.DeactivateAuthorizations))
-	out.SkipDNSChallengeValidation = (*bool)(unsafe.Pointer(in.SkipDNSChallengeValidation))
+	*out = *(*config.ACME)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -97,14 +89,7 @@ func Convert_v1alpha1_ACME_To_config_ACME(in *ACME, out *config.ACME, s conversi
 }
 
 func autoConvert_config_ACME_To_v1alpha1_ACME(in *config.ACME, out *ACME, s conversion.Scope) error {
-	out.Email = in.Email
-	out.Server = in.Server
-	out.PrivateKey = (*string)(unsafe.Pointer(in.PrivateKey))
-	out.PropagationTimeout = (*v1.Duration)(unsafe.Pointer(in.PropagationTimeout))
-	out.PrecheckNameservers = (*string)(unsafe.Pointer(in.PrecheckNameservers))
-	out.CACertificates = (*string)(unsafe.Pointer(in.CACertificates))
-	out.DeactivateAuthorizations = (*bool)(unsafe.Pointer(in.DeactivateAuthorizations))
-	out.SkipDNSChallengeValidation = (*bool)(unsafe.Pointer(in.SkipDNSChallengeValidation))
+	*out = *(*ACME)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -114,8 +99,7 @@ func Convert_config_ACME_To_v1alpha1_ACME(in *config.ACME, out *ACME, s conversi
 }
 
 func autoConvert_v1alpha1_CA_To_config_CA(in *CA, out *config.CA, s conversion.Scope) error {
-	out.Certificate = in.Certificate
-	out.CertificateKey = in.CertificateKey
+	*out = *(*config.CA)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -125,8 +109,7 @@ func Convert_v1alpha1_CA_To_config_CA(in *CA, out *config.CA, s conversion.Scope
 }
 
 func autoConvert_config_CA_To_v1alpha1_CA(in *config.CA, out *CA, s conversion.Scope) error {
-	out.Certificate = in.Certificate
-	out.CertificateKey = in.CertificateKey
+	*out = *(*CA)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -172,9 +155,7 @@ func Convert_config_Configuration_To_v1alpha1_Configuration(in *config.Configura
 }
 
 func autoConvert_v1alpha1_PrivateKeyDefaults_To_config_PrivateKeyDefaults(in *PrivateKeyDefaults, out *config.PrivateKeyDefaults, s conversion.Scope) error {
-	out.Algorithm = (*string)(unsafe.Pointer(in.Algorithm))
-	out.SizeRSA = (*int)(unsafe.Pointer(in.SizeRSA))
-	out.SizeECDSA = (*int)(unsafe.Pointer(in.SizeECDSA))
+	*out = *(*config.PrivateKeyDefaults)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -184,9 +165,7 @@ func Convert_v1alpha1_PrivateKeyDefaults_To_config_PrivateKeyDefaults(in *Privat
 }
 
 func autoConvert_config_PrivateKeyDefaults_To_v1alpha1_PrivateKeyDefaults(in *config.PrivateKeyDefaults, out *PrivateKeyDefaults, s conversion.Scope) error {
-	out.Algorithm = (*string)(unsafe.Pointer(in.Algorithm))
-	out.SizeRSA = (*int)(unsafe.Pointer(in.SizeRSA))
-	out.SizeECDSA = (*int)(unsafe.Pointer(in.SizeECDSA))
+	*out = *(*PrivateKeyDefaults)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -196,7 +175,7 @@ func Convert_config_PrivateKeyDefaults_To_v1alpha1_PrivateKeyDefaults(in *config
 }
 
 func autoConvert_v1alpha1_ShootIssuers_To_config_ShootIssuers(in *ShootIssuers, out *config.ShootIssuers, s conversion.Scope) error {
-	out.Enabled = in.Enabled
+	*out = *(*config.ShootIssuers)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -206,7 +185,7 @@ func Convert_v1alpha1_ShootIssuers_To_config_ShootIssuers(in *ShootIssuers, out 
 }
 
 func autoConvert_config_ShootIssuers_To_v1alpha1_ShootIssuers(in *config.ShootIssuers, out *ShootIssuers, s conversion.Scope) error {
-	out.Enabled = in.Enabled
+	*out = *(*ShootIssuers)(unsafe.Pointer(in))
 	return nil
 }
 
