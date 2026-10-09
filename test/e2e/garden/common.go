@@ -25,7 +25,6 @@ import (
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	"github.com/gardener/gardener/pkg/controllerutils"
 	"github.com/gardener/gardener/pkg/logger"
-	. "github.com/gardener/gardener/pkg/utils/test"
 	. "github.com/gardener/gardener/pkg/utils/test/matchers"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -69,7 +68,7 @@ var _ = BeforeEach(func() {
 })
 
 func waitForGardenToBeReconciled(ctx context.Context, garden *operatorv1alpha1.Garden) {
-	CEventually(ctx, func(g Gomega) gardencorev1beta1.LastOperationState {
+	Eventually(ctx, func(g Gomega) gardencorev1beta1.LastOperationState {
 		g.Expect(runtimeClient.Get(ctx, client.ObjectKeyFromObject(garden), garden)).To(Succeed())
 		if garden.Status.LastOperation == nil || garden.Status.ObservedGeneration != garden.Generation {
 			return ""
@@ -83,7 +82,7 @@ func waitForOperatorExtensionToBeReconciled(
 	extension *operatorv1alpha1.Extension,
 	expectedRuntimeStatus, expectedVirtualStatus gardencorev1beta1.ConditionStatus,
 ) {
-	CEventually(ctx, func(g Gomega) []gardencorev1beta1.Condition {
+	Eventually(ctx, func(g Gomega) []gardencorev1beta1.Condition {
 		g.Expect(runtimeClient.Get(ctx, client.ObjectKeyFromObject(extension), extension)).To(Succeed())
 		if extension.Status.ObservedGeneration != extension.Generation {
 			return nil
@@ -103,7 +102,7 @@ func waitForOperatorExtensionToBeReconciled(
 }
 
 func waitForOperatorExtensionToBeDeleted(ctx context.Context, extension *operatorv1alpha1.Extension) {
-	CEventually(ctx, func() error {
+	Eventually(ctx, func() error {
 		return runtimeClient.Get(ctx, client.ObjectKeyFromObject(extension), extension)
 	}).WithPolling(2 * time.Second).Should(BeNotFoundError())
 }
@@ -119,7 +118,7 @@ func triggerExtensionReconcile(ctx context.Context, extension *extensionsv1alpha
 }
 
 func waitForExtensionToBeReconciled(ctx context.Context, extension *extensionsv1alpha1.Extension) {
-	CEventually(ctx, func(g Gomega) gardencorev1beta1.LastOperationState {
+	Eventually(ctx, func(g Gomega) gardencorev1beta1.LastOperationState {
 		g.Expect(runtimeClient.Get(ctx, client.ObjectKeyFromObject(extension), extension)).To(Succeed())
 		if extension.Status.LastOperation == nil || extension.Status.ObservedGeneration != extension.Generation {
 			return ""
@@ -129,14 +128,14 @@ func waitForExtensionToBeReconciled(ctx context.Context, extension *extensionsv1
 }
 
 func waitForCertificateToBeReconciled(ctx context.Context, cert *certv1alpha1.Certificate, statusMatcher gomegatypes.GomegaMatcher) {
-	CEventually(ctx, func(g Gomega) certv1alpha1.CertificateStatus {
+	Eventually(ctx, func(g Gomega) certv1alpha1.CertificateStatus {
 		g.Expect(runtimeClient.Get(ctx, client.ObjectKeyFromObject(cert), cert)).To(Succeed())
 		return cert.Status
 	}).WithPolling(2 * time.Second).Should(statusMatcher)
 }
 
 func checkDNSProviderSecretLabels(ctx context.Context, namespace, name string, labelMatcher gomegatypes.GomegaMatcher) {
-	CEventually(ctx, func(g Gomega) map[string]string {
+	Eventually(ctx, func(g Gomega) map[string]string {
 		secret := &corev1.Secret{}
 		g.Expect(runtimeClient.Get(ctx, client.ObjectKey{Namespace: namespace, Name: name}, secret)).To(Succeed())
 		return secret.Labels

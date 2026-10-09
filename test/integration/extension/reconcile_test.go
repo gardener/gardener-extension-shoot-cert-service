@@ -20,7 +20,6 @@ import (
 	resourcesv1alpha1 "github.com/gardener/gardener/pkg/apis/resources/v1alpha1"
 	"github.com/gardener/gardener/pkg/logger"
 	gardenerutils "github.com/gardener/gardener/pkg/utils"
-	. "github.com/gardener/gardener/pkg/utils/test"
 	"github.com/gardener/gardener/pkg/utils/test/matchers"
 	"github.com/gardener/gardener/test/framework"
 	"github.com/go-logr/logr"
@@ -241,7 +240,7 @@ var _ = Describe("Extension tests", func() {
 		Expect(c.Create(ctx, ext)).To(Succeed())
 
 		By("waiting for extension last operation to succeed")
-		CEventually(ctx, func() bool {
+		Eventually(ctx, func() bool {
 			Expect(c.Get(ctx, client.ObjectKeyFromObject(ext), ext)).To(Succeed())
 			return ext.Status.LastOperation != nil && ext.Status.LastOperation.State == gardencorev1beta1.LastOperationStateSucceeded
 		}).WithPolling(1 * time.Second).WithTimeout(defaultTimeout).Should(BeTrue())
@@ -272,7 +271,7 @@ var _ = Describe("Extension tests", func() {
 
 		By("deleting extension")
 		Expect(c.Delete(ctx, ext)).To(Succeed())
-		CEventually(ctx, func() bool {
+		Eventually(ctx, func() bool {
 			err := c.Get(ctx, client.ObjectKeyFromObject(ext), ext)
 			return err != nil && client.IgnoreNotFound(err) == nil
 		}).WithPolling(1 * time.Second).WithTimeout(defaultTimeout).Should(BeTrue())
@@ -295,14 +294,14 @@ var _ = Describe("Extension tests", func() {
 		Expect(c.Create(ctx, ext)).To(Succeed())
 
 		By("waiting for extension last operation to fail")
-		CEventually(ctx, func() bool {
+		Eventually(ctx, func() bool {
 			Expect(c.Get(ctx, client.ObjectKeyFromObject(ext), ext)).To(Succeed())
 			return ext.Status.LastOperation != nil && ext.Status.LastOperation.State == gardencorev1beta1.LastOperationStateError
 		}).WithPolling(1 * time.Second).WithTimeout(defaultTimeout).Should(BeTrue())
 
 		By("deleting extension")
 		Expect(c.Delete(ctx, ext)).To(Succeed())
-		CEventually(ctx, func() bool {
+		Eventually(ctx, func() bool {
 			err := c.Get(ctx, client.ObjectKeyFromObject(ext), ext)
 			return err != nil && client.IgnoreNotFound(err) == nil
 		}).WithPolling(1 * time.Second).WithTimeout(defaultTimeout).Should(BeTrue())
