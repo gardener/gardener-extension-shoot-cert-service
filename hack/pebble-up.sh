@@ -85,6 +85,8 @@ spec:
       helm:
         ociRepository:
           ref: local-skaffold/gardener-extension-shoot-cert-service/charts/extension:v0.0.0
+          caBundleSecretRef:
+            name: gardener-local-registry-ca
       runtimeClusterValues:
         certificateConfig:
           defaultIssuer:
