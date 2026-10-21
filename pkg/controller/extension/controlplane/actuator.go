@@ -87,7 +87,7 @@ type actuator struct {
 func (a *actuator) Reconcile(ctx context.Context, log logr.Logger, ex *extensionsv1alpha1.Extension) error {
 	namespace := ex.GetNamespace()
 
-	certConfig, err := a.certConfigDecoder.DecodeAndValidateProviderConfig(ex, nil)
+	certConfig, err := a.certConfigDecoder.DecodeAndValidateProviderConfig(ex, nil, "")
 	if err != nil {
 		return err
 	}

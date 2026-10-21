@@ -17,8 +17,9 @@ import (
 	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/service"
 )
 
-// ValidateCertConfig validates the passed configuration instance.
-func ValidateCertConfig(config *service.CertConfig, cluster *controller.Cluster) field.ErrorList {
+// ValidateCertConfig validates the passed configuration instance. reservedIssuerName is the operator's
+// default issuer name, which tenant issuers must not collide with.
+func ValidateCertConfig(config *service.CertConfig, cluster *controller.Cluster, reservedIssuerName string) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if cluster == nil {
@@ -40,7 +41,7 @@ func ValidateCertConfig(config *service.CertConfig, cluster *controller.Cluster)
 		return allErrs
 	}
 
-	allErrs = append(allErrs, validateIssuers(cluster, config.Issuers, field.NewPath("issuers"))...)
+	allErrs = append(allErrs, validateIssuers(cluster, config.Issuers, reservedIssuerName, field.NewPath("issuers"))...)
 
 	allErrs = append(allErrs, validateDNSChallengeOnShoot(config.DNSChallengeOnShoot, field.NewPath("dnsChallengeOnShoot"))...)
 
@@ -49,7 +50,7 @@ func ValidateCertConfig(config *service.CertConfig, cluster *controller.Cluster)
 	return allErrs
 }
 
-func validateIssuers(cluster *controller.Cluster, issuers []service.IssuerConfig, fldPath *field.Path) field.ErrorList {
+func validateIssuers(cluster *controller.Cluster, issuers []service.IssuerConfig, reservedIssuerName string, fldPath *field.Path) field.ErrorList {
 	var (
 		allErrs = field.ErrorList{}
 		names   = sets.NewString()
@@ -59,6 +60,11 @@ func validateIssuers(cluster *controller.Cluster, issuers []service.IssuerConfig
 		indexFldPath := fldPath.Index(i)
 		if issuer.Name == "" {
 			allErrs = append(allErrs, field.Invalid(indexFldPath.Child("name"), issuer.Name, "must not be empty"))
+		}
+		// Collision with the operator's default issuer. The "-ca" variant collides
+		// with the CA issuer's secret name.
+		if reservedIssuerName != "" && (issuer.Name == reservedIssuerName || issuer.Name == reservedIssuerName+"-ca") {
+			allErrs = append(allErrs, field.Invalid(indexFldPath.Child("name"), issuer.Name, "must not collide with the default issuer name"))
 		}
 		if names.Has(issuer.Name) {
 			allErrs = append(allErrs, field.Duplicate(indexFldPath.Child("name"), issuer.Name))
