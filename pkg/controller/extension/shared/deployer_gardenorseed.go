@@ -100,7 +100,8 @@ func (d *Deployer) createNetworkPolicy() *networkingv1.NetworkPolicy {
 			},
 		},
 		Spec: networkingv1.NetworkPolicySpec{
-			PodSelector: metav1.LabelSelector{},
+			// Scope egress to the cert-controller-manager pods only
+			PodSelector: metav1.LabelSelector{MatchLabels: d.values.getSelectLabels()},
 			Egress: []networkingv1.NetworkPolicyEgressRule{
 				{
 					To: []networkingv1.NetworkPolicyPeer{
