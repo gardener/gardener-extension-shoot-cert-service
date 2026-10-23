@@ -25,6 +25,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	kubernetesscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
@@ -162,7 +163,7 @@ func (a *actuator) createValues(
 	}
 
 	values.Replicas = int32(controller.GetReplicas(cluster, 1)) // #nosec G115 -- replicas are always small integers
-	if values.RestrictedIssuer() {
+	if ptr.Deref(a.serviceConfig.RestrictIssuer, false) {
 		if cluster.Shoot.Spec.DNS == nil || cluster.Shoot.Spec.DNS.Domain == nil {
 			log.Info("no domain given for shoot %s/%s - aborting", cluster.Shoot.Name, cluster.Shoot.Namespace)
 			return nil, nil
