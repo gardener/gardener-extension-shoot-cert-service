@@ -1530,7 +1530,7 @@ var _ = Describe("Deployer", func() {
 						},
 					},
 					Spec: networkingv1.NetworkPolicySpec{
-						PodSelector: metav1.LabelSelector{},
+						PodSelector: metav1.LabelSelector{MatchLabels: values.getSelectLabels()},
 						Egress: []networkingv1.NetworkPolicyEgressRule{
 							{
 								To: []networkingv1.NetworkPolicyPeer{
