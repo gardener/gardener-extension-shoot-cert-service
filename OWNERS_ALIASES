@@ -4,9 +4,11 @@ aliases:
   shoot-cert-service-reviewers:
   - MartinWeindel
   - marc1404
+  - Vincinator
   shoot-cert-service-approvers:
   - MartinWeindel
   - marc1404
+  - Vincinator
   documentation-approvers: # Approvers for the Gardener documentation and its aggregate sources, see https://gardener.cloud/contribute/contribution-process/documentation-roles/#documentation-approver
   - BoHristova
   - VelmiraS
