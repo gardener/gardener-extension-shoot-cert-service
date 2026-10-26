@@ -64,7 +64,7 @@ func validateIssuers(cluster *controller.Cluster, issuers []service.IssuerConfig
 		// Collision with the operator's default issuer. The "-ca" variant collides
 		// with the CA issuer's secret name.
 		if reservedIssuerName != "" && (issuer.Name == reservedIssuerName || issuer.Name == reservedIssuerName+"-ca") {
-			allErrs = append(allErrs, field.Invalid(indexFldPath.Child("name"), issuer.Name, "must not collide with the default issuer name"))
+			allErrs = append(allErrs, field.Invalid(indexFldPath.Child("name"), issuer.Name, "must not collide with the default issuer name or its CA secret"))
 		}
 		if names.Has(issuer.Name) {
 			allErrs = append(allErrs, field.Duplicate(indexFldPath.Child("name"), issuer.Name))
