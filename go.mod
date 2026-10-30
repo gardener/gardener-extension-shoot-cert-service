@@ -5,9 +5,9 @@ go 1.26.8
 require (
 	github.com/gardener/cert-management v0.28.0
 	github.com/gardener/cert-management/pkg/apis v0.28.0
-	github.com/gardener/gardener v1.154.0
-	github.com/gardener/gardener/hack/tools v1.154.0
-	github.com/gardener/gardener/pkg/apis v1.154.0
+	github.com/gardener/gardener v1.154.1
+	github.com/gardener/gardener/hack/tools v1.154.1
+	github.com/gardener/gardener/pkg/apis v1.154.1
 	github.com/go-logr/logr v1.4.4
 	github.com/onsi/ginkgo/v2 v2.33.0
 	github.com/onsi/gomega v1.44.0
@@ -79,9 +79,9 @@ require (
 	github.com/fsnotify/fsnotify v1.10.1 // indirect
 	github.com/fxamacker/cbor/v2 v2.9.4 // indirect
 	github.com/gardener/controller-manager-library v0.2.1-0.20260918073533-fcde3b4f2fc1 // indirect
-	github.com/gardener/etcd-druid/api v0.39.0 // indirect
+	github.com/gardener/etcd-druid/api v0.39.1 // indirect
 	github.com/gardener/external-dns-management v0.51.1 // indirect
-	github.com/gardener/machine-controller-manager v0.63.0 // indirect
+	github.com/gardener/machine-controller-manager v0.63.1 // indirect
 	github.com/gardener/pvc-autoscaler v0.3.1 // indirect
 	github.com/go-acme/lego/v5 v5.5.2 // indirect
 	github.com/go-asn1-ber/asn1-ber v1.5.8-0.20250403174932-29230038a667 // indirect
