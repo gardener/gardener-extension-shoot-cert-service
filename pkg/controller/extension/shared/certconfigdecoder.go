@@ -30,13 +30,14 @@ func NewCertConfigDecoder(mgr manager.Manager) CertConfigDecoder {
 }
 
 // DecodeAndValidateProviderConfig decodes the provider config from the given Extension and validates it.
-func (d *CertConfigDecoder) DecodeAndValidateProviderConfig(ex *extensionsv1alpha1.Extension, cluster *controller.Cluster) (*service.CertConfig, error) {
+// reservedIssuerName is the operator's default issuer name that tenant issuers must not collide with.
+func (d *CertConfigDecoder) DecodeAndValidateProviderConfig(ex *extensionsv1alpha1.Extension, cluster *controller.Cluster, reservedIssuerName string) (*service.CertConfig, error) {
 	certConfig := &service.CertConfig{}
 	if ex.Spec.ProviderConfig != nil {
 		if _, _, err := d.decoder.Decode(ex.Spec.ProviderConfig.Raw, nil, certConfig); err != nil {
 			return nil, fmt.Errorf("failed to decode provider config: %+v", err)
 		}
-		if errs := validation.ValidateCertConfig(certConfig, cluster); len(errs) > 0 {
+		if errs := validation.ValidateCertConfig(certConfig, cluster, reservedIssuerName); len(errs) > 0 {
 			return nil, errs.ToAggregate()
 		}
 	}
