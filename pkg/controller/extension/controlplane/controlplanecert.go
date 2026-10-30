@@ -15,6 +15,7 @@ import (
 	"github.com/gardener/gardener/pkg/controllerutils"
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -94,10 +95,18 @@ func (r *controlPlaneCert) reconcile(ctx context.Context) error {
 
 func (r *controlPlaneCert) delete(ctx context.Context) error {
 	cert := r.newCertificate()
-	if err := r.client.Delete(ctx, cert); client.IgnoreNotFound(err) != nil {
+	if err := r.client.Get(ctx, client.ObjectKeyFromObject(cert), cert); err != nil {
+		if !apierrors.IsNotFound(err) {
+			return fmt.Errorf("failed to get certificate: %w", err)
+		}
+	} else if cert.Labels[ManagedByLabel] != ManagedByValue {
+		// Only delete certificates we created ourselves; a same-named cert managed by the operator must be left alone.
+		r.log.Info("Skipping deletion of certificate not managed by us", "name", cert.Name)
+	} else if err := r.client.Delete(ctx, cert); client.IgnoreNotFound(err) != nil {
 		return fmt.Errorf("failed to delete certificate: %w", err)
+	} else {
+		r.log.Info("Deleted certificate", "name", cert.Name)
 	}
-	r.log.Info("Deleted certificate", "name", cert.Name)
 
 	secret := r.newDNSProviderSecret()
 	if err := r.client.Delete(ctx, secret); client.IgnoreNotFound(err) != nil {
