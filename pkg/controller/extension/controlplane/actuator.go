@@ -153,6 +153,10 @@ func (a *actuator) Delete(ctx context.Context, log logr.Logger, ex *extensionsv1
 		if err := newGardenCert(a.client, log).delete(ctx, ex); err != nil {
 			return err
 		}
+	} else {
+		if err := newControlPlaneCert(a.client, log).delete(ctx); err != nil {
+			return err
+		}
 	}
 	return a.deleteResourcesForGardenOrSeed(ctx, log, ex)
 }
