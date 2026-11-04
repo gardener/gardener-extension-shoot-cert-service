@@ -132,10 +132,17 @@ func (r *gardenCert) patchHashAnnotation(ctx context.Context, ex *extensionsv1al
 
 func (r *gardenCert) delete(ctx context.Context, ex *extensionsv1alpha1.Extension) error {
 	cert := r.newCertificate()
-	if err := r.client.Delete(ctx, cert); err != nil {
+	if err := r.client.Get(ctx, client.ObjectKeyFromObject(cert), cert); err != nil {
 		if apierrors.IsNotFound(err) {
 			return nil
 		}
+		return fmt.Errorf("failed to get certificate: %w", err)
+	}
+	if cert.Labels[ManagedByLabel] != ManagedByValue {
+		r.log.Info("Skipping deletion of certificate not managed by us", "name", cert.Name)
+		return nil
+	}
+	if err := r.client.Delete(ctx, cert); client.IgnoreNotFound(err) != nil {
 		return fmt.Errorf("failed to delete certificate: %w", err)
 	}
 	r.log.Info("Deleted certificate", "name", cert.Name)
