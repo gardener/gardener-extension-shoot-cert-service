@@ -168,7 +168,11 @@ func (a *actuator) createValues(
 			log.Info("no domain given for shoot %s/%s - aborting", cluster.Shoot.Name, cluster.Shoot.Namespace)
 			return nil, nil
 		}
-		values.RestrictedDomains = *cluster.Shoot.Spec.DNS.Domain
+		if cluster.Shoot.Spec.DNS != nil && cluster.Shoot.Spec.DNS.Domain != nil {
+			values.RestrictedDomains = *cluster.Shoot.Spec.DNS.Domain
+		} else {
+			log.Info("RestrictedIssuer enabled, but Shoot has no DNS domain; skipping issuer domain restriction")
+		}
 	}
 
 	if err := gardenerutils.NewShootAccessSecret(v1alpha1.ShootAccessSecretName, namespace).Reconcile(ctx, a.client); err != nil {

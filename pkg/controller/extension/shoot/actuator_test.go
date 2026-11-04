@@ -47,7 +47,7 @@ var _ = Describe("createValues RestrictIssuer gate", func() {
 	})
 
 	// Regression guard: RestrictIssuer must gate on the config flag, not on RestrictedIssuer()
-	// (which requires RestrictedDomains to already be set -> circular, dead control). See f001.
+	// (which requires RestrictedDomains to already be set -> circular, dead control).
 	It("populates RestrictedDomains from the shoot domain when RestrictIssuer is enabled", func() {
 		a := &actuator{client: c, serviceConfig: config.Configuration{RestrictIssuer: ptr.To(true)}}
 
