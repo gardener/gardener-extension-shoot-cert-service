@@ -518,6 +518,9 @@ func (d *Deployer) args() []string {
 	if nameservers := d.values.precheckNameservers(); nameservers != "" {
 		args = append(args, fmt.Sprintf("--issuer.precheck-nameservers=%s", nameservers))
 	}
+	if wait := d.values.precheckAdditionalWait(); wait != "" {
+		args = append(args, fmt.Sprintf("--issuer.precheck-additional-wait=%s", wait))
+	}
 	if d.values.dnsChallengeOnShootEnabled() {
 		args = append(args,
 			"--dns=/var/run/secrets/gardener.cloud/shoot/generic-kubeconfig/kubeconfig",

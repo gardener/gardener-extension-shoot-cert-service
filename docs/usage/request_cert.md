@@ -248,6 +248,31 @@ This works by creating a DNS TXT record in your DNS provider under `_acme-challe
 Typically, the record is propagated within a few minutes. But if the record is not visible to the ACME server for any reasons, the certificate request is retried again after several minutes.
 This means you may have to wait up to one hour after the propagation problem has been resolved before the certificate request is retried. Take a look in the events with `kubectl describe ingress example` for troubleshooting.
 
+Before asking the ACME server to validate the challenge, the `cert-controller-manager` checks the visibility of the TXT record using the precheck nameservers.
+After this precheck succeeds, it waits for an additional time before the ACME server is asked to validate the challenge.
+If the TXT record is visible to the precheck nameservers but not yet to the ACME server, you can increase this additional wait with the optional field `precheckAdditionalWait`:
+
+```yaml
+kind: Shoot
+...
+spec:
+  extensions:
+  - type: shoot-cert-service
+    providerConfig:
+      apiVersion: service.cert.extensions.gardener.cloud/v1alpha1
+      kind: CertConfig
+      precheckAdditionalWait: 5m # illustrative value only
+```
+
+The value is a Go duration string such as `5m` or `90s`, not a number of seconds.
+
+Please note:
+- The wait only happens after a successful DNS precheck. It does not skip the DNS precheck or the validation by the ACME server.
+- It does not guarantee DNS propagation and does not fix DNS problems. A suitable value depends on your DNS setup.
+- `0s` disables the additional wait. If the field is not set, the default of the `cert-controller-manager` is used (currently 10 seconds).
+- Negative values are invalid. The field is only supported for shoots.
+- Long waits also delay certificate issuance and renewal. Changing the setting restarts the Shoot's certificate controller, so in-flight requests may be retried.
+
 ## Character Restrictions
 Due to restriction of the common name to 64 characters, you may to leave the common name unset in such cases.
 

@@ -205,6 +205,18 @@ string
 </tr>
 <tr>
 <td>
+<code>precheckAdditionalWait</code></br>
+<em>
+<a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.33/#duration-v1-meta">Duration</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>PrecheckAdditionalWait is the additional time to wait after a successful DNS precheck before the<br />ACME CA is asked to validate the DNS01 challenge.<br />Only supported for the extension on shoots.<br />If not specified, the default of cert-controller-manager is used.</p>
+</td>
+</tr>
+<tr>
+<td>
 <code>alerting</code></br>
 <em>
 <a href="#alerting">Alerting</a>

@@ -1251,6 +1251,46 @@ var _ = Describe("Deployer", func() {
 			})
 		})
 
+		It("should not add the precheck additional wait arg if not specified", func() {
+			values.CertConfig.PrecheckAdditionalWait = nil
+			testSeedManagedResource(standardSeedResources(), nil)
+		})
+
+		It("should deploy it with precheck additional wait", func() {
+			values.CertConfig.PrecheckAdditionalWait = &metav1.Duration{Duration: 5 * time.Minute}
+			testSeedManagedResource(standardSeedResources(), func(deployment *appsv1.Deployment) {
+				deployment.Spec.Template.Spec.Containers[0].Args = insertArgsAfter(
+					"--issuer.default-requests-per-day-quota=",
+					deployment.Spec.Template.Spec.Containers[0].Args,
+					"--issuer.precheck-additional-wait=5m0s",
+				)
+			})
+		})
+
+		It("should deploy it with explicit zero precheck additional wait", func() {
+			values.CertConfig.PrecheckAdditionalWait = &metav1.Duration{Duration: 0}
+			testSeedManagedResource(standardSeedResources(), func(deployment *appsv1.Deployment) {
+				deployment.Spec.Template.Spec.Containers[0].Args = insertArgsAfter(
+					"--issuer.default-requests-per-day-quota=",
+					deployment.Spec.Template.Spec.Containers[0].Args,
+					"--issuer.precheck-additional-wait=0s",
+				)
+			})
+		})
+
+		It("should deploy it with precheck nameservers and precheck additional wait", func() {
+			values.ExtensionConfig.ACME.PrecheckNameservers = new("8.8.8.8,8.8.4.4")
+			values.CertConfig.PrecheckAdditionalWait = &metav1.Duration{Duration: 90 * time.Second}
+			testSeedManagedResource(standardSeedResources(), func(deployment *appsv1.Deployment) {
+				deployment.Spec.Template.Spec.Containers[0].Args = insertArgsAfter(
+					"--issuer.default-requests-per-day-quota=",
+					deployment.Spec.Template.Spec.Containers[0].Args,
+					"--issuer.precheck-nameservers=8.8.8.8,8.8.4.4",
+					"--issuer.precheck-additional-wait=1m30s",
+				)
+			})
+		})
+
 		It("should deploy it with issuers on shoot", func() {
 			values.CertConfig.ShootIssuers = &service.ShootIssuers{
 				Enabled: true,
@@ -1480,7 +1520,7 @@ var _ = Describe("Deployer", func() {
 	})
 
 	Describe("DeployGardenOrSeedManagedResource", func() {
-		It("should deploy it for the runtime cluster with self-signed root CA", func() {
+		var testGardenRuntime = func() {
 			values.ShootDeployment = false
 			values.GardenDeployment = true
 			values.Namespace = "garden"
@@ -1551,9 +1591,9 @@ var _ = Describe("Deployer", func() {
 				}
 				deployment.Spec.Template.Spec.Containers[0].Args = removeArgs(deployment.Spec.Template.Spec.Containers[0].Args, "--acme-deactivate-authorizations")
 			})
-		})
+		}
 
-		It("should deploy it for a seed cluster", func() {
+		var testSeedRuntime = func() {
 			values.ShootDeployment = false
 			values.Namespace = "seed-foo"
 			values.CertClass = "seed"
@@ -1591,6 +1631,26 @@ var _ = Describe("Deployer", func() {
 				},
 			)
 			testInternalManagedResource(resources, false, nil)
+		}
+
+		It("should deploy it for the runtime cluster with self-signed root CA", func() {
+			testGardenRuntime()
+		})
+
+		It("should deploy it for a seed cluster", func() {
+			testSeedRuntime()
+		})
+
+		// precheckAdditionalWait is forbidden by validation for runtime clusters.
+		// Even if validation is bypassed, the flag must not be rendered.
+		It("should ignore precheck additional wait for the runtime cluster", func() {
+			values.CertConfig.PrecheckAdditionalWait = &metav1.Duration{Duration: 5 * time.Minute}
+			testGardenRuntime()
+		})
+
+		It("should ignore precheck additional wait for a seed cluster", func() {
+			values.CertConfig.PrecheckAdditionalWait = &metav1.Duration{Duration: 5 * time.Minute}
+			testSeedRuntime()
 		})
 	})
 })

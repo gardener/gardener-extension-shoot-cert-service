@@ -5,6 +5,8 @@
 package validation_test
 
 import (
+	"time"
+
 	"github.com/gardener/gardener/extensions/pkg/controller"
 	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	. "github.com/onsi/ginkgo/v2"
@@ -12,6 +14,7 @@ import (
 	. "github.com/onsi/gomega/gstruct"
 	gomegatypes "github.com/onsi/gomega/types"
 	autoscalingv1 "k8s.io/api/autoscaling/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/service"
@@ -290,6 +293,25 @@ var _ = Describe("Validation", func() {
 				"Detail": Equal("must contain at least one DNS server address"),
 			})),
 		)),
+		Entry("Unspecified PrecheckAdditionalWait", service.CertConfig{
+			PrecheckAdditionalWait: nil,
+		}, BeEmpty()),
+		Entry("Zero PrecheckAdditionalWait", service.CertConfig{
+			PrecheckAdditionalWait: &metav1.Duration{Duration: 0},
+		}, BeEmpty()),
+		Entry("Positive PrecheckAdditionalWait", service.CertConfig{
+			PrecheckAdditionalWait: &metav1.Duration{Duration: 5 * time.Minute},
+		}, BeEmpty()),
+		Entry("Negative PrecheckAdditionalWait", service.CertConfig{
+			PrecheckAdditionalWait: &metav1.Duration{Duration: -1 * time.Second},
+		}, ConsistOf(
+			PointTo(MatchFields(IgnoreExtras, Fields{
+				"Type":     Equal(field.ErrorTypeInvalid),
+				"Field":    Equal("precheckAdditionalWait"),
+				"BadValue": Equal("-1s"),
+				"Detail":   Equal("must not be negative"),
+			})),
+		)),
 	)
 	DescribeTable("#ValidateCertConfigRuntimeCluster",
 		func(config service.CertConfig, match gomegatypes.GomegaMatcher) {
@@ -328,6 +350,22 @@ var _ = Describe("Validation", func() {
 			PointTo(MatchFields(IgnoreExtras, Fields{
 				"Type":  Equal(field.ErrorTypeForbidden),
 				"Field": Equal("precheckNameservers"),
+			})),
+		)),
+		Entry("Unsupported PrecheckAdditionalWait", service.CertConfig{
+			PrecheckAdditionalWait: &metav1.Duration{Duration: 5 * time.Minute},
+		}, ConsistOf(
+			PointTo(MatchFields(IgnoreExtras, Fields{
+				"Type":  Equal(field.ErrorTypeForbidden),
+				"Field": Equal("precheckAdditionalWait"),
+			})),
+		)),
+		Entry("Unsupported zero PrecheckAdditionalWait", service.CertConfig{
+			PrecheckAdditionalWait: &metav1.Duration{Duration: 0},
+		}, ConsistOf(
+			PointTo(MatchFields(IgnoreExtras, Fields{
+				"Type":  Equal(field.ErrorTypeForbidden),
+				"Field": Equal("precheckAdditionalWait"),
 			})),
 		)),
 		Entry("Unsupported ShootIssuer", service.CertConfig{

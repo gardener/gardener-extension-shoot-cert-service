@@ -28,6 +28,9 @@ func ValidateCertConfig(config *service.CertConfig, cluster *controller.Cluster)
 		if config.PrecheckNameservers != nil {
 			allErrs = append(allErrs, field.Forbidden(field.NewPath("precheckNameservers"), "precheckNameservers are not allowed in extension on runtime cluster."))
 		}
+		if config.PrecheckAdditionalWait != nil {
+			allErrs = append(allErrs, field.Forbidden(field.NewPath("precheckAdditionalWait"), "precheckAdditionalWait is not allowed in extension on runtime cluster."))
+		}
 		if config.DNSChallengeOnShoot != nil {
 			allErrs = append(allErrs, field.Forbidden(field.NewPath("dnsChallengeOnShoot"), "dnsChallengeOnShoot is not allowed in extension on runtime cluster."))
 		}
@@ -45,6 +48,10 @@ func ValidateCertConfig(config *service.CertConfig, cluster *controller.Cluster)
 	allErrs = append(allErrs, validateDNSChallengeOnShoot(config.DNSChallengeOnShoot, field.NewPath("dnsChallengeOnShoot"))...)
 
 	allErrs = append(allErrs, validatePrecheckNameservers(config.PrecheckNameservers, field.NewPath("precheckNameservers"))...)
+
+	if config.PrecheckAdditionalWait != nil && config.PrecheckAdditionalWait.Duration < 0 {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("precheckAdditionalWait"), config.PrecheckAdditionalWait.Duration.String(), "must not be negative"))
+	}
 
 	return allErrs
 }

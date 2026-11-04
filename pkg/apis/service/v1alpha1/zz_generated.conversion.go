@@ -13,6 +13,7 @@ import (
 	unsafe "unsafe"
 
 	service "github.com/gardener/gardener-extension-shoot-cert-service/pkg/apis/service"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	conversion "k8s.io/apimachinery/pkg/conversion"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
@@ -172,6 +173,7 @@ func autoConvert_v1alpha1_CertConfig_To_service_CertConfig(in *CertConfig, out *
 	out.DNSChallengeOnShoot = (*service.DNSChallengeOnShoot)(unsafe.Pointer(in.DNSChallengeOnShoot))
 	out.ShootIssuers = (*service.ShootIssuers)(unsafe.Pointer(in.ShootIssuers))
 	out.PrecheckNameservers = (*string)(unsafe.Pointer(in.PrecheckNameservers))
+	out.PrecheckAdditionalWait = (*v1.Duration)(unsafe.Pointer(in.PrecheckAdditionalWait))
 	out.Alerting = (*service.Alerting)(unsafe.Pointer(in.Alerting))
 	out.GenerateControlPlaneCertificate = (*bool)(unsafe.Pointer(in.GenerateControlPlaneCertificate))
 	out.CAInjector = (*service.CAInjector)(unsafe.Pointer(in.CAInjector))
@@ -188,6 +190,7 @@ func autoConvert_service_CertConfig_To_v1alpha1_CertConfig(in *service.CertConfi
 	out.DNSChallengeOnShoot = (*DNSChallengeOnShoot)(unsafe.Pointer(in.DNSChallengeOnShoot))
 	out.ShootIssuers = (*ShootIssuers)(unsafe.Pointer(in.ShootIssuers))
 	out.PrecheckNameservers = (*string)(unsafe.Pointer(in.PrecheckNameservers))
+	out.PrecheckAdditionalWait = (*v1.Duration)(unsafe.Pointer(in.PrecheckAdditionalWait))
 	out.Alerting = (*Alerting)(unsafe.Pointer(in.Alerting))
 	out.GenerateControlPlaneCertificate = (*bool)(unsafe.Pointer(in.GenerateControlPlaneCertificate))
 	out.CAInjector = (*CAInjector)(unsafe.Pointer(in.CAInjector))

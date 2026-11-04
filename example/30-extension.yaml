@@ -40,5 +40,7 @@ spec:
 
     #precheckNameservers: "10.0.0.53,10.123.56.53,8.8.8.8" # optional comma separated list of DNS server IP addresses if public DNS servers are not sufficient for prechecking DNS challenges
 
+    #precheckAdditionalWait: 5m # optional additional wait after a successful DNS precheck before the ACME CA validates the DNS challenge (illustrative value; if not set, the default of cert-controller-manager is used)
+
     #alerting:
     #  certExpirationAlertDays: 13

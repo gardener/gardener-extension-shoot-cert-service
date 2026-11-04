@@ -10,6 +10,7 @@
 package service
 
 import (
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -90,6 +91,11 @@ func (in *CertConfig) DeepCopyInto(out *CertConfig) {
 	if in.PrecheckNameservers != nil {
 		in, out := &in.PrecheckNameservers, &out.PrecheckNameservers
 		*out = new(string)
+		**out = **in
+	}
+	if in.PrecheckAdditionalWait != nil {
+		in, out := &in.PrecheckAdditionalWait, &out.PrecheckAdditionalWait
+		*out = new(v1.Duration)
 		**out = **in
 	}
 	if in.Alerting != nil {

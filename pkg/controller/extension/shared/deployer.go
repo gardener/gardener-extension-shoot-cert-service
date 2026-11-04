@@ -119,6 +119,15 @@ func (v Values) precheckNameservers() string {
 	return precheckNameservers
 }
 
+// precheckAdditionalWait returns the additional wait after a successful DNS precheck.
+// It is only supported for shoot deployments and returns an empty string if not specified.
+func (v Values) precheckAdditionalWait() string {
+	if v.ShootDeployment && v.CertConfig.PrecheckAdditionalWait != nil {
+		return v.CertConfig.PrecheckAdditionalWait.Duration.String()
+	}
+	return ""
+}
+
 func (v Values) caInjectorEnabled() bool {
 	return v.CertConfig.CAInjector != nil && v.CertConfig.CAInjector.Enabled
 }

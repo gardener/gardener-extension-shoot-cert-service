@@ -29,6 +29,12 @@ type CertConfig struct {
 	// challenge before calling ACME CA. Please consider to specify nameservers per issuer instead.
 	PrecheckNameservers *string
 
+	// PrecheckAdditionalWait is the additional time to wait after a successful DNS precheck before the
+	// ACME CA is asked to validate the DNS01 challenge.
+	// Only supported for the extension on shoots.
+	// If not specified, the default of cert-controller-manager is used.
+	PrecheckAdditionalWait *metav1.Duration
+
 	// Alerting contains configuration for alerting of certificate expiration.
 	Alerting *Alerting
 
