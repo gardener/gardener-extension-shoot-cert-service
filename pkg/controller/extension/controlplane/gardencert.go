@@ -140,12 +140,12 @@ func (r *gardenCert) delete(ctx context.Context, ex *extensionsv1alpha1.Extensio
 	}
 	if cert.Labels[ManagedByLabel] != ManagedByValue {
 		r.log.Info("Skipping deletion of certificate not managed by us", "name", cert.Name)
-		return nil
+	} else {
+		if err := r.client.Delete(ctx, cert); client.IgnoreNotFound(err) != nil {
+			return fmt.Errorf("failed to delete certificate: %w", err)
+		}
+		r.log.Info("Deleted certificate", "name", cert.Name)
 	}
-	if err := r.client.Delete(ctx, cert); client.IgnoreNotFound(err) != nil {
-		return fmt.Errorf("failed to delete certificate: %w", err)
-	}
-	r.log.Info("Deleted certificate", "name", cert.Name)
 
 	if ex.DeletionTimestamp != nil {
 		return nil

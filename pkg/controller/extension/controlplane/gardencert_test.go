@@ -73,6 +73,9 @@ var _ = Describe("gardenCert#delete", func() {
 	})
 
 	It("skips deletion when certificate is not managed by us", func() {
+		ex.Annotations = map[string]string{GardenRelevantDataHashAnnotation: "somehash"}
+		Expect(c.Update(ctx, ex)).To(Succeed())
+
 		cert := &certv1alpha1.Certificate{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      r.newCertificate().Name,
@@ -86,6 +89,10 @@ var _ = Describe("gardenCert#delete", func() {
 
 		existing := &certv1alpha1.Certificate{}
 		Expect(c.Get(ctx, client.ObjectKeyFromObject(cert), existing)).To(Succeed())
+
+		updated := &extensionsv1alpha1.Extension{}
+		Expect(c.Get(ctx, client.ObjectKeyFromObject(ex), updated)).To(Succeed())
+		Expect(updated.Annotations).NotTo(HaveKey(GardenRelevantDataHashAnnotation))
 	})
 
 	It("deletes certificate without patching extension when extension has a deletion timestamp", func() {
