@@ -1,0 +1,57 @@
+ocm:
+  component_name: github.com/gardener/cert-management
+  component_version: v0.29.0
+release_notes:
+- audience: operator
+  author:
+    hostname: github.com
+    type: githubUser
+    username: MartinWeindel
+  category: bugfix
+  contents: Normalize domain ranges in IsInDomainRange() method.
+  mimetype: text/markdown
+  reference: '[#861](https://github.com/gardener/cert-management/pull/861)'
+  type: standard
+- audience: operator
+  author:
+    hostname: github.com
+    type: githubUser
+    username: MartinWeindel
+  category: bugfix
+  contents: Guard scheduledReconciliations map with mutex
+  mimetype: text/markdown
+  reference: '[#863](https://github.com/gardener/cert-management/pull/863)'
+  type: standard
+- audience: operator
+  author:
+    hostname: github.com
+    type: githubUser
+    username: MartinWeindel
+  category: other
+  contents: 'fix: cap CNAME chain length in FollowCNAMEs'
+  mimetype: text/markdown
+  reference: '[#860](https://github.com/gardener/cert-management/pull/860)'
+  type: standard
+- audience: operator
+  author:
+    hostname: github.com
+    type: githubUser
+    username: MartinWeindel
+  category: other
+  contents: 'fix: prevent tenant secretLabels from overwriting reserved labels'
+  mimetype: text/markdown
+  reference: '[#859](https://github.com/gardener/cert-management/pull/859)'
+  type: standard
+- audience: user
+  author:
+    hostname: github.com
+    type: githubUser
+    username: MartinWeindel
+  category: feature
+  contents: 'With the new `--namespace-restriction` option (off by default), cert-controller-manager
+    prevents cross-namespace certificate reuse: a certificate can no longer obtain
+    a secret or reference an issuer in another namespace. See [Restricting certificates
+    to their own namespace](https://github.com/gardener/cert-management/blob/master/README.md#restricting-certificates-to-their-own-namespace).'
+  mimetype: text/markdown
+  reference: '[#847](https://github.com/gardener/cert-management/pull/847)'
+  type: standard
