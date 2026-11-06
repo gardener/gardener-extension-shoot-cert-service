@@ -41,9 +41,14 @@ func (d *Deployer) collectIssuers() ([]Issuer, error) {
 		return issuerList, nil
 	}
 
+	operatorIssuerName := d.values.ExtensionConfig.IssuerName
+	reservedIssuerName := operatorIssuerName + "-ca"
 	for _, issuer := range d.values.CertConfig.Issuers {
-		if issuer.Name == d.values.ExtensionConfig.IssuerName {
+		if issuer.Name == operatorIssuerName {
 			continue
+		}
+		if issuer.Name == reservedIssuerName {
+			return nil, fmt.Errorf("issuer name %q is reserved and cannot be used by shoot issuers", issuer.Name)
 		}
 
 		acme := &ACME{
