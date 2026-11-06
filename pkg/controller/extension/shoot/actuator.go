@@ -164,10 +164,6 @@ func (a *actuator) createValues(
 
 	values.Replicas = int32(controller.GetReplicas(cluster, 1)) // #nosec G115 -- replicas are always small integers
 	if ptr.Deref(a.serviceConfig.RestrictIssuer, false) {
-		if cluster.Shoot.Spec.DNS == nil || cluster.Shoot.Spec.DNS.Domain == nil {
-			log.Info("no domain given for shoot %s/%s - aborting", cluster.Shoot.Name, cluster.Shoot.Namespace)
-			return nil, nil
-		}
 		if cluster.Shoot.Spec.DNS != nil && cluster.Shoot.Spec.DNS.Domain != nil {
 			values.RestrictedDomains = *cluster.Shoot.Spec.DNS.Domain
 		} else {

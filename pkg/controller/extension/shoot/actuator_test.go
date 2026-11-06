@@ -66,4 +66,15 @@ var _ = Describe("createValues RestrictIssuer gate", func() {
 		Expect(values).NotTo(BeNil())
 		Expect(values.RestrictedDomains).To(BeEmpty())
 	})
+
+	It("skips restriction but still deploys when RestrictIssuer is enabled and the shoot has no DNS domain", func() {
+		cluster.Shoot.Spec.DNS = nil
+		a := &actuator{client: c, serviceConfig: config.Configuration{RestrictIssuer: ptr.To(true)}}
+
+		values, err := a.createValues(ctx, logr.Discard(), &service.CertConfig{}, cluster, namespace)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(values).NotTo(BeNil())
+		Expect(values.RestrictedDomains).To(BeEmpty())
+		Expect(values.RestrictedIssuer()).To(BeFalse())
+	})
 })
