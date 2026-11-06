@@ -132,7 +132,7 @@ func mapGardenToExtension(mgr manager.Manager, log logr.Logger) func(context.Con
 		for _, ex := range extList.Items {
 			if ex.Spec.Type == Type &&
 				extensionsv1alpha1helper.GetExtensionClassOrDefault(ex.Spec.Class) == extensionsv1alpha1.ExtensionClassGarden {
-				certConfig, err := decoder.DecodeAndValidateProviderConfig(&ex, nil)
+				certConfig, err := decoder.DecodeAndValidateProviderConfig(&ex, nil, "")
 				if err != nil {
 					log.Error(err, "Failed to decode extension config")
 					return nil

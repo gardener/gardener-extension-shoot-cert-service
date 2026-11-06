@@ -66,7 +66,7 @@ func (a *actuator) Reconcile(ctx context.Context, log logr.Logger, ex *extension
 		return err
 	}
 
-	certConfig, err := a.certConfigDecoder.DecodeAndValidateProviderConfig(ex, cluster)
+	certConfig, err := a.certConfigDecoder.DecodeAndValidateProviderConfig(ex, cluster, a.serviceConfig.IssuerName)
 	if err != nil {
 		return err
 	}

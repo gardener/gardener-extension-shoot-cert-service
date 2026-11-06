@@ -47,7 +47,7 @@ var _ = Describe("Validation", func() {
 	)
 	DescribeTable("#ValidateCertConfigShoot",
 		func(config service.CertConfig, match gomegatypes.GomegaMatcher) {
-			err := validation.ValidateCertConfig(&config, cluster)
+			err := validation.ValidateCertConfig(&config, cluster, "default-issuer")
 			Expect(err).To(match)
 		},
 		Entry("No issuers", service.CertConfig{}, BeEmpty()),
@@ -90,6 +90,34 @@ var _ = Describe("Validation", func() {
 			PointTo(MatchFields(IgnoreExtras, Fields{
 				"Type":  Equal(field.ErrorTypeDuplicate),
 				"Field": Equal("issuers[1].name"),
+			})),
+		)),
+		Entry("Issuer colliding with default issuer name", service.CertConfig{
+			Issuers: []service.IssuerConfig{
+				{
+					Name:   "default-issuer",
+					Server: "https://acme-v02.api.letsencrypt.org/directory",
+					Email:  "john@example.com",
+				},
+			},
+		}, ConsistOf(
+			PointTo(MatchFields(IgnoreExtras, Fields{
+				"Type":  Equal(field.ErrorTypeInvalid),
+				"Field": Equal("issuers[0].name"),
+			})),
+		)),
+		Entry("Issuer colliding with default CA issuer secret name", service.CertConfig{
+			Issuers: []service.IssuerConfig{
+				{
+					Name:   "default-issuer-ca",
+					Server: "https://acme-v02.api.letsencrypt.org/directory",
+					Email:  "john@example.com",
+				},
+			},
+		}, ConsistOf(
+			PointTo(MatchFields(IgnoreExtras, Fields{
+				"Type":  Equal(field.ErrorTypeInvalid),
+				"Field": Equal("issuers[0].name"),
 			})),
 		)),
 		Entry("Valid configuration", service.CertConfig{
@@ -293,7 +321,7 @@ var _ = Describe("Validation", func() {
 	)
 	DescribeTable("#ValidateCertConfigRuntimeCluster",
 		func(config service.CertConfig, match gomegatypes.GomegaMatcher) {
-			err := validation.ValidateCertConfig(&config, nil)
+			err := validation.ValidateCertConfig(&config, nil, "")
 			Expect(err).To(match)
 		},
 		Entry("No issuers", service.CertConfig{}, BeEmpty()),
