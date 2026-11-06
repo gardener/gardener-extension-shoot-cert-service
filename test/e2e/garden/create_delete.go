@@ -14,6 +14,9 @@ import (
 	v1beta1constants "github.com/gardener/gardener/pkg/apis/core/v1beta1/constants"
 	extensionsv1alpha1 "github.com/gardener/gardener/pkg/apis/extensions/v1alpha1"
 	operatorv1alpha1 "github.com/gardener/gardener/pkg/apis/operator/v1alpha1"
+	securityv1alpha1 "github.com/gardener/gardener/pkg/apis/security/v1alpha1"
+	"github.com/gardener/gardener/pkg/apis/seedmanagement/encoding"
+	seedmanagementv1alpha1 "github.com/gardener/gardener/pkg/apis/seedmanagement/v1alpha1"
 	"github.com/gardener/gardener/pkg/client/kubernetes"
 	operatorclient "github.com/gardener/gardener/pkg/operator/client"
 	. "github.com/onsi/ginkgo/v2"
@@ -29,6 +32,7 @@ var _ = Describe("Shoot-Cert-Service Tests", func() {
 	var (
 		garden             = &operatorv1alpha1.Garden{ObjectMeta: metav1.ObjectMeta{Name: "local"}}
 		seed               = &gardencorev1beta1.Seed{ObjectMeta: metav1.ObjectMeta{Name: "local"}}
+		gardenlet          = &seedmanagementv1alpha1.Gardenlet{ObjectMeta: metav1.ObjectMeta{Name: "local", Namespace: "garden"}}
 		operatorExtension  = &operatorv1alpha1.Extension{ObjectMeta: metav1.ObjectMeta{Name: "extension-shoot-cert-service"}}
 		runtimeExtension   = &extensionsv1alpha1.Extension{ObjectMeta: metav1.ObjectMeta{Namespace: "garden", Name: "garden-controlplane-cert-service"}}
 		seedExtension      = &extensionsv1alpha1.Extension{ObjectMeta: metav1.ObjectMeta{Namespace: "garden", Name: "controlplane-cert-service"}}
@@ -52,9 +56,12 @@ var _ = Describe("Shoot-Cert-Service Tests", func() {
 		Expect(execMake(ctx, "extension-up")).To(Succeed())
 
 		By("Get Virtual Garden Client")
+		virtualScheme := runtime.NewScheme()
+		Expect(operatorclient.AddVirtualSchemeToScheme(virtualScheme)).To(Succeed())
+		Expect(securityv1alpha1.AddToScheme(virtualScheme)).To(Succeed())
 		virtualClusterClient, err := kubernetes.NewClientFromSecret(ctx, runtimeClient, v1beta1constants.GardenNamespace, "gardener",
 			kubernetes.WithDisabledCachedClient(),
-			kubernetes.WithClientOptions(client.Options{Scheme: operatorclient.VirtualScheme}),
+			kubernetes.WithClientOptions(client.Options{Scheme: virtualScheme}),
 		)
 		Expect(err).NotTo(HaveOccurred())
 
@@ -128,12 +135,38 @@ var _ = Describe("Shoot-Cert-Service Tests", func() {
 
 		By("Patch Seed: use WorkloadIdentity for DNS provider")
 		Expect(virtualClusterClient.Client().Get(ctx, client.ObjectKeyFromObject(seed), seed)).To(Succeed())
+		originalSeedDNSProviderRef := seed.Spec.DNS.Provider.CredentialsRef.DeepCopy()
+
+		wli := &securityv1alpha1.WorkloadIdentity{ObjectMeta: metav1.ObjectMeta{Namespace: "garden-local", Name: "local"}}
+		Expect(virtualClusterClient.Client().Get(ctx, client.ObjectKeyFromObject(wli), wli)).To(Succeed())
+
+		// Patch the Gardenlet config so the refallowlist controller sets the annotation on the WLI.
+		Expect(virtualClusterClient.Client().Get(ctx, client.ObjectKeyFromObject(gardenlet), gardenlet)).To(Succeed())
+		gardenletCfg, err := encoding.DecodeGardenletConfiguration(&gardenlet.Spec.Config, false)
+		Expect(err).NotTo(HaveOccurred())
+		originalCredentialsRef := gardenletCfg.SeedConfig.Spec.DNS.Provider.CredentialsRef.DeepCopy()
+		gardenletCfg.SeedConfig.Spec.DNS.Provider.CredentialsRef = &corev1.ObjectReference{
+			APIVersion: "security.gardener.cloud/v1alpha1",
+			Kind:       "WorkloadIdentity",
+			Name:       wli.Name,
+			Namespace:  wli.Namespace,
+		}
+		encodedCfg, err := encoding.EncodeGardenletConfiguration(gardenletCfg)
+		Expect(err).NotTo(HaveOccurred())
+		gardenletPatch := client.MergeFrom(gardenlet.DeepCopy())
+		gardenlet.Spec.Config = *encodedCfg
+		Expect(virtualClusterClient.Client().Patch(ctx, gardenlet, gardenletPatch)).To(Succeed())
+		Eventually(func(g Gomega) {
+			g.Expect(virtualClusterClient.Client().Get(ctx, client.ObjectKeyFromObject(wli), wli)).To(Succeed())
+			g.Expect(wli.Annotations[v1beta1constants.AnnotationSeedNames]).To(Equal(seed.Name))
+		}).Should(Succeed())
+
 		seedPatch = client.MergeFrom(seed.DeepCopy())
 		seed.Spec.DNS.Provider.CredentialsRef = &corev1.ObjectReference{
 			APIVersion: "security.gardener.cloud/v1alpha1",
 			Kind:       "WorkloadIdentity",
-			Name:       "local",
-			Namespace:  "garden-local",
+			Name:       wli.Name,
+			Namespace:  wli.Namespace,
 		}
 		Expect(virtualClusterClient.Client().Patch(ctx, seed, seedPatch)).To(Succeed())
 
@@ -153,9 +186,21 @@ var _ = Describe("Shoot-Cert-Service Tests", func() {
 		waitForGardenToBeReconciled(ctx, garden)
 
 		By("Patch Seed: Remove extension")
+		// Revert Gardenlet config so the refallowlist controller removes the WLI annotation.
+		Expect(virtualClusterClient.Client().Get(ctx, client.ObjectKeyFromObject(gardenlet), gardenlet)).To(Succeed())
+		gardenletCfg, err = encoding.DecodeGardenletConfiguration(&gardenlet.Spec.Config, false)
+		Expect(err).NotTo(HaveOccurred())
+		gardenletCfg.SeedConfig.Spec.DNS.Provider.CredentialsRef = originalCredentialsRef
+		encodedCfg, err = encoding.EncodeGardenletConfiguration(gardenletCfg)
+		Expect(err).NotTo(HaveOccurred())
+		gardenletPatch = client.MergeFrom(gardenlet.DeepCopy())
+		gardenlet.Spec.Config = *encodedCfg
+		Expect(virtualClusterClient.Client().Patch(ctx, gardenlet, gardenletPatch)).To(Succeed())
+
 		Expect(virtualClusterClient.Client().Get(ctx, client.ObjectKeyFromObject(seed), seed)).To(Succeed())
 		seedPatch = client.MergeFrom(seed.DeepCopy())
 		seed.Spec.Extensions = nil
+		seed.Spec.DNS.Provider.CredentialsRef = originalSeedDNSProviderRef
 		Expect(virtualClusterClient.Client().Patch(ctx, seed, seedPatch)).To(Succeed())
 
 		By("Check Operator Extension required status")

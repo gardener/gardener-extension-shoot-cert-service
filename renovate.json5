@@ -176,6 +176,7 @@
     "github.com/oklog/run",
     "github.com/oklog/ulid/v2",
     "github.com/open-telemetry/opentelemetry-operator/apis",
+    "github.com/pandatix/go-abnf",
     "github.com/pelletier/go-toml/v2",
     "github.com/perses/common",
     "github.com/perses/perses",
