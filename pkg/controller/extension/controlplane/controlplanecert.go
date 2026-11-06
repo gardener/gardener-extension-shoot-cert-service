@@ -102,6 +102,7 @@ func (r *controlPlaneCert) delete(ctx context.Context) error {
 	} else if cert.Labels[ManagedByLabel] != ManagedByValue {
 		// Only delete certificates we created ourselves; a same-named cert managed by the operator must be left alone.
 		r.log.Info("Skipping deletion of certificate not managed by us", "name", cert.Name)
+		return nil
 	} else if err := r.client.Delete(ctx, cert); client.IgnoreNotFound(err) != nil {
 		return fmt.Errorf("failed to delete certificate: %w", err)
 	} else {

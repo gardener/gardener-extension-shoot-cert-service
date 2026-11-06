@@ -47,11 +47,15 @@ var _ = Describe("controlPlaneCert#delete", func() {
 			},
 		}
 		Expect(c.Create(ctx, cert)).To(Succeed())
+		secret := r.newDNSProviderSecret()
+		Expect(c.Create(ctx, secret)).To(Succeed())
 
 		Expect(r.delete(ctx)).To(Succeed())
 
 		existing := &certv1alpha1.Certificate{}
 		Expect(c.Get(ctx, client.ObjectKeyFromObject(cert), existing)).To(Succeed())
+		existingSecret := r.newDNSProviderSecret()
+		Expect(c.Get(ctx, client.ObjectKeyFromObject(existingSecret), existingSecret)).To(Succeed())
 	})
 
 	It("deletes certificate when it is managed by us", func() {
