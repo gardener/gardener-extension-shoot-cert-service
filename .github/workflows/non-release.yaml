@@ -4,13 +4,19 @@ on:
     branches:
       - master
       - 'release-v*'
+  pull_request:
+
   pull_request_target:
     types:
       - labeled
 
 jobs:
   build:
-    if: ${{ github.repository == 'gardener/gardener-extension-shoot-cert-service' && (github.event.action != 'labeled' || (github.event.label.name == vars.DEFAULT_LABEL_OK_TO_TEST && vars.DEFAULT_LABEL_OK_TO_TEST != '')) }}
+    # only run in the main repo, and for pull_request_target only when the
+    # `ok-to-test` label was added (so fork PRs build only after a maintainer
+    # vets them; the label name is hardcoded in gardener/cc-utils's
+    # trusted-checkout action).
+    if: ${{ github.repository == 'gardener/gardener-extension-shoot-cert-service' && (github.event_name != 'pull_request_target' || (github.event_name == 'pull_request_target' && github.event.label.name == vars.DEFAULT_LABEL_OK_TO_TEST && vars.DEFAULT_LABEL_OK_TO_TEST != '')) }}
     uses: ./.github/workflows/build.yaml
     with:
       mode: snapshot
@@ -21,7 +27,7 @@ jobs:
       id-token: write
 
   component-descriptor:
-    if: ${{ github.repository == 'gardener/gardener-extension-shoot-cert-service' && (github.event.action != 'labeled' || (github.event.label.name == vars.DEFAULT_LABEL_OK_TO_TEST && vars.DEFAULT_LABEL_OK_TO_TEST != '')) }}
+    if: ${{ github.repository == 'gardener/gardener-extension-shoot-cert-service' && (github.event_name != 'pull_request_target' || (github.event_name == 'pull_request_target' && github.event.label.name == vars.DEFAULT_LABEL_OK_TO_TEST && vars.DEFAULT_LABEL_OK_TO_TEST != '')) }}
     uses: gardener/cc-utils/.github/workflows/post-build.yaml@v1
     needs:
       - build

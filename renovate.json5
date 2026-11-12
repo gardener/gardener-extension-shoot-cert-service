@@ -12,6 +12,9 @@
   postUpdateOptions: [
     'gomodTidy',
   ],
+  // Pin and maintain image/action digests so build inputs cannot be swapped under a
+  // mutable tag.
+  pinDigests: true,
   // Ignore the commits pushed by the `renovate-post-upgrade` GitHub Action (running
   // `make generate`/`make tidy`) when detecting whether a branch was manually edited.
   // Otherwise, Renovate would treat the branch as modified and stop updating the PR.
