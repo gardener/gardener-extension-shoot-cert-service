@@ -1,6 +1,5 @@
 ---
 title:  Gardener yourself a Shoot with Istio, custom Domains, and Certificates
-layout: single-page
 last_reviewed: 15.05.2020
 category: Networking
 level: beginner
@@ -23,9 +22,9 @@ Here are some pre-pointers that you will need to go deeper:
 * [Tutorial Domain Names](https://github.com/gardener/gardener-extension-shoot-dns-service/blob/master/docs/usage/dns_names.md)
 * [Tutorial Certificates](../usage/request_cert.md)
 
-{{% alert title="Tip" color="primary" %}}
-If you try my instructions and fail, then read the alternative title of this tutorial as "Shoot yourself in the foot with Gardener, custom Domains, Istio and Certificates".
-{{% /alert %}}
+> [!NOTE]
+> **Tip**
+> If you try my instructions and fail, then read the alternative title of this tutorial as "Shoot yourself in the foot with Gardener, custom Domains, Istio and Certificates".
 
 ## First Things First
 
@@ -455,9 +454,9 @@ $ curl -k https://httpbin.gsicdc.mydomain.io/ip
 Quod erat demonstrandum.
 The proof of exchanging the issuer is now left to the reader.
 
-{{% alert title="Tip" color="primary" %}}
-Remember that the certificate is actually not valid because it is issued from the Let's encrypt staging environment. Thus, we needed "curl -k" or "http --verify no".
-{{% /alert %}}
+> [!NOTE]
+> **Tip**
+> Remember that the certificate is actually not valid because it is issued from the Let's encrypt staging environment. Thus, we needed "curl -k" or "http --verify no".
 
 Hint: use the interactive k9s tool.
 ![k9s](images/k9s.png)
