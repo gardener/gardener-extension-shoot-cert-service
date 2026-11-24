@@ -1,5 +1,5 @@
 ############# builder
-FROM golang:1.27.4@sha256:3102e2c7eeee6e16de01ca3f35c56434696f70702a30b3d564b0244560981bb0 AS builder
+FROM golang:1.27.4@sha256:5f1b98fa02fe396ebce2a0227a0e08309e11792915b9dd2e1f71053d7e7e6666 AS builder
 
 WORKDIR /go/src/github.com/gardener/gardener-extension-shoot-cert-service
 
