@@ -90,6 +90,11 @@ var _ = Describe("Deployer", func() {
 						},
 						{
 							APIGroups: []string{""},
+							Resources: []string{"namespaces"},
+							Verbs:     []string{"get", "list", "watch"},
+						},
+						{
+							APIGroups: []string{""},
 							Resources: []string{"services"},
 							Verbs:     []string{"get", "list", "update", "watch"},
 						},
@@ -433,6 +438,11 @@ var _ = Describe("Deployer", func() {
 							APIGroups: []string{"networking.istio.io"},
 							Resources: []string{"gateways", "virtualservices"},
 							Verbs:     []string{"get", "list", "update", "watch"},
+						},
+						{
+							APIGroups: []string{""},
+							Resources: []string{"namespaces"},
+							Verbs:     []string{"get", "list", "watch"},
 						},
 						{
 							APIGroups: []string{""},
